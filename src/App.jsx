@@ -30,13 +30,74 @@ function App() {
   // 1. Dashboard Screen (Dark Mode)
   if (isUnlocked) {
     return (
-      <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white text-center">
-        <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 shadow-2xl">
-          <h1 className="text-3xl font-bold text-[#00a884] mb-4">Dashboard Active</h1>
-          <p className="text-gray-400">Welcome back, +{phone}</p>
-          <button onClick={() => setIsUnlocked(false)} className="mt-8 text-red-500 underline">
-            Logout
-          </button>
+      <div className="flex h-screen bg-[#111b21] text-[#e9edef] overflow-hidden">
+        {/* 1. Left Sidebar: Contacts & Chats */}
+        <div className="w-[30%] border-r border-gray-700 flex flex-col bg-[#111b21]">
+          {/* Profile Header */}
+          <div className="p-4 bg-[#202c33] flex justify-between items-center">
+            <div className="w-10 h-10 bg-[#00a884] rounded-full flex items-center justify-center font-bold text-[#111b21]">ME</div>
+            <div className="flex gap-5 text-gray-400">
+              <button className="hover:text-white">👥</button>
+              <button className="hover:text-white">💬</button>
+              <button onClick={() => setIsUnlocked(false)} className="hover:text-red-400">
+                🔒
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="p-3">
+            <div className="bg-[#202c33] flex items-center px-4 py-1.5 rounded-lg">
+              <span className="text-gray-500 mr-3">🔍</span>
+              <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" />
+            </div>
+          </div>
+
+          {/* Conversation List */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="p-4 flex gap-3 hover:bg-[#2a3942] cursor-pointer transition-colors border-b border-gray-800/50">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex-shrink-0"></div>
+              <div className="flex-1 overflow-hidden">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-sm">Tech Lead</h3>
+                  <span className="text-[10px] text-gray-500">1:05 PM</span>
+                </div>
+                <p className="text-xs text-gray-400 truncate mt-1">Is the login portal finished?</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Main Window: Active Messaging Area */}
+        <div className="flex-1 flex flex-col bg-[#0b141a] relative">
+          {/* Chat Header */}
+          <div className="p-3 bg-[#202c33] flex items-center gap-4 shadow-md">
+            <div className="w-10 h-10 bg-blue-500 rounded-full"></div>
+            <div>
+              <h2 className="font-medium text-sm">Tech Lead</h2>
+              <p className="text-[10px] text-[#00a884]">online</p>
+            </div>
+          </div>
+
+          {/* Messages Container (Simulated) */}
+          <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
+            <div className="bg-[#202c33] p-2.5 rounded-lg rounded-tl-none self-start max-w-md text-sm shadow-sm">
+              Hey, how is the ChatterBox progress?
+              <span className="text-[9px] text-gray-500 block text-right mt-1">1:05 PM</span>
+            </div>
+            <div className="bg-[#005c4b] p-2.5 rounded-lg rounded-tr-none self-end max-w-md text-sm shadow-sm">
+              The login portal is merged into main!
+              <span className="text-[9px] text-[#ffffff80] block text-right mt-1">1:08 PM</span>
+            </div>
+          </div>
+
+          {/* Bottom Input Field */}
+          <div className="p-3 bg-[#202c33] flex items-center gap-4">
+            <button className="text-xl text-gray-400 hover:text-white">😊</button>
+            <button className="text-xl text-gray-400 hover:text-white">📎</button>
+            <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm" />
+            <button className="bg-[#00a884] p-2 rounded-full hover:scale-105 transition-transform text-[#111b21]">➤</button>
+          </div>
         </div>
       </div>
     );
