@@ -26,12 +26,26 @@ function App() {
       text: newMessage,
       sender: "me",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: "sent", // New property: 'sent', 'delivered', or 'read'
     };
 
     // Update the messages state by adding the new message to the existing array of messages.
     setMessages([...messages, msg]);
     setNewMessage("");
   };
+
+  // This simulates the other person reading your message after 3 seconds
+  React.useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+
+    if (lastMessage?.sender === "me" && lastMessage.status === "sent") {
+      const timer = setTimeout(() => {
+        setMessages((prev) => prev.map((m) => (m.id === lastMessage.id ? { ...m, status: "read" } : m)));
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messages]);
 
   // This was the missing function causing the white screen!
   const handleRequestOtp = () => {
@@ -110,6 +124,14 @@ function App() {
               <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
                 {msg.text}
                 <span className={`text-[9px] block text-right mt-1 ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
+                {/* Render ticks only for messages sent by 'me' */}
+                {msg.sender === "me" && (
+                  <span className="text-[12px] leading-none flex">
+                    {msg.status === "sent" && <span className="text-gray-400">✓</span>}
+                    {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
+                    {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
+                  </span>
+                )}
               </div>
             ))}
           </div>
