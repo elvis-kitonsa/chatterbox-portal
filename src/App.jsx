@@ -30,21 +30,12 @@ function App() {
   // 1. Dashboard Screen (Dark Mode)
   if (isUnlocked) {
     return (
-      <div className="min-h-screen w-full bg-[#111b21] flex flex-col items-center justify-center p-6 text-white">
-        <div className="bg-[#202c33] p-10 rounded-2xl shadow-2xl border border-gray-800 text-center max-w-md w-full">
-          <h1 className="text-3xl font-bold text-[#00a884] mb-4">Vault Unlocked</h1>
-          <p className="text-gray-400 mb-8 font-medium">Active Session: +{phone}</p>
-          <div className="h-[200px] border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center mb-8">
-            <p className="text-gray-500">Expense Dashboard Loading...</p>
-          </div>
-          <button
-            onClick={() => {
-              setIsUnlocked(false);
-              setIsVerifying(false);
-            }}
-            className="text-red-500 text-sm font-semibold hover:underline"
-          >
-            Lock Dashboard
+      <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white text-center">
+        <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 shadow-2xl">
+          <h1 className="text-3xl font-bold text-[#00a884] mb-4">Dashboard Active</h1>
+          <p className="text-gray-400">Welcome back, +{phone}</p>
+          <button onClick={() => setIsUnlocked(false)} className="mt-8 text-red-500 underline">
+            Logout
           </button>
         </div>
       </div>
@@ -55,12 +46,11 @@ function App() {
   if (isVerifying) {
     return (
       <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-        <div className="bg-[#202c33] p-10 rounded-2xl shadow-2xl border border-gray-800 max-w-sm w-full text-center">
-          <h2 className="text-2xl font-bold mb-2">Verify Identity</h2>
-          <p className="text-gray-400 mb-8 text-sm">Enter the code sent to +{phone}</p>
-          <input type="text" maxLength="6" placeholder="000000" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full bg-[#2a3942] text-center text-3xl tracking-widest font-mono py-4 rounded-xl mb-6 border border-transparent focus:border-[#00a884] outline-none transition-all" />
-          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-4 rounded-full transition-all active:scale-95">
-            Unlock Vault
+        <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 max-w-sm w-full text-center">
+          <h2 className="text-2xl font-bold mb-6">Enter OTP</h2>
+          <input type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full bg-[#2a3942] text-center text-3xl py-4 rounded-xl mb-6 border border-transparent focus:border-[#00a884] outline-none" placeholder="000000" />
+          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] py-4 rounded-full font-bold text-[#111b21]">
+            Verify
           </button>
         </div>
       </div>
@@ -75,32 +65,46 @@ function App() {
           <span className="text-2xl">🛡️</span>
         </div>
         <h1 className="text-3xl font-bold text-[#00a884] mb-2 text-center">ChatterBox</h1>
-        <p className="text-gray-400 mb-8 text-center text-sm">Enter your phone to access your private expenses.</p>
+        <p className="text-gray-400 mb-8 text-center text-sm">Secure Phone Login</p>
 
-        <div className="mb-8 login-dark">
+        <div className="mb-8">
           <PhoneInput
             country={"ug"}
             value={phone}
             onChange={(p) => setPhone(p)}
+            enableSearch={true} // Adds a search bar for easier navigation
             containerStyle={{ width: "100%" }}
             inputStyle={{
               backgroundColor: "#2a3942",
               color: "white",
-              border: "none",
               width: "100%",
               height: "56px",
               borderRadius: "12px",
+              border: "1px solid #374151",
             }}
             buttonStyle={{
               backgroundColor: "#2a3942",
-              border: "none",
+              border: "1px solid #374151",
               borderRadius: "12px 0 0 12px",
+            }}
+            // FIXES THE DROPDOWN VISIBILITY:
+            dropdownStyle={{
+              backgroundColor: "#2a3942",
+              color: "#ffffff",
+              textAlign: "left",
+              width: "300px",
+            }}
+            searchStyle={{
+              backgroundColor: "#111b21",
+              color: "white",
+              width: "90%",
+              margin: "10px auto",
             }}
           />
         </div>
 
-        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-4 rounded-full transition-all active:scale-95 shadow-lg shadow-black/20">
-          Request Access
+        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-4 rounded-full transition-all shadow-lg">
+          Get OTP Code
         </button>
       </div>
     </div>
