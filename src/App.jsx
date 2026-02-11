@@ -9,6 +9,30 @@ function App() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
 
+  //Live Chat Functionality States:
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
+    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
+  ]);
+  const [newMessage, setNewMessage] = useState("");
+
+  // This function handles sending a new message in the chat.
+  // It checks if the input is not empty, creates a new message object, updates the messages state, and clears the input field.
+  const handleSendMessage = () => {
+    if (newMessage.trim() === "") return;
+
+    const msg = {
+      id: Date.now(),
+      text: newMessage,
+      sender: "me",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    // Update the messages state by adding the new message to the existing array of messages.
+    setMessages([...messages, msg]);
+    setNewMessage("");
+  };
+
   // This was the missing function causing the white screen!
   const handleRequestOtp = () => {
     if (phone.length > 10) {
@@ -80,23 +104,35 @@ function App() {
           </div>
 
           {/* Messages Container (Simulated) */}
+          {/* Messages Container */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
-            <div className="bg-[#202c33] p-2.5 rounded-lg rounded-tl-none self-start max-w-md text-sm shadow-sm">
-              Hey, how is the ChatterBox progress?
-              <span className="text-[9px] text-gray-500 block text-right mt-1">1:05 PM</span>
-            </div>
-            <div className="bg-[#005c4b] p-2.5 rounded-lg rounded-tr-none self-end max-w-md text-sm shadow-sm">
-              The login portal is merged into main!
-              <span className="text-[9px] text-[#ffffff80] block text-right mt-1">1:08 PM</span>
-            </div>
+            {messages.map((msg) => (
+              <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
+                {msg.text}
+                <span className={`text-[9px] block text-right mt-1 ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
+              </div>
+            ))}
           </div>
 
+          {/* Bottom Input Field */}
           {/* Bottom Input Field */}
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
             <button className="text-xl text-gray-400 hover:text-white">😊</button>
             <button className="text-xl text-gray-400 hover:text-white">📎</button>
-            <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm" />
-            <button className="bg-[#00a884] p-2 rounded-full hover:scale-105 transition-transform text-[#111b21]">➤</button>
+            <input
+              type="text"
+              placeholder="Type a message"
+              className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white"
+              value={newMessage} // LINK TO STATE
+              onChange={(e) => setNewMessage(e.target.value)} // UPDATE STATE
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()} // SEND ON ENTER
+            />
+            <button
+              onClick={handleSendMessage} // SEND ON CLICK
+              className="bg-[#00a884] p-2 rounded-full hover:scale-105 transition-transform text-[#111b21]"
+            >
+              ➤
+            </button>
           </div>
         </div>
       </div>
