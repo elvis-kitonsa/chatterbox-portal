@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
@@ -15,6 +15,18 @@ function App() {
     { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
   ]);
   const [newMessage, setNewMessage] = useState("");
+
+  const messagesEndRef = useRef(null);
+
+  // Function to scroll to the bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Watch for changes in the 'messages' array
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // This function handles sending a new message in the chat.
   // It checks if the input is not empty, creates a new message object, updates the messages state, and clears the input field.
@@ -117,23 +129,28 @@ function App() {
             </div>
           </div>
 
-          {/* Messages Container (Simulated) */}
           {/* Messages Container */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
             {messages.map((msg) => (
               <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
                 {msg.text}
-                <span className={`text-[9px] block text-right mt-1 ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
-                {/* Render ticks only for messages sent by 'me' */}
-                {msg.sender === "me" && (
-                  <span className="text-[12px] leading-none flex">
-                    {msg.status === "sent" && <span className="text-gray-400">✓</span>}
-                    {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
-                    {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
-                  </span>
-                )}
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  {" "}
+                  {/* Wrapped time/ticks for better alignment */}
+                  <span className={`text-[9px] block text-right ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
+                  {msg.sender === "me" && (
+                    <span className="text-[12px] leading-none flex">
+                      {msg.status === "sent" && <span className="text-gray-400">✓</span>}
+                      {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
+                      {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
+
+            {/* THIS IS THE CHANGE: The anchor for Auto-Scroll */}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Bottom Input Field */}
