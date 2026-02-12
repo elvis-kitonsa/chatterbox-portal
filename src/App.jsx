@@ -33,6 +33,9 @@ function App() {
 
   const messagesEndRef = useRef(null);
 
+  // State to hold the search term for filtering contacts in the sidebar.
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -147,23 +150,32 @@ function App() {
           <div className="p-3">
             <div className="bg-[#202c33] flex items-center px-4 py-1.5 rounded-lg">
               <span className="text-gray-500 mr-3">🔍</span>
-              <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" />
+              <input
+                type="text"
+                placeholder="Search or start new chat"
+                className="bg-transparent text-sm w-full outline-none"
+                value={searchTerm} // Add this
+                onChange={(e) => setSearchTerm(e.target.value)} // Add this
+              />
             </div>
           </div>
 
           {/* Conversation List */}
+          {/* This section renders the list of contacts in the sidebar. It filters the contacts based on the search term and maps over them to create a clickable div for each contact. When a contact is clicked, it sets that contact as the active chat. The active contact is highlighted with a different background color. */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {contacts.map((contact) => (
-              <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
-                <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-sm">{contact.name}</h3>
+            {contacts
+              .filter((contact) => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((contact) => (
+                <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
+                  <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold text-sm">{contact.name}</h3>
+                    </div>
+                    <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
                   </div>
-                  <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
@@ -209,7 +221,6 @@ function App() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Bottom Input Field */}
           {/* Bottom Input Field */}
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
             <button className="text-xl text-gray-400 hover:text-white">😊</button>
