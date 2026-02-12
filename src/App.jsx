@@ -161,11 +161,26 @@ function App() {
           </div>
 
           {/* Conversation List */}
-          {/* This section renders the list of contacts in the sidebar. It filters the contacts based on the search term and maps over them to create a clickable div for each contact. When a contact is clicked, it sets that contact as the active chat. The active contact is highlighted with a different background color. */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {contacts
-              .filter((contact) => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((contact) => (
+            {(() => {
+              // 1. Create the filtered list first
+              const filteredContacts = contacts.filter((contact) => contact.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+              // 2. If no contacts match, show the "No results" UI
+              if (filteredContacts.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center h-40 text-center p-6">
+                    <span className="text-4xl mb-3">🕵️‍♂️</span>
+                    <p className="text-gray-400 text-sm">
+                      No contacts found matching <br />
+                      <span className="text-white font-medium">"{searchTerm}"</span>
+                    </p>
+                  </div>
+                );
+              }
+
+              // 3. Otherwise, map through the filtered results as usual
+              return filteredContacts.map((contact) => (
                 <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
                   <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
                   <div className="flex-1 overflow-hidden">
@@ -175,7 +190,8 @@ function App() {
                     <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
                   </div>
                 </div>
-              ))}
+              ));
+            })()}
           </div>
         </div>
 
