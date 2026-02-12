@@ -24,6 +24,10 @@ function App() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
 
+  // State to make the top search bar filter messages and contacts in real-time as the user types.
+  // This will be used to implement the search functionality in the sidebar.
+  const [searchTerm, setSearchTerm] = useState("");
+
   //Live Chat Functionality States:
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
@@ -107,6 +111,31 @@ function App() {
     }
   }, [messages, activeContactId]);
 
+  // This function handles file uploads in the chat.
+  // It creates a new message with the file information and updates the messages state.
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // For now, we create a local URL to preview the image
+    const fileUrl = URL.createObjectURL(file);
+
+    const msg = {
+      id: Date.now(),
+      text: file.name,
+      fileUrl: fileUrl,
+      type: file.type.startsWith("image/") ? "image" : "file",
+      sender: "me",
+      contactId: activeContactId,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: "sent",
+    };
+
+    setMessages([...messages, msg]);
+  };
+
   // This was the missing function causing the white screen!
   const handleRequestOtp = () => {
     if (phone.length > 10) {
@@ -147,7 +176,7 @@ function App() {
           <div className="p-3">
             <div className="bg-[#202c33] flex items-center px-4 py-1.5 rounded-lg">
               <span className="text-gray-500 mr-3">🔍</span>
-              <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" />
+              <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
 
@@ -186,13 +215,28 @@ function App() {
           {/* Messages Container */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
             {messages
-              .filter((msg) => msg.contactId === activeContactId || !msg.contactId) // Show only active chat messages
+              .filter((msg) => {
+                const isCurrentChat = msg.contactId === activeContactId || !msg.contactId;
+                const matchesSearch = msg.text.toLowerCase().includes(searchTerm.toLowerCase());
+                return isCurrentChat && matchesSearch;
+              })
               .map((msg) => (
                 <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
-                  {msg.text}
+                  {/* --- INSERTED MEDIA LOGIC START --- */}
+                  {msg.fileUrl && msg.type === "image" && <img src={msg.fileUrl} alt="attachment" className="rounded-lg mb-2 max-h-60 w-full object-cover" />}
+
+                  {msg.fileUrl && msg.type === "file" && (
+                    <div className="bg-[#111b21] p-3 rounded flex items-center gap-3 mb-2">
+                      <span>📄</span>
+                      <span className="truncate text-xs">{msg.text}</span>
+                    </div>
+                  )}
+
+                  {/* Only show text if it's not a pure image/file or if it's a regular text message */}
+                  {!msg.fileUrl && <div>{msg.text}</div>}
+                  {/* --- INSERTED MEDIA LOGIC END --- */}
+
                   <div className="flex items-center justify-end gap-1 mt-1">
-                    {" "}
-                    {/* Wrapped time/ticks for better alignment */}
                     <span className={`text-[9px] block text-right ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
                     {msg.sender === "me" && (
                       <span className="text-[12px] leading-none flex">
@@ -204,24 +248,19 @@ function App() {
                   </div>
                 </div>
               ))}
-
-            {/* THIS IS THE CHANGE: The anchor for Auto-Scroll */}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Bottom Input Field */}
-          {/* Bottom Input Field */}
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
             <button className="text-xl text-gray-400 hover:text-white">😊</button>
-            <button className="text-xl text-gray-400 hover:text-white">📎</button>
-            <input
-              type="text"
-              placeholder="Type a message"
-              className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white"
-              value={newMessage} // LINK TO STATE
-              onChange={(e) => setNewMessage(e.target.value)} // UPDATE STATE
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()} // SEND ON ENTER
-            />
+            <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
+              📎
+            </button>
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
+            {/* THE MISSING TEXT INPUT - ADD THIS BACK */}
+            <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleSendMessage()} />
+
             <button
               onClick={handleSendMessage} // SEND ON CLICK
               className="bg-[#00a884] p-2 rounded-full hover:scale-105 transition-transform text-[#111b21]"
