@@ -253,10 +253,11 @@ function App() {
             );
           })()}
 
-          {/* Messages Container */}
+          {/* Messages Container for */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
             {messages
               .filter((msg) => {
+                // Filter messages to show only those that belong to the active chat and match the search term
                 const isCurrentChat = msg.contactId === activeContactId || !msg.contactId;
                 const matchesSearch = (msg.text || "").toLowerCase().includes(searchTerm.toLowerCase());
                 return isCurrentChat && matchesSearch;
@@ -266,6 +267,7 @@ function App() {
                   {/* --- INSERTED MEDIA LOGIC START --- */}
                   {msg.fileUrl && msg.type === "image" && <img src={msg.fileUrl} alt="attachment" className="rounded-lg mb-2 max-h-60 w-full object-cover" />}
 
+                  {/* voice and audio message UI */}
                   {msg.type === "voice" && (
                     <div className="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg mb-2 min-w-[200px]">
                       <button className="text-xl text-[#00a884]">▶️</button>
