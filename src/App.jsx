@@ -222,18 +222,21 @@ function App() {
           </div>
 
           {/* Conversation List */}
+          {/* This section renders the list of contacts in the sidebar. It filters the contacts based on the search term and maps over them to create a clickable div for each contact. When a contact is clicked, it sets that contact as the active chat. The active contact is highlighted with a different background color. */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {contacts.map((contact) => (
-              <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
-                <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-sm">{contact.name}</h3>
+            {contacts
+              .filter((contact) => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((contact) => (
+                <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
+                  <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-semibold text-sm">{contact.name}</h3>
+                    </div>
+                    <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
                   </div>
-                  <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
