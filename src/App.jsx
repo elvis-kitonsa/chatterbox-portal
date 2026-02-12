@@ -3,15 +3,20 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function App() {
-  // 1. Your list of contacts
+  // Your list of contacts
+  // State to hold the list of contacts, each with an id, name, status, and color for the avatar.
+  // This will be used to render the contact list in the sidebar.
   const [contacts, setContacts] = useState([
     { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500" },
     { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500" },
     { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500" },
   ]);
 
-  // 2. Track which contact is currently selected
+  // Track which contact is currently selected
   const [activeContactId, setActiveContactId] = useState("tech-lead");
+
+  // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
+  const [isTyping, setIsTyping] = useState(false);
 
   // States to track if the user is unlocked, to store the phone number, and to manage OTP input
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -58,6 +63,8 @@ function App() {
   };
 
   // This simulates the other person reading your message after 3 seconds
+  // and updates messages status to "Read" after a delay with blue ticks.
+  // It checks the last message sent by "me" and if it's still "sent", it updates it to "read" after 3 seconds.
   React.useEffect(() => {
     const lastMessage = messages[messages.length - 1];
 
@@ -69,6 +76,36 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [messages]);
+
+  // This sets a typing indicator and simulates a reply from the other person after you send a message.
+  // It checks if the last message was sent by "me" and then sets a timer to show "typing..." and another
+  // timer to add a reply message after a delay.
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+
+    if (lastMessage?.sender === "me") {
+      const typingTimer = setTimeout(() => {
+        setIsTyping(true);
+      }, 1000);
+
+      const replyTimer = setTimeout(() => {
+        const reply = {
+          id: Date.now(),
+          text: "Got it! I'm looking into the ChatterBox code now. 👍",
+          sender: "them",
+          contactId: activeContactId,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, reply]);
+        setIsTyping(false);
+      }, 4000);
+
+      return () => {
+        clearTimeout(typingTimer);
+        clearTimeout(replyTimer);
+      };
+    }
+  }, [messages, activeContactId]);
 
   // This was the missing function causing the white screen!
   const handleRequestOtp = () => {
@@ -133,7 +170,6 @@ function App() {
         {/* 2. Main Window: Active Messaging Area */}
         <div className="flex-1 flex flex-col bg-[#0b141a] relative">
           {/* Chat Header */}
-          {/* Chat Header */}
           {(() => {
             const activeContact = contacts.find((c) => c.id === activeContactId);
             return (
@@ -141,7 +177,7 @@ function App() {
                 <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
                 <div>
                   <h2 className="font-medium text-sm">{activeContact?.name}</h2>
-                  <p className="text-[10px] text-[#00a884]">{activeContact?.status}</p>
+                  <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
                 </div>
               </div>
             );
