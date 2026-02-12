@@ -37,6 +37,13 @@ function App() {
 
   const messagesEndRef = useRef(null);
 
+  // Add this near your other useState hooks
+  // This will track if the user is currently recording a voice message and how long they've been
+  // recording.
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const timerRef = useRef(null);
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -136,6 +143,40 @@ function App() {
     setMessages([...messages, msg]);
   };
 
+  // --- NEW VOICE NOTE FUNCTIONS START ---
+  const startRecording = () => {
+    setIsRecording(true);
+    setRecordingTime(0);
+    timerRef.current = setInterval(() => {
+      setRecordingTime((prev) => prev + 1);
+    }, 1000);
+  };
+
+  const stopAndSendVoiceNote = () => {
+    clearInterval(timerRef.current);
+    setIsRecording(false);
+
+    const voiceMsg = {
+      id: Date.now(),
+      type: "voice",
+      duration: recordingTime,
+      sender: "me",
+      contactId: activeContactId,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: "sent",
+    };
+
+    setMessages([...messages, voiceMsg]);
+    setRecordingTime(0);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+  // --- NEW VOICE NOTE FUNCTIONS END ---
+
   // This was the missing function causing the white screen!
   const handleRequestOtp = () => {
     if (phone.length > 10) {
@@ -217,7 +258,7 @@ function App() {
             {messages
               .filter((msg) => {
                 const isCurrentChat = msg.contactId === activeContactId || !msg.contactId;
-                const matchesSearch = msg.text.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearch = (msg.text || "").toLowerCase().includes(searchTerm.toLowerCase());
                 return isCurrentChat && matchesSearch;
               })
               .map((msg) => (
@@ -225,15 +266,17 @@ function App() {
                   {/* --- INSERTED MEDIA LOGIC START --- */}
                   {msg.fileUrl && msg.type === "image" && <img src={msg.fileUrl} alt="attachment" className="rounded-lg mb-2 max-h-60 w-full object-cover" />}
 
-                  {msg.fileUrl && msg.type === "file" && (
-                    <div className="bg-[#111b21] p-3 rounded flex items-center gap-3 mb-2">
-                      <span>📄</span>
-                      <span className="truncate text-xs">{msg.text}</span>
+                  {msg.type === "voice" && (
+                    <div className="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg mb-2 min-w-[200px]">
+                      <button className="text-xl text-[#00a884]">▶️</button>
+                      <div className="flex-1 h-1 bg-gray-600 rounded-full relative">
+                        <div className="absolute left-0 top-0 h-full bg-[#00a884] w-1/3 rounded-full"></div>
+                      </div>
+                      <span className="text-[10px] text-gray-400">{formatTime(msg.duration)}</span>
                     </div>
                   )}
 
-                  {/* Only show text if it's not a pure image/file or if it's a regular text message */}
-                  {!msg.fileUrl && <div>{msg.text}</div>}
+                  {!msg.fileUrl && msg.type !== "voice" && <div>{msg.text}</div>}
                   {/* --- INSERTED MEDIA LOGIC END --- */}
 
                   <div className="flex items-center justify-end gap-1 mt-1">
@@ -253,20 +296,42 @@ function App() {
 
           {/* Bottom Input Field */}
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
-            <button className="text-xl text-gray-400 hover:text-white">😊</button>
-            <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
-              📎
-            </button>
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
-            {/* THE MISSING TEXT INPUT - ADD THIS BACK */}
-            <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={(e) => e.key === "Enter" && handleSendMessage()} />
+            {isRecording ? (
+              // RECORDING UI
+              <div className="flex flex-1 items-center justify-between bg-[#2a3942] px-4 py-2 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                  <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
+                </div>
+                <button onClick={stopAndSendVoiceNote} className="text-[#00a884] font-bold text-sm hover:underline">
+                  DONE
+                </button>
+              </div>
+            ) : (
+              // NORMAL INPUT UI
+              <>
+                <button className="text-xl text-gray-400 hover:text-white">😊</button>
+                <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
+                  📎
+                </button>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
 
-            <button
-              onClick={handleSendMessage} // SEND ON CLICK
-              className="bg-[#00a884] p-2 rounded-full hover:scale-105 transition-transform text-[#111b21]"
-            >
-              ➤
-            </button>
+                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
+              </>
+            )}
+
+            {/* TOGGLE MICROPHONE / SEND */}
+            {newMessage.trim() === "" && !isRecording ? (
+              <button onClick={startRecording} className="text-xl text-gray-400 hover:text-[#00a884]">
+                🎤
+              </button>
+            ) : (
+              !isRecording && (
+                <button onClick={handleSendMessage} className="bg-[#00a884] p-2 rounded-full text-[#111b21]">
+                  ➤
+                </button>
+              )
+            )}
           </div>
         </div>
       </div>
