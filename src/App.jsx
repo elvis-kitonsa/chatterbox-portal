@@ -3,6 +3,16 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function App() {
+  // 1. Your list of contacts
+  const [contacts, setContacts] = useState([
+    { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500" },
+    { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500" },
+    { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500" },
+  ]);
+
+  // 2. Track which contact is currently selected
+  const [activeContactId, setActiveContactId] = useState("tech-lead");
+
   // States to track if the user is unlocked, to store the phone number, and to manage OTP input
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -37,6 +47,7 @@ function App() {
       id: Date.now(),
       text: newMessage,
       sender: "me",
+      contactId: activeContactId, // TAG THE MESSAGE TO THE ACTIVE CHAT
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "sent", // New property: 'sent', 'delivered', or 'read'
     };
@@ -105,49 +116,58 @@ function App() {
 
           {/* Conversation List */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-4 flex gap-3 hover:bg-[#2a3942] cursor-pointer transition-colors border-b border-gray-800/50">
-              <div className="w-12 h-12 bg-blue-500 rounded-full flex-shrink-0"></div>
-              <div className="flex-1 overflow-hidden">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold text-sm">Tech Lead</h3>
-                  <span className="text-[10px] text-gray-500">1:05 PM</span>
+            {contacts.map((contact) => (
+              <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
+                <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
+                <div className="flex-1 overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-sm">{contact.name}</h3>
+                  </div>
+                  <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
                 </div>
-                <p className="text-xs text-gray-400 truncate mt-1">Is the login portal finished?</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
         {/* 2. Main Window: Active Messaging Area */}
         <div className="flex-1 flex flex-col bg-[#0b141a] relative">
           {/* Chat Header */}
-          <div className="p-3 bg-[#202c33] flex items-center gap-4 shadow-md">
-            <div className="w-10 h-10 bg-blue-500 rounded-full"></div>
-            <div>
-              <h2 className="font-medium text-sm">Tech Lead</h2>
-              <p className="text-[10px] text-[#00a884]">online</p>
-            </div>
-          </div>
+          {/* Chat Header */}
+          {(() => {
+            const activeContact = contacts.find((c) => c.id === activeContactId);
+            return (
+              <div className="p-3 bg-[#202c33] flex items-center gap-4 shadow-md">
+                <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
+                <div>
+                  <h2 className="font-medium text-sm">{activeContact?.name}</h2>
+                  <p className="text-[10px] text-[#00a884]">{activeContact?.status}</p>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Messages Container */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
-            {messages.map((msg) => (
-              <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
-                {msg.text}
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  {" "}
-                  {/* Wrapped time/ticks for better alignment */}
-                  <span className={`text-[9px] block text-right ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
-                  {msg.sender === "me" && (
-                    <span className="text-[12px] leading-none flex">
-                      {msg.status === "sent" && <span className="text-gray-400">✓</span>}
-                      {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
-                      {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
-                    </span>
-                  )}
+            {messages
+              .filter((msg) => msg.contactId === activeContactId || !msg.contactId) // Show only active chat messages
+              .map((msg) => (
+                <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
+                  {msg.text}
+                  <div className="flex items-center justify-end gap-1 mt-1">
+                    {" "}
+                    {/* Wrapped time/ticks for better alignment */}
+                    <span className={`text-[9px] block text-right ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
+                    {msg.sender === "me" && (
+                      <span className="text-[12px] leading-none flex">
+                        {msg.status === "sent" && <span className="text-gray-400">✓</span>}
+                        {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
+                        {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
             {/* THIS IS THE CHANGE: The anchor for Auto-Scroll */}
             <div ref={messagesEndRef} />
