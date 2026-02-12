@@ -94,29 +94,47 @@ function App() {
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
 
-    if (lastMessage?.sender === "me") {
-      const typingTimer = setTimeout(() => {
-        setIsTyping(true);
-      }, 1000);
+    // RULE 1: Only reply if the last message was from ME
+    // RULE 2: Don't reply if the bot is already "typing"
+    if (lastMessage?.sender === "me" && !isTyping) {
+      setIsTyping(true);
 
       const replyTimer = setTimeout(() => {
+        const userText = (lastMessage.text || "").toLowerCase();
+        let botResponse = "";
+
+        // AI-style keyword routing
+        if (userText.includes("hello") || userText.includes("hi")) {
+          botResponse = "Hey! Ready to dive back into the ChatterBox code?";
+        } else if (userText.includes("ai") || userText.includes("bot")) {
+          botResponse = "I'm a simulated AI integrated into this portal to help with testing.";
+        } else if (userText.includes("great") || userText.includes("good")) {
+          botResponse = "Glad to hear it. Stability is looking much better now.";
+        } else if (userText.includes("how are you")) {
+          botResponse = "Operating at 100% efficiency. Ready for your next merge!";
+        } else if (lastMessage.type === "image") {
+          botResponse = "Analyzing that attachment... looks like a clean UI layout.";
+        } else {
+          // Random fallback "Thinking" responses to avoid repetitive spam
+          const fallbacks = ["I see. Let's keep monitoring that progress.", "Acknowledged. Anything else you want to test in this branch?", "Interesting point. How does that affect the overall project scope?"];
+          botResponse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
+
         const reply = {
           id: Date.now(),
-          text: "Got it! I'm looking into the ChatterBox code now. 👍",
+          text: botResponse,
           sender: "them",
           contactId: activeContactId,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
+
         setMessages((prev) => [...prev, reply]);
         setIsTyping(false);
-      }, 4000);
+      }, 2500); // 2.5s delay for "thinking" time
 
-      return () => {
-        clearTimeout(typingTimer);
-        clearTimeout(replyTimer);
-      };
+      return () => clearTimeout(replyTimer);
     }
-  }, [messages, activeContactId]);
+  }, [messages.length, activeContactId]);
 
   // This function handles file uploads in the chat.
   // It creates a new message with the file information and updates the messages state.
