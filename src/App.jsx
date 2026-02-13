@@ -34,8 +34,24 @@ function App() {
     { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
   ]);
   const [newMessage, setNewMessage] = useState("");
-
   const messagesEndRef = useRef(null);
+
+  // State to manage the current wallpaper selection for the chat background. This allows users to switch between different wallpapers, enhancing personalization.
+  const [wallpaper, setWallpaper] = useState("classic");
+
+  // Add this with your other useState hooks
+  const [theme, setTheme] = useState("dark"); // Default to dark
+
+  // Helper to get theme-based classes
+  const themeClasses = {
+    bg: theme === "dark" ? "bg-[#111b21]" : "bg-[#f0f2f5]",
+    sidebarBg: theme === "dark" ? "bg-[#111b21]" : "bg-white",
+    headerBg: theme === "dark" ? "bg-[#202c33]" : "bg-[#f0f2f5]",
+    chatBg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#efeae2]",
+    text: theme === "dark" ? "text-[#e9edef]" : "text-[#111b21]",
+    secondaryText: theme === "dark" ? "text-gray-400" : "text-gray-600",
+    inputBg: theme === "dark" ? "bg-[#2a3942]" : "bg-white",
+  };
 
   // Add this near your other useState hooks
   // This will track if the user is currently recording a voice message and how long they've been
@@ -402,11 +418,11 @@ function App() {
   // 1. Dashboard Screen (Dark Mode)
   if (isUnlocked) {
     return (
-      <div className="flex h-screen bg-[#111b21] text-[#e9edef] overflow-hidden">
+      <div className={`flex h-screen ${themeClasses.bg} ${themeClasses.text} overflow-hidden transition-colors duration-300`}>
         {/* 1. Left Sidebar: Contacts & Chats */}
-        <div className="w-[30%] border-r border-gray-700 flex flex-col bg-[#111b21]">
+        <div className={`w-[30%] border-r ${theme === "dark" ? "border-gray-700" : "border-gray-300"} flex flex-col ${themeClasses.sidebarBg}`}>
           {/* Profile Header */}
-          <div className="p-4 bg-[#202c33] flex justify-between items-center">
+          <div className={`p-4 ${themeClasses.headerBg} flex justify-between items-center`}>
             <div className="w-10 h-10 bg-[#00a884] rounded-full flex items-center justify-center font-bold text-[#111b21]">ME</div>
             <div className="flex gap-5 text-gray-400">
               <button className="hover:text-white">👥</button>
@@ -419,7 +435,7 @@ function App() {
 
           {/* Search Bar */}
           <div className="p-3">
-            <div className="bg-[#202c33] flex items-center px-4 py-1.5 rounded-lg">
+            <div className={`${themeClasses.inputBg} flex items-center px-4 py-1.5 rounded-lg`}>
               <span className="text-gray-500 mr-3">🔍</span>
               <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
@@ -461,7 +477,7 @@ function App() {
         </div>
 
         {/* 2. Main Window: Active Messaging Area */}
-        <div className="flex-1 flex flex-col bg-[#0b141a] relative">
+        <div className={`flex-1 flex flex-col ${themeClasses.chatBg} relative`}>
           {/* Chat Header */}
           {(() => {
             const activeContact = contacts.find((c) => c.id === activeContactId);
@@ -476,10 +492,17 @@ function App() {
                 </div>
 
                 {/* NEW: Wallpaper Switcher UI */}
-                <div className="flex items-center gap-3 bg-[#111b21]/50 p-2 rounded-full border border-gray-700">
-                  <button onClick={() => setWallpaper("classic")} className={`w-4 h-4 rounded-full bg-gray-500 border ${wallpaper === "classic" ? "border-white scale-125" : "border-transparent"}`} title="Classic Doodle" />
-                  <button onClick={() => setWallpaper("midnight")} className={`w-4 h-4 rounded-full bg-[#0b141a] border ${wallpaper === "midnight" ? "border-white scale-125" : "border-transparent"}`} title="Midnight Solid" />
-                  <button onClick={() => setWallpaper("nebula")} className={`w-4 h-4 rounded-full bg-indigo-900 border ${wallpaper === "nebula" ? "border-white scale-125" : "border-transparent"}`} title="Nebula Gradient" />
+                {/* Updated Theme/Wallpaper Switcher */}
+                <div className="flex items-center gap-3 bg-[#111b21]/20 p-2 rounded-full border border-gray-700/30">
+                  {/* Theme Toggle (Sun/Moon) */}
+                  <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-lg mr-2 hover:scale-110 transition-transform" title="Switch Theme">
+                    {theme === "dark" ? "☀️" : "🌙"}
+                  </button>
+                  <div className="w-[1px] h-4 bg-gray-600 mr-1" /> {/* Divider */}
+                  {/* Existing Wallpaper Buttons */}
+                  <button onClick={() => setWallpaper("classic")} className={`w-4 h-4 rounded-full bg-gray-500 border ${wallpaper === "classic" ? "border-white scale-125" : "border-transparent"}`} title="Classic" />
+                  <button onClick={() => setWallpaper("midnight")} className={`w-4 h-4 rounded-full bg-[#0b141a] border ${wallpaper === "midnight" ? "border-white scale-125" : "border-transparent"}`} title="Midnight" />
+                  <button onClick={() => setWallpaper("nebula")} className={`w-4 h-4 rounded-full bg-indigo-900 border ${wallpaper === "nebula" ? "border-white scale-125" : "border-transparent"}`} title="Nebula" />
                 </div>
               </div>
             );
