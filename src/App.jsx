@@ -50,6 +50,11 @@ function App() {
   const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
   const audioPlayerRef = useRef(new Audio()); // Global audio player instance
 
+  // This ref will be used to visualize the audio levels while recording a voice note.
+  // In other words, it will allow us to create a dynamic visualizer that reacts to the user's voice input in real-time.
+  const analyzerRef = useRef(null);
+  const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -154,19 +159,46 @@ function App() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
-      audioChunks.current = [];
 
+      // --- WAVEFORM LOGIC START ---
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyzer = audioContext.createAnalyser();
+      analyzer.fftSize = 32; // Small size for a simple waveform
+      source.connect(analyzer);
+      analyzerRef.current = analyzer;
+
+      const bufferLength = analyzer.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const updateVisualizer = () => {
+        if (!analyzerRef.current) return;
+        analyzerRef.current.getByteFrequencyData(dataArray);
+
+        // We take a slice of the data and convert it to a small array for our bars
+        const normalizedData = Array.from(dataArray.slice(0, 10)).map((v) => v / 255);
+        setVisualizerData(normalizedData);
+        requestAnimationFrame(updateVisualizer);
+      };
+      updateVisualizer();
+      // --- WAVEFORM LOGIC END ---
+
+      mediaRecorder.current = new MediaRecorder(stream);
+
+      // ADD THIS: This actually collects the audio data as it's recorded
       mediaRecorder.current.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunks.current.push(e.data);
+        if (e.data.size > 0) {
+          audioChunks.current.push(e.data);
+        }
       };
 
+      // ... (rest of your existing mediaRecorder logic)
       mediaRecorder.current.start();
       setIsRecording(true);
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
     } catch (err) {
-      alert("Microphone access is required to record voice notes.");
+      alert("Microphone access denied!");
     }
   };
 
@@ -359,6 +391,14 @@ function App() {
                   <button onClick={cancelRecording} className="text-gray-400 hover:text-red-500 transition-colors">
                     🗑️
                   </button>
+
+                  {/* THE DANCING WAVEFORM */}
+                  <div className="flex items-end gap-[3px] h-5">
+                    {visualizerData.map((val, i) => (
+                      <div key={i} className="w-[3px] bg-[#00a884] rounded-full transition-all duration-75" style={{ height: `${Math.max(20, val * 100)}%` }}></div>
+                    ))}
+                  </div>
+
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                   <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
                 </div>
