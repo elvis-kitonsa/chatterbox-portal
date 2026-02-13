@@ -44,6 +44,12 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef(null);
 
+  // Refs to handle media recording and audio playback
+  const mediaRecorder = useRef(null);
+  const audioChunks = useRef([]);
+  const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
+  const audioPlayerRef = useRef(new Audio()); // Global audio player instance
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -144,30 +150,76 @@ function App() {
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    timerRef.current = setInterval(() => {
-      setRecordingTime((prev) => prev + 1);
-    }, 1000);
+  // Actual Recording Logic
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder.current = new MediaRecorder(stream);
+      audioChunks.current = [];
+
+      mediaRecorder.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.current.push(e.data);
+      };
+
+      mediaRecorder.current.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
+    } catch (err) {
+      alert("Microphone access is required to record voice notes.");
+    }
   };
 
   const stopAndSendVoiceNote = () => {
-    clearInterval(timerRef.current);
-    setIsRecording(false);
+    if (!mediaRecorder.current) return;
 
-    const voiceMsg = {
-      id: Date.now(),
-      type: "voice",
-      duration: recordingTime,
-      sender: "me",
-      contactId: activeContactId,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      status: "sent",
+    mediaRecorder.current.onstop = () => {
+      const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const voiceMsg = {
+        id: Date.now(),
+        type: "voice",
+        fileUrl: audioUrl, // THE ACTUAL SOUND DATA
+        duration: recordingTime,
+        sender: "me",
+        contactId: activeContactId,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        status: "sent",
+      };
+
+      setMessages((prev) => [...prev, voiceMsg]);
+      audioChunks.current = [];
     };
 
-    setMessages([...messages, voiceMsg]);
+    mediaRecorder.current.stop();
+    clearInterval(timerRef.current);
+    setIsRecording(false);
     setRecordingTime(0);
+  };
+
+  // NEW: Cancellation Feature
+  const cancelRecording = () => {
+    if (mediaRecorder.current && isRecording) {
+      mediaRecorder.current.stop(); // Stop recording
+      audioChunks.current = []; // Wipe the data
+    }
+    clearInterval(timerRef.current);
+    setIsRecording(false);
+    setRecordingTime(0);
+  };
+
+  // Playback Logic
+  const togglePlayVoiceNote = (id, url) => {
+    if (playingAudioId === id) {
+      audioPlayerRef.current.pause();
+      setPlayingAudioId(null);
+    } else {
+      audioPlayerRef.current.src = url;
+      audioPlayerRef.current.play();
+      setPlayingAudioId(id);
+      audioPlayerRef.current.onended = () => setPlayingAudioId(null);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -253,7 +305,7 @@ function App() {
             );
           })()}
 
-          {/* Messages Container for */}
+          {/* Messages Container */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
             {messages
               .filter((msg) => {
@@ -270,9 +322,11 @@ function App() {
                   {/* voice and audio message UI */}
                   {msg.type === "voice" && (
                     <div className="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg mb-2 min-w-[200px]">
-                      <button className="text-xl text-[#00a884]">▶️</button>
+                      <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="text-xl text-[#00a884] hover:scale-110 transition-transform">
+                        {playingAudioId === msg.id ? "⏸️" : "▶️"}
+                      </button>
                       <div className="flex-1 h-1 bg-gray-600 rounded-full relative">
-                        <div className="absolute left-0 top-0 h-full bg-[#00a884] w-1/3 rounded-full"></div>
+                        <div className={`absolute left-0 top-0 h-full bg-[#00a884] rounded-full transition-all duration-300 ${playingAudioId === msg.id ? "w-full" : "w-0"}`}></div>
                       </div>
                       <span className="text-[10px] text-gray-400">{formatTime(msg.duration)}</span>
                     </div>
@@ -299,9 +353,12 @@ function App() {
           {/* Bottom Input Field */}
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
             {isRecording ? (
-              // RECORDING UI
               <div className="flex flex-1 items-center justify-between bg-[#2a3942] px-4 py-2 rounded-xl">
                 <div className="flex items-center gap-3">
+                  {/* TRASH ICON: The Cancellation feature */}
+                  <button onClick={cancelRecording} className="text-gray-400 hover:text-red-500 transition-colors">
+                    🗑️
+                  </button>
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                   <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
                 </div>
