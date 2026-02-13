@@ -183,9 +183,6 @@ function App() {
     "😻",
   ];
 
-  // State to manage the current wallpaper selection for the chat background.
-  const [wallpaper, setWallpaper] = useState("classic");
-
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -509,14 +506,7 @@ function App() {
           })()}
 
           {/* Messages Container */}
-          <div
-            className={`flex-1 p-8 overflow-y-auto flex flex-col gap-3 transition-all duration-500 ${wallpaper === "nebula" ? "bg-gradient-to-b from-[#1a1c2c] to-[#4a1942]" : "bg-[#0b141a]"}`}
-            style={{
-              backgroundImage: wallpaper === "classic" ? "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')" : "none",
-              backgroundBlendMode: "overlay",
-              backgroundOpacity: 0.05,
-            }}
-          >
+          <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
             {messages
               .filter((msg) => {
                 // Filter messages to show only those that belong to the active chat and match the search term
