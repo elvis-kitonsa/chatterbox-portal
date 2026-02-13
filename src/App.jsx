@@ -463,11 +463,20 @@ function App() {
           {(() => {
             const activeContact = contacts.find((c) => c.id === activeContactId);
             return (
-              <div className="p-3 bg-[#202c33] flex items-center gap-4 shadow-md">
-                <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
-                <div>
-                  <h2 className="font-medium text-sm">{activeContact?.name}</h2>
-                  <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
+              <div className="p-3 bg-[#202c33] flex items-center justify-between shadow-md">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
+                  <div>
+                    <h2 className="font-medium text-sm">{activeContact?.name}</h2>
+                    <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
+                  </div>
+                </div>
+
+                {/* NEW: Wallpaper Switcher UI */}
+                <div className="flex items-center gap-3 bg-[#111b21]/50 p-2 rounded-full border border-gray-700">
+                  <button onClick={() => setWallpaper("classic")} className={`w-4 h-4 rounded-full bg-gray-500 border ${wallpaper === "classic" ? "border-white scale-125" : "border-transparent"}`} title="Classic Doodle" />
+                  <button onClick={() => setWallpaper("midnight")} className={`w-4 h-4 rounded-full bg-[#0b141a] border ${wallpaper === "midnight" ? "border-white scale-125" : "border-transparent"}`} title="Midnight Solid" />
+                  <button onClick={() => setWallpaper("nebula")} className={`w-4 h-4 rounded-full bg-indigo-900 border ${wallpaper === "nebula" ? "border-white scale-125" : "border-transparent"}`} title="Nebula Gradient" />
                 </div>
               </div>
             );
