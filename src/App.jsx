@@ -55,6 +55,118 @@ function App() {
   const analyzerRef = useRef(null);
   const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // A small sample of emojis. You can expand this list or group them by category!
+  // State to manage the visibility of the emoji picker and a list of emojis to display in the picker.
+  // This will allow users to insert emojis into their messages.
+  const emojiList = [
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "🙃",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😛",
+    "😝",
+    "😜",
+    "🤪",
+    "🤨",
+    "🧐",
+    "🤓",
+    "😎",
+    "🤩",
+    "🥳",
+    "😏",
+    "😒",
+    "😞",
+    "😔",
+    "😟",
+    "😕",
+    "🙁",
+    "☹️",
+    "😣",
+    "😖",
+    "😫",
+    "😩",
+    "🥺",
+    "😢",
+    "😭",
+    "😤",
+    "😠",
+    "😡",
+    "🤬",
+    "🤯",
+    "😳",
+    "🥵",
+    "🥶",
+    "😱",
+    "😨",
+    "😰",
+    "😥",
+    "😓",
+    "🤔",
+    "🤭",
+    "🤫",
+    "🤥",
+    "😶",
+    "😐",
+    "😑",
+    "😬",
+    "🙄",
+    "😯",
+    "😦",
+    "😧",
+    "😮",
+    "😲",
+    "🥱",
+    "😴",
+    "🤤",
+    "😪",
+    "😵",
+    "🤐",
+    "🥴",
+    "🤢",
+    "🤮",
+    "🤧",
+    "😷",
+    "🤒",
+    "🤕",
+    "🤑",
+    "🤠",
+    "😈",
+    "👿",
+    "👹",
+    "👺",
+    "🤡",
+    "💩",
+    "👻",
+    "💀",
+    "☠️",
+    "👽",
+    "👾",
+    "🤖",
+    "🎃",
+    "😺",
+    "😸",
+    "😻",
+  ];
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -279,6 +391,11 @@ function App() {
     }
   };
 
+  // This function allows users to add emojis to their message input.
+  const addEmoji = (emoji) => {
+    setNewMessage((prev) => prev + emoji);
+    // Optional: Auto-close after picking? Usually, WhatsApp stays open.
+  };
   // 1. Dashboard Screen (Dark Mode)
   if (isUnlocked) {
     return (
@@ -383,6 +500,20 @@ function App() {
           </div>
 
           {/* Bottom Input Field */}
+
+          {/* EMOJI PICKER POPUP */}
+          {showEmojiPicker && (
+            <div className="absolute bottom-[70px] left-4 w-72 h-64 bg-[#2a3942] rounded-xl shadow-2xl border border-gray-700 overflow-y-auto p-3 custom-scrollbar z-50">
+              <div className="grid grid-cols-6 gap-2">
+                {emojiList.map((emoji, index) => (
+                  <button key={index} onClick={() => addEmoji(emoji)} className="text-2xl hover:bg-[#374151] rounded p-1 transition-colors">
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
             {isRecording ? (
               <div className="flex flex-1 items-center justify-between bg-[#2a3942] px-4 py-2 rounded-xl">
@@ -409,13 +540,18 @@ function App() {
             ) : (
               // NORMAL INPUT UI
               <>
-                <button className="text-xl text-gray-400 hover:text-white">😊</button>
+                {/* 1. Added toggle logic and dynamic coloring to the emoji button */}
+                <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`text-xl transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-white"}`}>
+                  😊
+                </button>
+
                 <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
                   📎
                 </button>
                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
 
-                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
+                {/* 2. Added onFocus to auto-close the picker when the user starts typing */}
+                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onFocus={() => setShowEmojiPicker(false)} onChange={(e) => setNewMessage(e.target.value)} />
               </>
             )}
 
