@@ -44,8 +44,6 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef(null);
 
-<<<<<<< Updated upstream
-=======
   // Refs to handle media recording and audio playback
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
@@ -170,10 +168,8 @@ function App() {
   ];
 
   // State to manage the current wallpaper selection for the chat background.
-  // This allows users to customize the look of their chat window.
   const [wallpaper, setWallpaper] = useState("classic");
 
->>>>>>> Stashed changes
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -224,47 +220,29 @@ function App() {
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
 
-    // RULE 1: Only reply if the last message was from ME
-    // RULE 2: Don't reply if the bot is already "typing"
-    if (lastMessage?.sender === "me" && !isTyping) {
-      setIsTyping(true);
+    if (lastMessage?.sender === "me") {
+      const typingTimer = setTimeout(() => {
+        setIsTyping(true);
+      }, 1000);
 
       const replyTimer = setTimeout(() => {
-        const userText = (lastMessage.text || "").toLowerCase();
-        let botResponse = "";
-
-        // AI-style keyword routing
-        if (userText.includes("hello") || userText.includes("hi")) {
-          botResponse = "Hey! Ready to dive back into the ChatterBox code?";
-        } else if (userText.includes("ai") || userText.includes("bot")) {
-          botResponse = "I'm a simulated AI integrated into this portal to help with testing.";
-        } else if (userText.includes("great") || userText.includes("good")) {
-          botResponse = "Glad to hear it. Stability is looking much better now.";
-        } else if (userText.includes("how are you")) {
-          botResponse = "Operating at 100% efficiency. Ready for your next merge!";
-        } else if (lastMessage.type === "image") {
-          botResponse = "Analyzing that attachment... looks like a clean UI layout.";
-        } else {
-          // Random fallback "Thinking" responses to avoid repetitive spam
-          const fallbacks = ["I see. Let's keep monitoring that progress.", "Acknowledged. Anything else you want to test in this branch?", "Interesting point. How does that affect the overall project scope?"];
-          botResponse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-        }
-
         const reply = {
           id: Date.now(),
-          text: botResponse,
+          text: "Got it! I'm looking into the ChatterBox code now. 👍",
           sender: "them",
           contactId: activeContactId,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
-
         setMessages((prev) => [...prev, reply]);
         setIsTyping(false);
-      }, 2500); // 2.5s delay for "thinking" time
+      }, 4000);
 
-      return () => clearTimeout(replyTimer);
+      return () => {
+        clearTimeout(typingTimer);
+        clearTimeout(replyTimer);
+      };
     }
-  }, [messages.length, activeContactId]);
+  }, [messages, activeContactId]);
 
   // This function handles file uploads in the chat.
   // It creates a new message with the file information and updates the messages state.
@@ -292,30 +270,103 @@ function App() {
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    timerRef.current = setInterval(() => {
-      setRecordingTime((prev) => prev + 1);
-    }, 1000);
+  // Actual Recording Logic
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // --- WAVEFORM LOGIC START ---
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyzer = audioContext.createAnalyser();
+      analyzer.fftSize = 32; // Small size for a simple waveform
+      source.connect(analyzer);
+      analyzerRef.current = analyzer;
+
+      const bufferLength = analyzer.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      const updateVisualizer = () => {
+        if (!analyzerRef.current) return;
+        analyzerRef.current.getByteFrequencyData(dataArray);
+
+        // We take a slice of the data and convert it to a small array for our bars
+        const normalizedData = Array.from(dataArray.slice(0, 10)).map((v) => v / 255);
+        setVisualizerData(normalizedData);
+        requestAnimationFrame(updateVisualizer);
+      };
+      updateVisualizer();
+      // --- WAVEFORM LOGIC END ---
+
+      mediaRecorder.current = new MediaRecorder(stream);
+
+      // ADD THIS: This actually collects the audio data as it's recorded
+      mediaRecorder.current.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunks.current.push(e.data);
+        }
+      };
+
+      // ... (rest of your existing mediaRecorder logic)
+      mediaRecorder.current.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
+    } catch (err) {
+      alert("Microphone access denied!");
+    }
   };
 
   const stopAndSendVoiceNote = () => {
-    clearInterval(timerRef.current);
-    setIsRecording(false);
+    if (!mediaRecorder.current) return;
 
-    const voiceMsg = {
-      id: Date.now(),
-      type: "voice",
-      duration: recordingTime,
-      sender: "me",
-      contactId: activeContactId,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      status: "sent",
+    mediaRecorder.current.onstop = () => {
+      const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const voiceMsg = {
+        id: Date.now(),
+        type: "voice",
+        fileUrl: audioUrl, // THE ACTUAL SOUND DATA
+        duration: recordingTime,
+        sender: "me",
+        contactId: activeContactId,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        status: "sent",
+      };
+
+      setMessages((prev) => [...prev, voiceMsg]);
+      audioChunks.current = [];
     };
 
-    setMessages([...messages, voiceMsg]);
+    mediaRecorder.current.stop();
+    clearInterval(timerRef.current);
+    setIsRecording(false);
     setRecordingTime(0);
+  };
+
+  // NEW: Cancellation Feature
+  const cancelRecording = () => {
+    if (mediaRecorder.current && isRecording) {
+      mediaRecorder.current.stop(); // Stop recording
+      audioChunks.current = []; // Wipe the data
+    }
+    clearInterval(timerRef.current);
+    setIsRecording(false);
+    setRecordingTime(0);
+  };
+
+  // Playback Logic
+  const togglePlayVoiceNote = (id, url) => {
+    if (playingAudioId === id) {
+      audioPlayerRef.current.pause();
+      setPlayingAudioId(null);
+    } else {
+      audioPlayerRef.current.src = url;
+      audioPlayerRef.current.play();
+      setPlayingAudioId(id);
+      audioPlayerRef.current.onended = () => setPlayingAudioId(null);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -343,6 +394,11 @@ function App() {
     }
   };
 
+  // This function allows users to add emojis to their message input.
+  const addEmoji = (emoji) => {
+    setNewMessage((prev) => prev + emoji);
+    // Optional: Auto-close after picking? Usually, WhatsApp stays open.
+  };
   // 1. Dashboard Screen (Dark Mode)
   if (isUnlocked) {
     return (
@@ -429,10 +485,6 @@ function App() {
             );
           })()}
 
-<<<<<<< Updated upstream
-          {/* Messages Container for */}
-          <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
-=======
           {/* Messages Container */}
           <div
             className={`flex-1 p-8 overflow-y-auto flex flex-col gap-3 transition-all duration-500 ${wallpaper === "nebula" ? "bg-gradient-to-b from-[#1a1c2c] to-[#4a1942]" : "bg-[#0b141a]"}`}
@@ -442,7 +494,6 @@ function App() {
               backgroundOpacity: 0.05,
             }}
           >
->>>>>>> Stashed changes
             {messages
               .filter((msg) => {
                 // Filter messages to show only those that belong to the active chat and match the search term
@@ -458,9 +509,11 @@ function App() {
                   {/* voice and audio message UI */}
                   {msg.type === "voice" && (
                     <div className="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg mb-2 min-w-[200px]">
-                      <button className="text-xl text-[#00a884]">▶️</button>
+                      <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="text-xl text-[#00a884] hover:scale-110 transition-transform">
+                        {playingAudioId === msg.id ? "⏸️" : "▶️"}
+                      </button>
                       <div className="flex-1 h-1 bg-gray-600 rounded-full relative">
-                        <div className="absolute left-0 top-0 h-full bg-[#00a884] w-1/3 rounded-full"></div>
+                        <div className={`absolute left-0 top-0 h-full bg-[#00a884] rounded-full transition-all duration-300 ${playingAudioId === msg.id ? "w-full" : "w-0"}`}></div>
                       </div>
                       <span className="text-[10px] text-gray-400">{formatTime(msg.duration)}</span>
                     </div>
@@ -485,11 +538,36 @@ function App() {
           </div>
 
           {/* Bottom Input Field */}
+
+          {/* EMOJI PICKER POPUP */}
+          {showEmojiPicker && (
+            <div className="absolute bottom-[70px] left-4 w-72 h-64 bg-[#2a3942] rounded-xl shadow-2xl border border-gray-700 overflow-y-auto p-3 custom-scrollbar z-50">
+              <div className="grid grid-cols-6 gap-2">
+                {emojiList.map((emoji, index) => (
+                  <button key={index} onClick={() => addEmoji(emoji)} className="text-2xl hover:bg-[#374151] rounded p-1 transition-colors">
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="p-3 bg-[#202c33] flex items-center gap-4">
             {isRecording ? (
-              // RECORDING UI
               <div className="flex flex-1 items-center justify-between bg-[#2a3942] px-4 py-2 rounded-xl">
                 <div className="flex items-center gap-3">
+                  {/* TRASH ICON: The Cancellation feature */}
+                  <button onClick={cancelRecording} className="text-gray-400 hover:text-red-500 transition-colors">
+                    🗑️
+                  </button>
+
+                  {/* THE DANCING WAVEFORM */}
+                  <div className="flex items-end gap-[3px] h-5">
+                    {visualizerData.map((val, i) => (
+                      <div key={i} className="w-[3px] bg-[#00a884] rounded-full transition-all duration-75" style={{ height: `${Math.max(20, val * 100)}%` }}></div>
+                    ))}
+                  </div>
+
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                   <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
                 </div>
@@ -500,13 +578,18 @@ function App() {
             ) : (
               // NORMAL INPUT UI
               <>
-                <button className="text-xl text-gray-400 hover:text-white">😊</button>
+                {/* 1. Added toggle logic and dynamic coloring to the emoji button */}
+                <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`text-xl transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-white"}`}>
+                  😊
+                </button>
+
                 <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
                   📎
                 </button>
                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
 
-                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
+                {/* 2. Added onFocus to auto-close the picker when the user starts typing */}
+                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onFocus={() => setShowEmojiPicker(false)} onChange={(e) => setNewMessage(e.target.value)} />
               </>
             )}
 
