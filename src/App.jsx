@@ -640,53 +640,54 @@ function App() {
   }
 
   // 3. Login Screen (Dark Mode)
+  // Replace your "3. Login Screen" return block with this:
   return (
-    <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-      <div className="bg-[#202c33] p-10 rounded-2xl shadow-2xl border border-gray-800 max-w-sm w-full">
-        <div className="w-16 h-16 bg-[#00a884]/20 rounded-full flex items-center justify-center mb-6 mx-auto">
-          <span className="text-2xl">🛡️</span>
+    <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
+      <div className="bg-[#202c33] p-10 rounded-[2.5rem] shadow-2xl border border-[#00a884]/20 max-w-sm w-full relative overflow-hidden group">
+        {/* Dynamic Glow Effect */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00a884]/10 rounded-full blur-3xl group-hover:bg-[#00a884]/20 transition-all duration-700"></div>
+
+        {/* New Chat Logo */}
+        <div className="w-20 h-20 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20 transform transition-transform hover:rotate-6">
+          <span className="text-4xl text-[#111b21]">💬</span>
         </div>
-        <h1 className="text-3xl font-bold text-[#00a884] mb-2 text-center">ChatterBox</h1>
-        <p className="text-gray-400 mb-8 text-center text-sm">Secure Phone Login</p>
+
+        <h1 className="text-4xl font-black text-white mb-2 text-center tracking-tight">
+          Chatter<span className="text-[#00a884]">Box</span>
+        </h1>
+        <p className="text-gray-400 mb-10 text-center text-sm font-medium tracking-wide">Engage. Talk. Interact.</p>
 
         <div className="mb-8">
+          <label className="text-[10px] font-bold text-[#00a884] uppercase tracking-[0.2em] ml-1 mb-2 block">Phone Number</label>
           <PhoneInput
             country={"ug"}
             value={phone}
             onChange={(p) => setPhone(p)}
-            enableSearch={true} // Adds a search bar for easier navigation
             containerStyle={{ width: "100%" }}
             inputStyle={{
               backgroundColor: "#2a3942",
               color: "white",
               width: "100%",
-              height: "56px",
-              borderRadius: "12px",
-              border: "1px solid #374151",
+              height: "60px",
+              borderRadius: "18px",
+              border: "2px solid transparent",
+              fontSize: "16px",
             }}
             buttonStyle={{
               backgroundColor: "#2a3942",
-              border: "1px solid #374151",
-              borderRadius: "12px 0 0 12px",
-            }}
-            // FIXES THE DROPDOWN VISIBILITY:
-            dropdownStyle={{
-              backgroundColor: "#2a3942",
-              color: "#ffffff",
-              textAlign: "left",
-              width: "300px",
-            }}
-            searchStyle={{
-              backgroundColor: "#111b21",
-              color: "white",
-              width: "90%",
-              margin: "10px auto",
+              border: "none",
+              borderRadius: "18px 0 0 18px",
+              paddingLeft: "10px",
             }}
           />
         </div>
 
-        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-4 rounded-full transition-all shadow-lg">
-          Get OTP Code
+        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
+          Send Verification Code
+        </button>
+
+        <button className="w-full bg-transparent border-2 border-[#2a3942] hover:border-[#00a884] hover:text-[#00a884] text-gray-400 font-bold py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+          <span className="text-xl group-hover/btn:scale-110 transition-transform duration-300">🔒</span> Login with Fingerprint
         </button>
       </div>
     </div>
