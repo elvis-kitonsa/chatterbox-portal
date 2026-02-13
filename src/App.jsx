@@ -44,6 +44,136 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef(null);
 
+<<<<<<< Updated upstream
+=======
+  // Refs to handle media recording and audio playback
+  const mediaRecorder = useRef(null);
+  const audioChunks = useRef([]);
+  const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
+  const audioPlayerRef = useRef(new Audio()); // Global audio player instance
+
+  // This ref will be used to visualize the audio levels while recording a voice note.
+  // In other words, it will allow us to create a dynamic visualizer that reacts to the user's voice input in real-time.
+  const analyzerRef = useRef(null);
+  const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // A small sample of emojis. You can expand this list or group them by category!
+  // State to manage the visibility of the emoji picker and a list of emojis to display in the picker.
+  // This will allow users to insert emojis into their messages.
+  const emojiList = [
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "🙃",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😛",
+    "😝",
+    "😜",
+    "🤪",
+    "🤨",
+    "🧐",
+    "🤓",
+    "😎",
+    "🤩",
+    "🥳",
+    "😏",
+    "😒",
+    "😞",
+    "😔",
+    "😟",
+    "😕",
+    "🙁",
+    "☹️",
+    "😣",
+    "😖",
+    "😫",
+    "😩",
+    "🥺",
+    "😢",
+    "😭",
+    "😤",
+    "😠",
+    "😡",
+    "🤬",
+    "🤯",
+    "😳",
+    "🥵",
+    "🥶",
+    "😱",
+    "😨",
+    "😰",
+    "😥",
+    "😓",
+    "🤔",
+    "🤭",
+    "🤫",
+    "🤥",
+    "😶",
+    "😐",
+    "😑",
+    "😬",
+    "🙄",
+    "😯",
+    "😦",
+    "😧",
+    "😮",
+    "😲",
+    "🥱",
+    "😴",
+    "🤤",
+    "😪",
+    "😵",
+    "🤐",
+    "🥴",
+    "🤢",
+    "🤮",
+    "🤧",
+    "😷",
+    "🤒",
+    "🤕",
+    "🤑",
+    "🤠",
+    "😈",
+    "👿",
+    "👹",
+    "👺",
+    "🤡",
+    "💩",
+    "👻",
+    "💀",
+    "☠️",
+    "👽",
+    "👾",
+    "🤖",
+    "🎃",
+    "😺",
+    "😸",
+    "😻",
+  ];
+
+  // State to manage the current wallpaper selection for the chat background.
+  // This allows users to customize the look of their chat window.
+  const [wallpaper, setWallpaper] = useState("classic");
+
+>>>>>>> Stashed changes
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -280,18 +410,39 @@ function App() {
           {(() => {
             const activeContact = contacts.find((c) => c.id === activeContactId);
             return (
-              <div className="p-3 bg-[#202c33] flex items-center gap-4 shadow-md">
-                <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
-                <div>
-                  <h2 className="font-medium text-sm">{activeContact?.name}</h2>
-                  <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
+              <div className="p-3 bg-[#202c33] flex items-center justify-between shadow-md">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
+                  <div>
+                    <h2 className="font-medium text-sm">{activeContact?.name}</h2>
+                    <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
+                  </div>
+                </div>
+
+                {/* NEW: Wallpaper Switcher UI */}
+                <div className="flex items-center gap-3 bg-[#111b21]/50 p-2 rounded-full border border-gray-700">
+                  <button onClick={() => setWallpaper("classic")} className={`w-4 h-4 rounded-full bg-gray-500 border ${wallpaper === "classic" ? "border-white scale-125" : "border-transparent"}`} title="Classic Doodle" />
+                  <button onClick={() => setWallpaper("midnight")} className={`w-4 h-4 rounded-full bg-[#0b141a] border ${wallpaper === "midnight" ? "border-white scale-125" : "border-transparent"}`} title="Midnight Solid" />
+                  <button onClick={() => setWallpaper("nebula")} className={`w-4 h-4 rounded-full bg-indigo-900 border ${wallpaper === "nebula" ? "border-white scale-125" : "border-transparent"}`} title="Nebula Gradient" />
                 </div>
               </div>
             );
           })()}
 
+<<<<<<< Updated upstream
           {/* Messages Container for */}
           <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
+=======
+          {/* Messages Container */}
+          <div
+            className={`flex-1 p-8 overflow-y-auto flex flex-col gap-3 transition-all duration-500 ${wallpaper === "nebula" ? "bg-gradient-to-b from-[#1a1c2c] to-[#4a1942]" : "bg-[#0b141a]"}`}
+            style={{
+              backgroundImage: wallpaper === "classic" ? "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')" : "none",
+              backgroundBlendMode: "overlay",
+              backgroundOpacity: 0.05,
+            }}
+          >
+>>>>>>> Stashed changes
             {messages
               .filter((msg) => {
                 // Filter messages to show only those that belong to the active chat and match the search term
