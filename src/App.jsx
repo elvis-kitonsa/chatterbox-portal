@@ -464,10 +464,13 @@ function App() {
       return; // Stop the function here
     }
 
-    // 2. Proceed with normal verification
+    // 2. Proceed with normal verification (Check if the OTP is correct)
     if (otp === generatedOTP) {
-      alert("Login Successful!");
-      // Logic to enter the app/dashboard
+      setIsUnlocked(true);
+
+      // Optional: Reset verification states
+      setIsVerifying(false);
+      console.log("Access Granted: Redirecting to Dashboard...");
     } else {
       alert("Invalid code. Please try again.");
     }
@@ -767,7 +770,7 @@ function App() {
             </div>
 
             {/* Clean, Branded Input */}
-            <input type="tel" placeholder="700 000 000" className="flex-1 bg-transparent border-none outline-none text-white px-4 font-bold placeholder:text-gray-600 text-lg" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <input type="tel" placeholder="0700 000 000" className="flex-1 bg-transparent border-none outline-none text-white px-4 font-bold placeholder:text-gray-600 text-lg" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
 
           {/* THE FIX: Premium Custom Dropdown List */}
@@ -800,10 +803,6 @@ function App() {
 
         <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
           Send Verification Code
-        </button>
-
-        <button className="w-full bg-transparent border-2 border-[#2a3942] hover:border-[#00a884] hover:text-[#00a884] text-gray-400 font-bold py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group/btn">
-          <span className="text-xl group-hover/btn:scale-110 transition-transform duration-300">🔒</span> Login with Fingerprint
         </button>
       </div>
 
