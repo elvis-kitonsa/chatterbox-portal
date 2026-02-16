@@ -183,6 +183,15 @@ function App() {
     "😻",
   ];
 
+  // States to handle OTP functionality
+  const [generatedOtp, setGeneratedOtp] = useState(null);
+  const [otpExpiry, setOtpExpiry] = useState(null);
+  const [isExpired, setIsExpired] = useState(false);
+
+  // States to handle the simulation for the custom popup with the auto-generated OTPs
+  const [showSimulation, setShowSimulation] = useState(false);
+  const [generatedOTP, setGeneratedOTP] = useState("");
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -390,20 +399,48 @@ function App() {
   // --- NEW VOICE NOTE FUNCTIONS END ---
 
   // This was the missing function causing the white screen!
+  // 1. Logic to send the OTP
+  // 1. Logic to send the OTP
   const handleRequestOtp = () => {
-    if (phone.length > 10) {
-      setIsVerifying(true);
+    if (phone.length >= 10) {
+      // Generate the code
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiryTime = Date.now() + 3 * 60 * 1000;
+
+      // Update states
+      setGeneratedOtp(newOtp); // Used for the actual logic check
+      setGeneratedOTP(newOtp); // Used for the display in the simulation modal
+      setOtpExpiry(expiryTime);
+      setIsExpired(false);
+
+      // OPEN THE PRETTY MODAL
+      setShowSimulation(true);
+
+      // Keep this for debugging in the inspect tool
+      console.log(`%c [SECURITY] OTP for ${phone}: ${newOtp}`, "color: #00a884; font-weight: bold; font-size: 16px;");
+
+      // REMOVE the old alert() line that was here!
     } else {
       alert("Please enter a valid phone number.");
     }
   };
 
+  // 2. Logic to verify the OTP
   const handleVerifyOtp = () => {
-    // For development, let's use '123456' as our secret code
-    if (otp === "123456") {
+    const currentTime = Date.now();
+
+    // Check if OTP has expired
+    if (currentTime > otpExpiry) {
+      setIsExpired(true);
+      alert("This OTP has expired. Please request a new one.");
+      return;
+    }
+
+    // Validate the code
+    if (otp === generatedOtp) {
       setIsUnlocked(true);
     } else {
-      alert("Invalid OTP. Try '123456'");
+      alert("Invalid code. Please check and try again.");
     }
   };
 
@@ -659,6 +696,10 @@ function App() {
             Confirm Code
           </button>
 
+          {/* Expiry Warning UI */}
+          {/* Add a visual cue to indicate the code is about to expire */}
+          <div className="mt-4">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-500 text-[10px] uppercase tracking-tighter">Valid for 3 minutes only</p>}</div>
+
           <button onClick={() => setIsVerifying(false)} className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
             ← Use different number
           </button>
@@ -718,6 +759,36 @@ function App() {
           <span className="text-xl group-hover/btn:scale-110 transition-transform duration-300">🔒</span> Login with Fingerprint
         </button>
       </div>
+
+      {showSimulation && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1e293b] border border-gray-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 transform transition-all scale-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-[#00a884]/20 rounded-lg">
+                <span className="text-xl">💬</span>
+              </div>
+              <h3 className="text-lg font-bold text-white">ChatterBox Security</h3>
+            </div>
+
+            <p className="text-gray-400 mb-6">
+              Your verification code is: <br />
+              <span className="text-3xl font-mono tracking-widest text-[#00a884] font-bold">{generatedOTP}</span>
+            </p>
+
+            <button
+              onClick={() => {
+                setShowSimulation(false); // Closes this popup
+                setIsVerifying(true); // Switches the app to the OTP input screen
+              }}
+              className="w-full py-4 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-black rounded-xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-widest"
+            >
+              Copy & Continue
+            </button>
+
+            <p className="text-xs text-center text-gray-500 mt-4 italic">(This is a simulation. In production, this would be an actual SMS.)</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
