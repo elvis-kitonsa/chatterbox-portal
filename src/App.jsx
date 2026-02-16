@@ -192,6 +192,14 @@ function App() {
   const [showSimulation, setShowSimulation] = useState(false);
   const [generatedOTP, setGeneratedOTP] = useState("");
 
+  // 2. PLACE THE USEEFFECT HERE
+  // This watches for the moment isVerifying becomes true
+  useEffect(() => {
+    if (isVerifying && generatedOTP) {
+      setOtp(generatedOTP);
+    }
+  }, [isVerifying, generatedOTP]);
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -777,8 +785,16 @@ function App() {
 
             <button
               onClick={() => {
-                setShowSimulation(false); // Closes this popup
-                setIsVerifying(true); // Switches the app to the OTP input screen
+                // 1. Physically copy the code to the phone/computer clipboard
+                if (generatedOTP) {
+                  navigator.clipboard.writeText(generatedOTP);
+                }
+
+                // 2. Optional: Add a small toast or haptic feedback here
+
+                // 3. Close the modal and move to the verification screen
+                setShowSimulation(false);
+                setIsVerifying(true);
               }}
               className="w-full py-4 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-black rounded-xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-widest"
             >
