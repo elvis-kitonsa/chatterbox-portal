@@ -390,20 +390,52 @@ function App() {
   // --- NEW VOICE NOTE FUNCTIONS END ---
 
   // This was the missing function causing the white screen!
+  // 1. Logic to send the OTP
+  // 1. Logic to send the OTP
   const handleRequestOtp = () => {
-    if (phone.length > 10) {
-      setIsVerifying(true);
+    if (phone.length >= 10) {
+      // Generate the code
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiryTime = Date.now() + 3 * 60 * 1000;
+
+      // Update states
+      setGeneratedOtp(newOtp); // Used for the actual logic check
+      setGeneratedOTP(newOtp); // Used for the display in the simulation modal
+      setOtpExpiry(expiryTime);
+      setIsExpired(false);
+
+      // OPEN THE PRETTY MODAL
+      setShowSimulation(true);
+
+      // Keep this for debugging in the inspect tool
+      console.log(`%c [SECURITY] OTP for ${phone}: ${newOtp}`, "color: #00a884; font-weight: bold; font-size: 16px;");
+
+      // REMOVE the old alert() line that was here!
     } else {
       alert("Please enter a valid phone number.");
     }
   };
 
+  // 2. Logic to verify the OTP
   const handleVerifyOtp = () => {
-    // For development, let's use '123456' as our secret code
-    if (otp === "123456") {
+    const currentTime = Date.now();
+
+    // 1. Check if the time has run out
+    if (currentTime > otpExpiry) {
+      setIsExpired(true);
+      alert("This code has expired. Please request a new one.");
+      return; // Stop the function here
+    }
+
+    // 2. Proceed with normal verification (Check if the OTP is correct)
+    if (otp === generatedOTP) {
       setIsUnlocked(true);
+
+      // Optional: Reset verification states
+      setIsVerifying(false);
+      console.log("Access Granted: Redirecting to Dashboard...");
     } else {
-      alert("Invalid OTP. Try '123456'");
+      alert("Invalid code. Please try again.");
     }
   };
 
@@ -625,14 +657,46 @@ function App() {
   }
 
   // 2. OTP Verification Screen
+  // Replace your verification screen 'if' block with this:
   if (isVerifying) {
     return (
-      <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-        <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 max-w-sm w-full text-center">
-          <h2 className="text-2xl font-bold mb-6">Enter OTP</h2>
-          <input type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full bg-[#2a3942] text-center text-3xl py-4 rounded-xl mb-6 border border-transparent focus:border-[#00a884] outline-none" placeholder="000000" />
-          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] py-4 rounded-full font-bold text-[#111b21]">
-            Verify
+      <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
+        <div className="bg-[#202c33] p-12 rounded-[2.5rem] border border-[#00a884]/30 max-w-sm w-full text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden">
+          {/* Subtle Background Glow */}
+          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#00a884]/5 rounded-full blur-3xl"></div>
+
+          {/* Updated Chat Logo (Matches Login) */}
+          <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20">
+            <span className="text-3xl text-[#111b21]">💬</span>
+          </div>
+
+          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Verify it's you</h2>
+          <p className="text-gray-400 text-sm mb-10 leading-relaxed">
+            We sent a code to <br />
+            <span className="text-[#00a884] font-bold">+{phone}</span>
+          </p>
+
+          <div className="group mb-8">
+            <input
+              type="text"
+              maxLength="6"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full bg-[#2a3942] text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl border-2 border-transparent group-hover:border-gray-600 focus:border-[#00a884] outline-none transition-all duration-300 shadow-inner"
+              placeholder="000000"
+            />
+          </div>
+
+          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_10px_20px_rgba(0,168,132,0.3)] py-4 rounded-2xl font-black text-[#111b21] uppercase tracking-widest transition-all duration-300 active:scale-95 mb-4">
+            Confirm Code
+          </button>
+
+          {/* Expiry Warning UI */}
+          {/* Add a visual cue to indicate the code is about to expire */}
+          <div className="mt-4">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-500 text-[10px] uppercase tracking-tighter">Valid for 3 minutes only</p>}</div>
+
+          <button onClick={() => setIsVerifying(false)} className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
+            ← Use different number
           </button>
         </div>
       </div>
@@ -640,55 +704,114 @@ function App() {
   }
 
   // 3. Login Screen (Dark Mode)
+  // Replace your "3. Login Screen" return block with this:
   return (
-    <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-      <div className="bg-[#202c33] p-10 rounded-2xl shadow-2xl border border-gray-800 max-w-sm w-full">
-        <div className="w-16 h-16 bg-[#00a884]/20 rounded-full flex items-center justify-center mb-6 mx-auto">
-          <span className="text-2xl">🛡️</span>
-        </div>
-        <h1 className="text-3xl font-bold text-[#00a884] mb-2 text-center">ChatterBox</h1>
-        <p className="text-gray-400 mb-8 text-center text-sm">Secure Phone Login</p>
+    <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
+      <div className="bg-[#202c33] p-10 rounded-[2.5rem] shadow-2xl border border-[#00a884]/20 max-w-sm w-full relative overflow-hidden group">
+        {/* Dynamic Glow Effect */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00a884]/10 rounded-full blur-3xl group-hover:bg-[#00a884]/20 transition-all duration-700"></div>
 
-        <div className="mb-8">
-          <PhoneInput
-            country={"ug"}
-            value={phone}
-            onChange={(p) => setPhone(p)}
-            enableSearch={true} // Adds a search bar for easier navigation
-            containerStyle={{ width: "100%" }}
-            inputStyle={{
-              backgroundColor: "#2a3942",
-              color: "white",
-              width: "100%",
-              height: "56px",
-              borderRadius: "12px",
-              border: "1px solid #374151",
-            }}
-            buttonStyle={{
-              backgroundColor: "#2a3942",
-              border: "1px solid #374151",
-              borderRadius: "12px 0 0 12px",
-            }}
-            // FIXES THE DROPDOWN VISIBILITY:
-            dropdownStyle={{
-              backgroundColor: "#2a3942",
-              color: "#ffffff",
-              textAlign: "left",
-              width: "300px",
-            }}
-            searchStyle={{
-              backgroundColor: "#111b21",
-              color: "white",
-              width: "90%",
-              margin: "10px auto",
-            }}
-          />
+        {/* New Chat Logo */}
+        <div className="w-20 h-20 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20 transform transition-transform hover:rotate-6">
+          <span className="text-4xl text-[#111b21]">💬</span>
         </div>
 
-        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-4 rounded-full transition-all shadow-lg">
-          Get OTP Code
+        <h1 className="text-4xl font-black text-white mb-2 text-center tracking-tight">
+          Chatter<span className="text-[#00a884]">Box</span>
+        </h1>
+        <p className="text-gray-400 mb-10 text-center text-sm font-medium tracking-wide">Engage. Talk. Interact.</p>
+
+        <div className="mb-8 relative group">
+          <label className="text-[10px] font-bold text-[#00a884] uppercase tracking-[0.2em] ml-1 mb-2 block">Phone Number</label>
+
+          <div className="flex items-center bg-[#2a3942] rounded-2xl border-2 border-transparent focus-within:border-[#00a884]/50 transition-all duration-300 overflow-hidden shadow-inner h-[60px]">
+            {/* Custom Styled Country Trigger */}
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-white/5 h-full px-4 transition-colors border-r border-white/10" onClick={() => setShowCountryList(!showCountryList)}>
+              <span className="text-xl">{selectedCountry.flag}</span>
+              <span className="text-white font-bold text-sm">{selectedCountry.code}</span>
+              <span className={`text-[#00a884] text-[10px] transition-transform duration-300 ${showCountryList ? "rotate-180" : ""}`}>▼</span>
+            </div>
+
+            {/* Clean, Branded Input */}
+            <input type="tel" placeholder="0700 000 000" className="flex-1 bg-transparent border-none outline-none text-white px-4 font-bold placeholder:text-gray-600 text-lg" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+
+          {/* THE FIX: Premium Custom Dropdown List */}
+          {showCountryList && (
+            <div className="absolute top-[100%] left-0 w-full mt-2 bg-[#202c33] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[110] overflow-hidden backdrop-blur-xl max-h-[220px] overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-200">
+              {[
+                { code: "+256", flag: "🇺🇬", name: "Uganda" },
+                { code: "+254", flag: "🇰🇪", name: "Kenya" },
+                { code: "+255", flag: "🇹🇿", name: "Tanzania" },
+                { code: "+234", flag: "🇳🇬", name: "Nigeria" },
+                { code: "+1", flag: "🇺🇸", name: "USA" },
+              ].map((country) => (
+                <div
+                  key={country.code}
+                  onClick={() => {
+                    setSelectedCountry(country);
+                    setShowCountryList(false);
+                    // Optional: You could update the phone prefix here if needed
+                  }}
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-[#00a884]/10 cursor-pointer transition-colors border-b border-white/5 last:border-none"
+                >
+                  <span className="text-xl">{country.flag}</span>
+                  <span className="text-white text-sm font-semibold">{country.name}</span>
+                  <span className="ml-auto text-[#00a884] text-xs font-mono font-bold">{country.code}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
+          Send Verification Code
         </button>
       </div>
+
+      {showSimulation && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
+          {/* Main Card */}
+          <div className="bg-[#111b21] border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-[0_40px_80px_rgba(0,0,0,0.7)] relative overflow-hidden ring-1 ring-white/10">
+            {/* Subtle brand glow in the background */}
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00a884]/10 rounded-full blur-[80px]"></div>
+
+            <div className="relative z-10">
+              {/* REPLACED: Shield is gone. Using your branded chat logo with a glow */}
+              <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-[0_0_20px_rgba(0,168,132,0.4)]">
+                <span className="text-3xl filter drop-shadow-sm">💬</span>
+              </div>
+
+              <h3 className="text-white text-2xl font-black tracking-tight mb-2">Secure Access</h3>
+              <p className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">
+                Confirm the code below to enter your <br />
+                <span className="text-[#00a884] opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">verified workspace</span>
+              </p>
+
+              {/* Improved Code Box: Deeper contrast and neon text */}
+              <div className="bg-[#202c33] py-8 rounded-[2rem] border border-white/5 mb-10 shadow-inner group">
+                <span className="text-5xl font-mono font-black text-[#00a884] tracking-[0.15em] drop-shadow-[0_0_12px_rgba(0,168,132,0.3)] group-hover:scale-110 transition-transform duration-500 block">{generatedOTP}</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedOTP);
+                  setShowSimulation(false);
+                  setIsVerifying(true);
+                }}
+                className="w-full py-5 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-bold rounded-2xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-[0.2em] active:scale-95"
+              >
+                Copy & Continue
+              </button>
+
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-pulse"></div>
+                <span className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Secure Simulation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
