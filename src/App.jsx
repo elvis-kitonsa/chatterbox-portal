@@ -200,6 +200,22 @@ function App() {
     }
   }, [isVerifying, generatedOTP]);
 
+  // 3. PLACE THE USEEFFECT HERE
+  // This watches for the moment isExpired becomes true
+  useEffect(() => {
+    if (!otpExpiry || isExpired) return;
+
+    // Check every second if the code is still valid
+    const timer = setInterval(() => {
+      if (Date.now() > otpExpiry) {
+        setIsExpired(true);
+        clearInterval(timer);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer); // Cleanup on unmount
+  }, [otpExpiry, isExpired]);
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -437,18 +453,19 @@ function App() {
   const handleVerifyOtp = () => {
     const currentTime = Date.now();
 
-    // Check if OTP has expired
+    // 1. Check if the time has run out
     if (currentTime > otpExpiry) {
       setIsExpired(true);
-      alert("This OTP has expired. Please request a new one.");
-      return;
+      alert("This code has expired. Please request a new one.");
+      return; // Stop the function here
     }
 
-    // Validate the code
-    if (otp === generatedOtp) {
-      setIsUnlocked(true);
+    // 2. Proceed with normal verification
+    if (otp === generatedOTP) {
+      alert("Login Successful!");
+      // Logic to enter the app/dashboard
     } else {
-      alert("Invalid code. Please check and try again.");
+      alert("Invalid code. Please try again.");
     }
   };
 
@@ -769,39 +786,45 @@ function App() {
       </div>
 
       {showSimulation && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1e293b] border border-gray-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 transform transition-all scale-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-[#00a884]/20 rounded-lg">
-                <span className="text-xl">💬</span>
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
+          {/* Main Card */}
+          <div className="bg-[#111b21] border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-[0_40px_80px_rgba(0,0,0,0.7)] relative overflow-hidden ring-1 ring-white/10">
+            {/* Subtle brand glow in the background */}
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00a884]/10 rounded-full blur-[80px]"></div>
+
+            <div className="relative z-10">
+              {/* REPLACED: Shield is gone. Using your branded chat logo with a glow */}
+              <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-[0_0_20px_rgba(0,168,132,0.4)]">
+                <span className="text-3xl filter drop-shadow-sm">💬</span>
               </div>
-              <h3 className="text-lg font-bold text-white">ChatterBox Security</h3>
-            </div>
 
-            <p className="text-gray-400 mb-6">
-              Your verification code is: <br />
-              <span className="text-3xl font-mono tracking-widest text-[#00a884] font-bold">{generatedOTP}</span>
-            </p>
+              <h3 className="text-white text-2xl font-black tracking-tight mb-2">Secure Access</h3>
+              <p className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">
+                Confirm the code below to enter your <br />
+                <span className="text-[#00a884] opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">verified workspace</span>
+              </p>
 
-            <button
-              onClick={() => {
-                // 1. Physically copy the code to the phone/computer clipboard
-                if (generatedOTP) {
+              {/* Improved Code Box: Deeper contrast and neon text */}
+              <div className="bg-[#202c33] py-8 rounded-[2rem] border border-white/5 mb-10 shadow-inner group">
+                <span className="text-5xl font-mono font-black text-[#00a884] tracking-[0.15em] drop-shadow-[0_0_12px_rgba(0,168,132,0.3)] group-hover:scale-110 transition-transform duration-500 block">{generatedOTP}</span>
+              </div>
+
+              <button
+                onClick={() => {
                   navigator.clipboard.writeText(generatedOTP);
-                }
+                  setShowSimulation(false);
+                  setIsVerifying(true);
+                }}
+                className="w-full py-5 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-bold rounded-2xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-[0.2em] active:scale-95"
+              >
+                Copy & Continue
+              </button>
 
-                // 2. Optional: Add a small toast or haptic feedback here
-
-                // 3. Close the modal and move to the verification screen
-                setShowSimulation(false);
-                setIsVerifying(true);
-              }}
-              className="w-full py-4 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-black rounded-xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-widest"
-            >
-              Copy & Continue
-            </button>
-
-            <p className="text-xs text-center text-gray-500 mt-4 italic">(This is a simulation. In production, this would be an actual SMS.)</p>
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-pulse"></div>
+                <span className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Secure Simulation</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
