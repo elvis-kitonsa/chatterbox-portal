@@ -192,6 +192,10 @@ function App() {
   const [showSimulation, setShowSimulation] = useState(false);
   const [generatedOTP, setGeneratedOTP] = useState("");
 
+  // States to handle the country selection
+  const [showCountryList, setShowCountryList] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState({ code: "+256", flag: "🇺🇬", name: "Uganda" });
+
   // 2. PLACE THE USEEFFECT HERE
   // This watches for the moment isVerifying becomes true
   useEffect(() => {
@@ -751,29 +755,47 @@ function App() {
         </h1>
         <p className="text-gray-400 mb-10 text-center text-sm font-medium tracking-wide">Engage. Talk. Interact.</p>
 
-        <div className="mb-8">
+        <div className="mb-8 relative group">
           <label className="text-[10px] font-bold text-[#00a884] uppercase tracking-[0.2em] ml-1 mb-2 block">Phone Number</label>
-          <PhoneInput
-            country={"ug"}
-            value={phone}
-            onChange={(p) => setPhone(p)}
-            containerStyle={{ width: "100%" }}
-            inputStyle={{
-              backgroundColor: "#2a3942",
-              color: "white",
-              width: "100%",
-              height: "60px",
-              borderRadius: "18px",
-              border: "2px solid transparent",
-              fontSize: "16px",
-            }}
-            buttonStyle={{
-              backgroundColor: "#2a3942",
-              border: "none",
-              borderRadius: "18px 0 0 18px",
-              paddingLeft: "10px",
-            }}
-          />
+
+          <div className="flex items-center bg-[#2a3942] rounded-2xl border-2 border-transparent focus-within:border-[#00a884]/50 transition-all duration-300 overflow-hidden shadow-inner h-[60px]">
+            {/* Custom Styled Country Trigger */}
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-white/5 h-full px-4 transition-colors border-r border-white/10" onClick={() => setShowCountryList(!showCountryList)}>
+              <span className="text-xl">{selectedCountry.flag}</span>
+              <span className="text-white font-bold text-sm">{selectedCountry.code}</span>
+              <span className={`text-[#00a884] text-[10px] transition-transform duration-300 ${showCountryList ? "rotate-180" : ""}`}>▼</span>
+            </div>
+
+            {/* Clean, Branded Input */}
+            <input type="tel" placeholder="700 000 000" className="flex-1 bg-transparent border-none outline-none text-white px-4 font-bold placeholder:text-gray-600 text-lg" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+
+          {/* THE FIX: Premium Custom Dropdown List */}
+          {showCountryList && (
+            <div className="absolute top-[100%] left-0 w-full mt-2 bg-[#202c33] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[110] overflow-hidden backdrop-blur-xl max-h-[220px] overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-200">
+              {[
+                { code: "+256", flag: "🇺🇬", name: "Uganda" },
+                { code: "+254", flag: "🇰🇪", name: "Kenya" },
+                { code: "+255", flag: "🇹🇿", name: "Tanzania" },
+                { code: "+234", flag: "🇳🇬", name: "Nigeria" },
+                { code: "+1", flag: "🇺🇸", name: "USA" },
+              ].map((country) => (
+                <div
+                  key={country.code}
+                  onClick={() => {
+                    setSelectedCountry(country);
+                    setShowCountryList(false);
+                    // Optional: You could update the phone prefix here if needed
+                  }}
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-[#00a884]/10 cursor-pointer transition-colors border-b border-white/5 last:border-none"
+                >
+                  <span className="text-xl">{country.flag}</span>
+                  <span className="text-white text-sm font-semibold">{country.name}</span>
+                  <span className="ml-auto text-[#00a884] text-xs font-mono font-bold">{country.code}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
