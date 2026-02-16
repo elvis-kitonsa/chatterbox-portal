@@ -183,43 +183,6 @@ function App() {
     "😻",
   ];
 
-  // States to handle OTP functionality
-  const [generatedOtp, setGeneratedOtp] = useState(null);
-  const [otpExpiry, setOtpExpiry] = useState(null);
-  const [isExpired, setIsExpired] = useState(false);
-
-  // States to handle the simulation for the custom popup with the auto-generated OTPs
-  const [showSimulation, setShowSimulation] = useState(false);
-  const [generatedOTP, setGeneratedOTP] = useState("");
-
-  // States to handle the country selection
-  const [showCountryList, setShowCountryList] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState({ code: "+256", flag: "🇺🇬", name: "Uganda" });
-
-  // 2. PLACE THE USEEFFECT HERE
-  // This watches for the moment isVerifying becomes true
-  useEffect(() => {
-    if (isVerifying && generatedOTP) {
-      setOtp(generatedOTP);
-    }
-  }, [isVerifying, generatedOTP]);
-
-  // 3. PLACE THE USEEFFECT HERE
-  // This watches for the moment isExpired becomes true
-  useEffect(() => {
-    if (!otpExpiry || isExpired) return;
-
-    // Check every second if the code is still valid
-    const timer = setInterval(() => {
-      if (Date.now() > otpExpiry) {
-        setIsExpired(true);
-        clearInterval(timer);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer); // Cleanup on unmount
-  }, [otpExpiry, isExpired]);
-
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
