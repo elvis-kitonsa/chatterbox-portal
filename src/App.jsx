@@ -510,6 +510,7 @@ function App() {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                    onFocus={() => setShowEmojiPicker(false)}
                   />
 
                   {/* Attachment (Clip) */}
