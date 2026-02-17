@@ -21,7 +21,8 @@ function App() {
   const [activeContactId, setActiveContactId] = useState("tech-lead"); // Track which contact is currently selected
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
-    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
+    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read" /*Options: "sent", "delivered", "read" */ },
+    { id: 3, text: "Hello chat", sender: "me", time: "3:29 PM", status: "delivered" },
   ]);
   const [newMessage, setNewMessage] = useState(""); // This will be used to store the text of the new message being typed in the input field.
   const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
@@ -408,11 +409,7 @@ function App() {
                     {/* --- BUBBLE CONTAINER --- */}
                     <div
                       className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
-                        msg.sender === "me"
-                          ? /* 🟢 ADDED: w-fit | REMOVED: rounded-tr-none 🟢 */
-                            "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] shadow-[#00a884]/20"
-                          : /* 🟢 ADDED: w-fit | REMOVED: rounded-tl-none 🟢 */
-                            "bg-[#2a3942] text-white border-t border-white/10"
+                        msg.sender === "me" ? /* 🟢 ADDED: w-fit | REMOVED: rounded-tr-none 🟢 */ "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] shadow-[#00a884]/20" : /* 🟢 ADDED: w-fit | REMOVED: rounded-tl-none 🟢 */ "bg-[#2a3942] text-white border-t border-white/10"
                       }`}
                     >
                       {/* CHECK: Is it a voice note or text? */}
@@ -439,9 +436,17 @@ function App() {
                         /* STANDARD TEXT RENDER */
                         <>
                           <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
-                          <div className={`flex items-center justify-end gap-1.5 mt-2 text-[9px] font-bold ${msg.sender === "me" ? "opacity-70" : "text-gray-400"}`}>
-                            <span>{msg.time}</span>
-                            {msg.sender === "me" && <span className={msg.status === "read" ? "text-blue-700" : ""}>✓✓</span>}
+                          <div className="flex items-center justify-end gap-1.5 mt-2 text-[9px] font-bold">
+                            {/* 💡 Move opacity here so it doesn't dull the blue ticks */}
+                            <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
+
+                            {msg.sender === "me" && (
+                              <span className="flex items-center ml-1 text-[11px] font-bold">
+                                {msg.status === "sent" && <span className="text-gray-400">✓</span>}
+                                {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
+                                {msg.status === "read" && <span className="text-blue-500">✓✓</span>}
+                              </span>
+                            )}
                           </div>
                         </>
                       )}
