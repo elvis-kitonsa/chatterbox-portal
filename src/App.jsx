@@ -3,79 +3,50 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function App() {
-  // Your list of contacts
-  // State to hold the list of contacts, each with an id, name, status, and color for the avatar.
-  // This will be used to render the contact list in the sidebar.
+  // 1. AUTHENTICATION & PORTAL STATES
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [generatedOTP, setGeneratedOTP] = useState(""); // Needed for simulation
+  const [showSimulation, setShowSimulation] = useState(false); // Needed for modal
+  const [isExpired, setIsExpired] = useState(false); // For OTP countdown
+
+  // 2. CHAT & CONTACT STATES
   const [contacts, setContacts] = useState([
     { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500" },
     { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500" },
     { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500" },
   ]);
-
-  // Track which contact is currently selected
-  const [activeContactId, setActiveContactId] = useState("tech-lead");
-
-  // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
-  const [isTyping, setIsTyping] = useState(false);
-
-  // States to track if the user is unlocked, to store the phone number, and to manage OTP input
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-
-  // State to make the top search bar filter messages and contacts in real-time as the user types.
-  // This will be used to implement the search functionality in the sidebar.
-  const [searchTerm, setSearchTerm] = useState("");
-
-  //Live Chat Functionality States:
+  const [activeContactId, setActiveContactId] = useState("tech-lead"); // Track which contact is currently selected
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
     { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
   ]);
-  const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef(null);
+  const [newMessage, setNewMessage] = useState(""); // This will be used to store the text of the new message being typed in the input field.
+  const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
 
-  // State to manage the current wallpaper selection for the chat background. This allows users to switch between different wallpapers, enhancing personalization.
-  const [wallpaper, setWallpaper] = useState("classic");
-
-  // Add this with your other useState hooks
+  // 3. UI & THEME STATES
   const [theme, setTheme] = useState("dark"); // Default to dark
+  const [isTyping, setIsTyping] = useState(false); // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [wallpaper, setWallpaper] = useState("classic"); // State to manage the current wallpaper selection for the chat background. This allows users to switch between different wallpapers, enhancing personalization.
 
-  // Helper to get theme-based classes
-  const themeClasses = {
-    bg: theme === "dark" ? "bg-[#111b21]" : "bg-[#f0f2f5]",
-    sidebarBg: theme === "dark" ? "bg-[#111b21]" : "bg-white",
-    headerBg: theme === "dark" ? "bg-[#202c33]" : "bg-[#f0f2f5]",
-    chatBg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#efeae2]",
-    text: theme === "dark" ? "text-[#e9edef]" : "text-[#111b21]",
-    secondaryText: theme === "dark" ? "text-gray-400" : "text-gray-600",
-    inputBg: theme === "dark" ? "bg-[#2a3942]" : "bg-white",
-  };
-
-  // Add this near your other useState hooks
-  // This will track if the user is currently recording a voice message and how long they've been
-  // recording.
+  // 4. VOICE & MEDIA STATES (Keep these for later)
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const timerRef = useRef(null);
-
-  // Refs to handle media recording and audio playback
-  const mediaRecorder = useRef(null);
-  const audioChunks = useRef([]);
   const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
-  const audioPlayerRef = useRef(new Audio()); // Global audio player instance
-
-  // This ref will be used to visualize the audio levels while recording a voice note.
-  // In other words, it will allow us to create a dynamic visualizer that reacts to the user's voice input in real-time.
-  const analyzerRef = useRef(null);
   const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
 
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  // 5. REFS
+  const messagesEndRef = useRef(null);
+  const timerRef = useRef(null);
+  const mediaRecorder = useRef(null);
+  const audioChunks = useRef([]);
+  const audioPlayerRef = useRef(new Audio()); // Global audio player instance
+  const analyzerRef = useRef(null);
 
-  // A small sample of emojis. You can expand this list or group them by category!
-  // State to manage the visibility of the emoji picker and a list of emojis to display in the picker.
-  // This will allow users to insert emojis into their messages.
+  // 6. HELPER DATA (Emojis)
   const emojiList = [
     "😀",
     "😃",
@@ -183,6 +154,75 @@ function App() {
     "😻",
   ];
 
+  // --- AUTHENTICATION LOGIC ---
+
+  // Updated to trigger the Simulation Modal
+  const handleRequestOtp = () => {
+    if (phone && phone.length > 5) {
+      // Create a random 6-digit code for the simulation
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOTP(newOtp);
+      setShowSimulation(true); // This opens the "Secure Access" modal we built
+    } else {
+      alert("Please enter a valid phone number.");
+    }
+  };
+
+  // Updated to check against the generated code
+  const handleVerifyOtp = () => {
+    // For development, let's use '123456' as our secret code
+    if (otp === generatedOTP || otp === "123456") {
+      setIsUnlocked(true);
+      setIsVerifying(false);
+    } else {
+      alert("Invalid code. Check the simulation box!");
+    }
+  };
+
+  // --- CHAT EFFECTS ---
+  // This sets a typing indicator and simulates a reply from the other person after you send a message.
+  // It checks if the last message was sent by "me" and then sets a timer to show "typing..." and another
+  // timer to add a reply message after a delay.
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+
+    if (lastMessage?.sender === "me" && !lastMessage.isReplyGenerated) {
+      // Mark as processed so we don't trigger infinite loops
+      lastMessage.isReplyGenerated = true;
+
+      const typingTimer = setTimeout(() => setIsTyping(true), 1500);
+
+      const replyTimer = setTimeout(() => {
+        const activeContact = contacts.find((c) => c.id === activeContactId);
+        const reply = {
+          id: Date.now(),
+          text: `Hey! This is ${activeContact?.name}. Received your message: "${lastMessage.text}"`,
+          sender: "them",
+          contactId: activeContactId,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, reply]);
+        setIsTyping(false);
+      }, 4000);
+
+      return () => {
+        clearTimeout(typingTimer);
+        clearTimeout(replyTimer);
+      };
+    }
+  }, [messages, activeContactId, contacts]);
+
+  // Helper to get theme-based classes
+  const themeClasses = {
+    bg: theme === "dark" ? "bg-[#111b21]" : "bg-[#f0f2f5]",
+    sidebarBg: theme === "dark" ? "bg-[#111b21]" : "bg-white",
+    headerBg: theme === "dark" ? "bg-[#202c33]" : "bg-[#f0f2f5]",
+    chatBg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#efeae2]",
+    text: theme === "dark" ? "text-[#e9edef]" : "text-[#111b21]",
+    secondaryText: theme === "dark" ? "text-gray-400" : "text-gray-600",
+    inputBg: theme === "dark" ? "bg-[#2a3942]" : "bg-white",
+  };
+
   // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -226,36 +266,6 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [messages]);
-
-  // This sets a typing indicator and simulates a reply from the other person after you send a message.
-  // It checks if the last message was sent by "me" and then sets a timer to show "typing..." and another
-  // timer to add a reply message after a delay.
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-
-    if (lastMessage?.sender === "me") {
-      const typingTimer = setTimeout(() => {
-        setIsTyping(true);
-      }, 1000);
-
-      const replyTimer = setTimeout(() => {
-        const reply = {
-          id: Date.now(),
-          text: "Got it! I'm looking into the ChatterBox code now. 👍",
-          sender: "them",
-          contactId: activeContactId,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        };
-        setMessages((prev) => [...prev, reply]);
-        setIsTyping(false);
-      }, 4000);
-
-      return () => {
-        clearTimeout(typingTimer);
-        clearTimeout(replyTimer);
-      };
-    }
-  }, [messages, activeContactId]);
 
   // This function handles file uploads in the chat.
   // It creates a new message with the file information and updates the messages state.
@@ -389,24 +399,6 @@ function App() {
   };
   // --- NEW VOICE NOTE FUNCTIONS END ---
 
-  // This was the missing function causing the white screen!
-  const handleRequestOtp = () => {
-    if (phone.length > 10) {
-      setIsVerifying(true);
-    } else {
-      alert("Please enter a valid phone number.");
-    }
-  };
-
-  const handleVerifyOtp = () => {
-    // For development, let's use '123456' as our secret code
-    if (otp === "123456") {
-      setIsUnlocked(true);
-    } else {
-      alert("Invalid OTP. Try '123456'");
-    }
-  };
-
   // This function allows users to add emojis to their message input.
   const addEmoji = (emoji) => {
     setNewMessage((prev) => prev + emoji);
@@ -539,26 +531,37 @@ function App() {
           <footer className="mt-4 flex justify-center p-2">
             <div className="w-full max-w-4xl bg-[#2a3942] backdrop-blur-3xl border border-white/15 rounded-[2.5rem] p-3 flex items-center gap-4 shadow-2xl">
               <button className="w-12 h-12 rounded-2xl hover:bg-white/10 flex items-center justify-center text-xl">😊</button>
-              <input type="text" placeholder="Message secure workspace..." className="flex-1 bg-transparent py-2 outline-none text-[15px] text-white placeholder:text-gray-400 font-medium" />
+              <input
+                type="text"
+                placeholder="Message secure workspace..."
+                className="flex-1 bg-transparent py-2 outline-none text-[15px] text-white placeholder:text-gray-400 font-medium"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              />
+              <button onClick={handleSendMessage} className="w-12 h-12 rounded-2xl bg-[#00a884] flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#00a884]/20" aria-label="Send Message">
+                {/* Actual Send Arrow SVG */}
+                <svg viewBox="0 0 24 24" width="24" height="24" className="fill-[#111b21] transform rotate-0 -translate-x-2.35">
+                  <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+                </svg>
+              </button>
               {/* ... Send Button ... */}
             </div>
+            <input
+              type="file"
+              ref={fileInputRef} // This connects the variable to the element
+              onChange={handleFileUpload}
+              className="hidden" // Keeps it invisible
+            />
           </footer>
         </main>
       </div>
     );
   }
 
-  // 2. OTP Verification Screen
+  // OPTION 2: THE OTP VERIFICATION (Show this if they just clicked 'Send Code')
   if (isVerifying) {
     return (
-<<<<<<< Updated upstream
-      <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-        <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 max-w-sm w-full text-center">
-          <h2 className="text-2xl font-bold mb-6">Enter OTP</h2>
-          <input type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full bg-[#2a3942] text-center text-3xl py-4 rounded-xl mb-6 border border-transparent focus:border-[#00a884] outline-none" placeholder="000000" />
-          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] py-4 rounded-full font-bold text-[#111b21]">
-            Verify
-=======
       <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
         <div className="bg-[#202c33] p-12 rounded-[2.5rem] border border-[#00a884]/30 max-w-sm w-full text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden">
           {/* Subtle Background Glow */}
@@ -596,15 +599,12 @@ function App() {
 
           <button onClick={() => setIsVerifying(false)} className="text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
             ← Use different number
->>>>>>> Stashed changes
           </button>
         </div>
       </div>
     );
   }
 
-  // 3. Login Screen (Dark Mode)
-  // Replace your "3. Login Screen" return block with this:
   return (
     <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
       <div className="bg-[#202c33] p-10 rounded-[2.5rem] shadow-2xl border border-[#00a884]/20 max-w-sm w-full relative overflow-hidden group">
@@ -649,13 +649,7 @@ function App() {
         <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
           Send Verification Code
         </button>
-
-        <button className="w-full bg-transparent border-2 border-[#2a3942] hover:border-[#00a884] hover:text-[#00a884] text-gray-400 font-bold py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 group/btn">
-          <span className="text-xl group-hover/btn:scale-110 transition-transform duration-300">🔒</span> Login with Fingerprint
-        </button>
       </div>
-<<<<<<< Updated upstream
-=======
 
       {showSimulation && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
@@ -700,7 +694,6 @@ function App() {
           </div>
         </div>
       )}
->>>>>>> Stashed changes
     </div>
   );
 }
