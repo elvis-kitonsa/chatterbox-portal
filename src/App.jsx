@@ -412,214 +412,138 @@ function App() {
     setNewMessage((prev) => prev + emoji);
     // Optional: Auto-close after picking? Usually, WhatsApp stays open.
   };
-  // 1. Dashboard Screen (Dark Mode)
+
+  // 1. Dashboard Screen (Dark Mode - To match the color aesthetic of Whatsapp)
   if (isUnlocked) {
     return (
-      <div className={`flex h-screen ${themeClasses.bg} ${themeClasses.text} overflow-hidden transition-colors duration-300`}>
-        {/* 1. Left Sidebar: Contacts & Chats */}
-        <div className={`w-[30%] border-r ${theme === "dark" ? "border-gray-700" : "border-gray-300"} flex flex-col ${themeClasses.sidebarBg}`}>
-          {/* Profile Header */}
-          <div className={`p-4 ${themeClasses.headerBg} flex justify-between items-center`}>
-            <div className="w-10 h-10 bg-[#00a884] rounded-full flex items-center justify-center font-bold text-[#111b21]">ME</div>
-            <div className="flex gap-5 text-gray-400">
-              <button className="hover:text-white">👥</button>
-              <button className="hover:text-white">💬</button>
-              <button onClick={() => setIsUnlocked(false)} className="hover:text-red-400">
-                🔒
-              </button>
-            </div>
-          </div>
+      <div className={`flex h-screen overflow-hidden transition-all duration-700 font-sans relative ${theme === "dark" ? "bg-[#080c0e] text-white" : "bg-gray-50 text-gray-900"}`}>
+        {/* 🌌 DYNAMIC BACKGROUND BLUR NODES */}
+        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-[#00a884]/10 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
+        <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[150px] pointer-events-none"></div>
 
-          {/* Search Bar */}
-          <div className="p-3">
-            <div className={`${themeClasses.inputBg} flex items-center px-4 py-1.5 rounded-lg`}>
-              <span className="text-gray-500 mr-3">🔍</span>
-              <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {(() => {
-              // 1. Create the filtered list first
-              const filteredContacts = contacts.filter((contact) => contact.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-              // 2. If no contacts match, show the "No results" UI
-              if (filteredContacts.length === 0) {
-                return (
-                  <div className="flex flex-col items-center justify-center h-40 text-center p-6">
-                    <span className="text-4xl mb-3">🕵️‍♂️</span>
-                    <p className="text-gray-400 text-sm">
-                      No contacts found matching <br />
-                      <span className="text-white font-medium">"{searchTerm}"</span>
-                    </p>
-                  </div>
-                );
-              }
-
-              // 3. Otherwise, map through the filtered results as usual
-              return filteredContacts.map((contact) => (
-                <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
-                  <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold text-sm">{contact.name}</h3>
-                    </div>
-                    <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
-                  </div>
-                </div>
-              ));
-            })()}
-          </div>
-        </div>
-
-        {/* 2. Main Window: Active Messaging Area */}
-        <div className={`flex-1 flex flex-col ${themeClasses.chatBg} relative`}>
-          {/* Chat Header */}
-          {(() => {
-            const activeContact = contacts.find((c) => c.id === activeContactId);
-            return (
-              <div className="p-3 bg-[#202c33] flex items-center justify-between shadow-md">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
-                  <div>
-                    <h2 className="font-medium text-sm">{activeContact?.name}</h2>
-                    <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
-                  </div>
-                </div>
-
-                {/* NEW: Wallpaper Switcher UI */}
-                {/* Updated Theme/Wallpaper Switcher */}
-                <div className="flex items-center gap-3 bg-[#111b21]/20 p-2 rounded-full border border-gray-700/30">
-                  {/* Theme Toggle (Sun/Moon) */}
-                  <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-lg mr-2 hover:scale-110 transition-transform" title="Switch Theme">
-                    {theme === "dark" ? "☀️" : "🌙"}
-                  </button>
-                  <div className="w-[1px] h-4 bg-gray-600 mr-1" /> {/* Divider */}
-                  {/* Existing Wallpaper Buttons */}
-                  <button onClick={() => setWallpaper("classic")} className={`w-4 h-4 rounded-full bg-gray-500 border ${wallpaper === "classic" ? "border-white scale-125" : "border-transparent"}`} title="Classic" />
-                  <button onClick={() => setWallpaper("midnight")} className={`w-4 h-4 rounded-full bg-[#0b141a] border ${wallpaper === "midnight" ? "border-white scale-125" : "border-transparent"}`} title="Midnight" />
-                  <button onClick={() => setWallpaper("nebula")} className={`w-4 h-4 rounded-full bg-indigo-900 border ${wallpaper === "nebula" ? "border-white scale-125" : "border-transparent"}`} title="Nebula" />
-                </div>
+        {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
+        <aside className={`w-[340px] m-4 mr-0 rounded-[2.5rem] border border-white/5 flex flex-col backdrop-blur-3xl shadow-2xl z-20 overflow-hidden ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+          {/* Top Branding/Profile Area */}
+          <div className="p-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center shadow-lg shadow-[#00a884]/20 transform hover:rotate-6 transition-transform cursor-pointer">
+                <span className="text-xl text-[#111b21]">💬</span>
               </div>
-            );
-          })()}
+              <div>
+                <h1 className="text-lg font-black tracking-tighter">
+                  Chatter<span className="text-[#00a884]">Box</span>
+                </h1>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-300 font-bold">Workspace</p>
+              </div>
+            </div>
+            <button onClick={() => setIsUnlocked(false)} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all">
+              🔒
+            </button>
+          </div>
 
-          {/* Messages Container */}
-          <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
-            {messages
-              .filter((msg) => {
-                // Filter messages to show only those that belong to the active chat and match the search term
-                const isCurrentChat = msg.contactId === activeContactId || !msg.contactId;
-                const matchesSearch = (msg.text || "").toLowerCase().includes(searchTerm.toLowerCase());
-                return isCurrentChat && matchesSearch;
-              })
-              .map((msg) => (
-                <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
-                  {/* --- INSERTED MEDIA LOGIC START --- */}
-                  {msg.fileUrl && msg.type === "image" && <img src={msg.fileUrl} alt="attachment" className="rounded-lg mb-2 max-h-60 w-full object-cover" />}
+          {/* Search Capsule: For searching conversations and contacts within the sidebar */}
+          <div className="px-6 pb-4">
+            <div className="bg-[#2a3942] border border-white/10 rounded-2xl flex items-center px-4 py-3 shadow-inner">
+              <span className="text-gray-400 mr-3">🔍</span>
+              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-300 font-medium" />
+            </div>
+          </div>
 
-                  {/* voice and audio message UI */}
-                  {msg.type === "voice" && (
-                    <div className="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg mb-2 min-w-[200px]">
-                      <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="text-xl text-[#00a884] hover:scale-110 transition-transform">
-                        {playingAudioId === msg.id ? "⏸️" : "▶️"}
-                      </button>
-                      <div className="flex-1 h-1 bg-gray-600 rounded-full relative">
-                        <div className={`absolute left-0 top-0 h-full bg-[#00a884] rounded-full transition-all duration-300 ${playingAudioId === msg.id ? "w-full" : "w-0"}`}></div>
-                      </div>
-                      <span className="text-[10px] text-gray-400">{formatTime(msg.duration)}</span>
+          {/* Modern List */}
+          <div className="flex-1 overflow-y-auto px-3 custom-scrollbar">
+            {contacts
+              .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((contact) => (
+                <div
+                  key={contact.id}
+                  onClick={() => setActiveContactId(contact.id)}
+                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${activeContactId === contact.id ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1" : "border-transparent hover:bg-white/5 hover:translate-x-1"}`}
+                >
+                  <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#00a884] rounded-full border-2 border-[#111b21]"></div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      {/* This makes the active name bright white and the others readable gray */}
+                      <h3 className={`font-bold text-sm truncate ${activeContactId === contact.id ? "text-white" : "text-gray-300"}`}>{contact.name}</h3> <span className="text-[9px] font-bold opacity-30 italic">12:45</span>
                     </div>
-                  )}
-
-                  {!msg.fileUrl && msg.type !== "voice" && <div>{msg.text}</div>}
-                  {/* --- INSERTED MEDIA LOGIC END --- */}
-
-                  <div className="flex items-center justify-end gap-1 mt-1">
-                    <span className={`text-[9px] block text-right ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
-                    {msg.sender === "me" && (
-                      <span className="text-[12px] leading-none flex">
-                        {msg.status === "sent" && <span className="text-gray-400">✓</span>}
-                        {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
-                        {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
-                      </span>
-                    )}
+                    <p className="text-[11px] opacity-40 font-medium truncate">Online • Secure</p>
                   </div>
                 </div>
               ))}
-            <div ref={messagesEndRef} />
           </div>
+        </aside>
 
-          {/* Bottom Input Field */}
+        {/* 💬 2. FLOATING MESSAGING HUB */}
+        <main className="flex-1 m-4 flex flex-col relative z-10">
+          {/* Floating Header */}
+          <header className={`p-4 rounded-[2rem] border border-white/5 backdrop-blur-xl mb-4 flex items-center justify-between shadow-xl ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+            {(() => {
+              const activeContact = contacts.find((c) => c.id === activeContactId);
+              return (
+                <div className="flex items-center gap-4 ml-2">
+                  <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner`}></div>
+                  <div>
+                    <h2 className="text-sm font-black tracking-tight">{activeContact?.name}</h2>
+                    <p className="text-[10px] text-[#00a884] font-bold uppercase tracking-widest animate-pulse">● Active Now</p>
+                  </div>
+                </div>
+              );
+            })()}
 
-          {/* EMOJI PICKER POPUP */}
-          {showEmojiPicker && (
-            <div className="absolute bottom-[70px] left-4 w-72 h-64 bg-[#2a3942] rounded-xl shadow-2xl border border-gray-700 overflow-y-auto p-3 custom-scrollbar z-50">
-              <div className="grid grid-cols-6 gap-2">
-                {emojiList.map((emoji, index) => (
-                  <button key={index} onClick={() => addEmoji(emoji)} className="text-2xl hover:bg-[#374151] rounded p-1 transition-colors">
-                    {emoji}
-                  </button>
-                ))}
+            <div className="flex items-center gap-3 bg-black/30 p-2 rounded-2xl border border-white/5 mr-2">
+              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform">
+                {theme === "dark" ? "☀️" : "🌙"}
+              </button>
+              <div className="w-[1px] h-4 bg-white/10"></div>
+              <div className="flex gap-1.5 px-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
               </div>
             </div>
-          )}
+          </header>
 
-          <div className="p-3 bg-[#202c33] flex items-center gap-4">
-            {isRecording ? (
-              <div className="flex flex-1 items-center justify-between bg-[#2a3942] px-4 py-2 rounded-xl">
-                <div className="flex items-center gap-3">
-                  {/* TRASH ICON: The Cancellation feature */}
-                  <button onClick={cancelRecording} className="text-gray-400 hover:text-red-500 transition-colors">
-                    🗑️
-                  </button>
+          {/* Message Viewport - Floating Cards Style */}
+          <div className={`flex-1 rounded-[2.5rem] border border-white/5 overflow-hidden relative shadow-2xl ${theme === "dark" ? "bg-[#0b141a]/60" : "bg-white/40"}`}>
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none grayscale" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
-                  {/* THE DANCING WAVEFORM */}
-                  <div className="flex items-end gap-[3px] h-5">
-                    {visualizerData.map((val, i) => (
-                      <div key={i} className="w-[3px] bg-[#00a884] rounded-full transition-all duration-75" style={{ height: `${Math.max(20, val * 100)}%` }}></div>
-                    ))}
+            <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
+              {messages
+                .filter((m) => m.contactId === activeContactId || !m.contactId)
+                .map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
+                    {msg.sender === "me" ? (
+                      /* --- YOUR OUTGOING BUBBLE (STAYS THE SAME OR ADJUSTED) --- */
+                      <div className="p-4 rounded-[1.8rem] max-w-[70%] bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] rounded-tr-none shadow-xl shadow-[#00a884]/20">
+                        <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                        <div className="flex items-center justify-end gap-1.5 mt-2 opacity-70 text-[9px] font-bold">
+                          <span>{msg.time}</span>
+                          <span>✓✓</span>
+                        </div>
+                      </div>
+                    ) : (
+                      /* --- PASTE THE UPDATED INCOMING BUBBLE HERE --- */
+                      <div className="bg-[#2a3942] text-white border-t border-white/10 rounded-[1.8rem] rounded-tl-none p-4 shadow-xl max-w-[70%]">
+                        <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
+                        <div className="text-[10px] text-gray-400 mt-2 text-right font-bold italic">{msg.time}</div>
+                      </div>
+                    )}
                   </div>
-
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
-                </div>
-                <button onClick={stopAndSendVoiceNote} className="text-[#00a884] font-bold text-sm hover:underline">
-                  DONE
-                </button>
-              </div>
-            ) : (
-              // NORMAL INPUT UI
-              <>
-                {/* 1. Added toggle logic and dynamic coloring to the emoji button */}
-                <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`text-xl transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-white"}`}>
-                  😊
-                </button>
-
-                <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
-                  📎
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
-
-                {/* 2. Added onFocus to auto-close the picker when the user starts typing */}
-                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onFocus={() => setShowEmojiPicker(false)} onChange={(e) => setNewMessage(e.target.value)} />
-              </>
-            )}
-
-            {/* TOGGLE MICROPHONE / SEND */}
-            {newMessage.trim() === "" && !isRecording ? (
-              <button onClick={startRecording} className="text-xl text-gray-400 hover:text-[#00a884]">
-                🎤
-              </button>
-            ) : (
-              !isRecording && (
-                <button onClick={handleSendMessage} className="bg-[#00a884] p-2 rounded-full text-[#111b21]">
-                  ➤
-                </button>
-              )
-            )}
+                ))}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
-        </div>
+
+          {/* Floating Input Pod */}
+          <footer className="mt-4 flex justify-center p-2">
+            <div className="w-full max-w-4xl bg-[#2a3942] backdrop-blur-3xl border border-white/15 rounded-[2.5rem] p-3 flex items-center gap-4 shadow-2xl">
+              <button className="w-12 h-12 rounded-2xl hover:bg-white/10 flex items-center justify-center text-xl">😊</button>
+              <input type="text" placeholder="Message secure workspace..." className="flex-1 bg-transparent py-2 outline-none text-[15px] text-white placeholder:text-gray-400 font-medium" />
+              {/* ... Send Button ... */}
+            </div>
+          </footer>
+        </main>
       </div>
     );
   }
@@ -627,12 +551,52 @@ function App() {
   // 2. OTP Verification Screen
   if (isVerifying) {
     return (
+<<<<<<< Updated upstream
       <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
         <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 max-w-sm w-full text-center">
           <h2 className="text-2xl font-bold mb-6">Enter OTP</h2>
           <input type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full bg-[#2a3942] text-center text-3xl py-4 rounded-xl mb-6 border border-transparent focus:border-[#00a884] outline-none" placeholder="000000" />
           <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] py-4 rounded-full font-bold text-[#111b21]">
             Verify
+=======
+      <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
+        <div className="bg-[#202c33] p-12 rounded-[2.5rem] border border-[#00a884]/30 max-w-sm w-full text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden">
+          {/* Subtle Background Glow */}
+          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#00a884]/5 rounded-full blur-3xl"></div>
+
+          {/* Updated Chat Logo (Matches Login) */}
+          <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20">
+            <span className="text-3xl text-[#111b21]">💬</span>
+          </div>
+
+          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Verify it's you</h2>
+          <p className="text-gray-400 text-sm mb-10 leading-relaxed">
+            We sent a code to <br />
+            <span className="text-[#00a884] font-bold">+{phone}</span>
+          </p>
+
+          <div className="group mb-8">
+            <input
+              type="text"
+              maxLength="6"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full bg-[#2a3942] text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl border-2 border-transparent group-hover:border-gray-600 focus:border-[#00a884] outline-none transition-all duration-300 shadow-inner"
+              placeholder="000000"
+            />
+          </div>
+
+          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_10px_20px_rgba(0,168,132,0.3)] py-4 rounded-2xl font-black text-[#111b21] uppercase tracking-widest transition-all duration-300 active:scale-95 mb-4">
+            Confirm Code
+          </button>
+
+          {/* Expiry Warning UI */}
+          {/* Add a visual cue to indicate the code is about to expire */}
+          <div className="mt-4">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-300 text-[10px] uppercase tracking-tighter">Valid for 3 minutes only</p>}</div>
+
+          <button onClick={() => setIsVerifying(false)} className="text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
+            ← Use different number
+>>>>>>> Stashed changes
           </button>
         </div>
       </div>
@@ -690,6 +654,53 @@ function App() {
           <span className="text-xl group-hover/btn:scale-110 transition-transform duration-300">🔒</span> Login with Fingerprint
         </button>
       </div>
+<<<<<<< Updated upstream
+=======
+
+      {showSimulation && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
+          {/* Main Card */}
+          <div className="bg-[#111b21] border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-[0_40px_80px_rgba(0,0,0,0.7)] relative overflow-hidden ring-1 ring-white/10">
+            {/* Subtle brand glow in the background */}
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00a884]/10 rounded-full blur-[80px]"></div>
+
+            <div className="relative z-10">
+              {/* REPLACED: Shield is gone. Using your branded chat logo with a glow */}
+              <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-[0_0_20px_rgba(0,168,132,0.4)]">
+                <span className="text-3xl filter drop-shadow-sm">💬</span>
+              </div>
+
+              <h3 className="text-white text-2xl font-black tracking-tight mb-2">Secure Access</h3>
+              <p className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">
+                Confirm the code below to enter your <br />
+                <span className="text-[#00a884] opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">verified workspace</span>
+              </p>
+
+              {/* Improved Code Box: Deeper contrast and neon text */}
+              <div className="bg-[#202c33] py-8 rounded-[2rem] border border-white/5 mb-10 shadow-inner group">
+                <span className="text-5xl font-mono font-black text-[#00a884] tracking-[0.15em] drop-shadow-[0_0_12px_rgba(0,168,132,0.3)] group-hover:scale-110 transition-transform duration-500 block">{generatedOTP}</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedOTP);
+                  setShowSimulation(false);
+                  setIsVerifying(true);
+                }}
+                className="w-full py-5 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-bold rounded-2xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-[0.2em] active:scale-95"
+              >
+                Copy & Continue
+              </button>
+
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-pulse"></div>
+                <span className="text-[10px] text-gray-300 uppercase tracking-[0.3em] font-bold">Secure Simulation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+>>>>>>> Stashed changes
     </div>
   );
 }
