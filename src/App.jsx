@@ -589,7 +589,13 @@ function App() {
 
                   {/* Camera (Hidden if typing) */}
                   {!newMessage && (
-                    <button className="p-1 text-gray-400 hover:text-gray-200">
+                    <button
+                      type="button"
+                      className="p-1 text-gray-400 hover:text-gray-200"
+                      onClick={() => {
+                        /* This should open profile or contact info, NOT recording */
+                      }}
+                    >
                       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
                       </svg>
@@ -600,14 +606,24 @@ function App() {
             </div>
 
             {/* 2. THE ACTION CIRCLE (Floating on the right) */}
-            <button onClick={newMessage.trim() ? handleSendMessage : isRecording ? stopAndSendVoiceNote : startRecording} className="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-white shadow-md hover:scale-105 active:scale-95 transition-all flex-shrink-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevents the click from bubbling up to other elements
+                if (newMessage.trim()) {
+                  handleSendMessage();
+                } else {
+                  isRecording ? stopAndSendVoiceNote() : startRecording();
+                }
+              }}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition-all flex-shrink-0 z-50 ${isRecording ? "bg-red-500 animate-pulse" : "bg-[#00a884]"}`}
+            >
               {newMessage.trim() ? (
-                /* Send Arrow */
+                /* Send Arrow SVG */
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" className="ml-1">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
                 </svg>
               ) : (
-                /* WhatsApp Microphone Icon */
+                /* WhatsApp Microphone SVG */
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                   <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
                   <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
