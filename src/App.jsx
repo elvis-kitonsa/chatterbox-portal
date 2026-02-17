@@ -406,7 +406,15 @@ function App() {
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
                     {/* --- BUBBLE CONTAINER --- */}
-                    <div className={`p-4 rounded-[1.8rem] max-w-[70%] shadow-xl transition-all ${msg.sender === "me" ? "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] rounded-tr-none shadow-[#00a884]/20" : "bg-[#2a3942] text-white rounded-tl-none border-t border-white/10"}`}>
+                    <div
+                      className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
+                        msg.sender === "me"
+                          ? /* 🟢 ADDED: w-fit | REMOVED: rounded-tr-none 🟢 */
+                            "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] shadow-[#00a884]/20"
+                          : /* 🟢 ADDED: w-fit | REMOVED: rounded-tl-none 🟢 */
+                            "bg-[#2a3942] text-white border-t border-white/10"
+                      }`}
+                    >
                       {/* CHECK: Is it a voice note or text? */}
                       {msg.type === "voice" ? (
                         <div className="flex items-center gap-3 min-w-[180px]">
