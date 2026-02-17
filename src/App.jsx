@@ -47,111 +47,11 @@ function App() {
   const analyzerRef = useRef(null);
 
   // 6. HELPER DATA (Emojis)
-  const emojiList = [
-    "😀",
-    "😃",
-    "😄",
-    "😁",
-    "😆",
-    "😅",
-    "😂",
-    "🤣",
-    "😊",
-    "😇",
-    "🙂",
-    "🙃",
-    "😉",
-    "😌",
-    "😍",
-    "🥰",
-    "😘",
-    "😗",
-    "😙",
-    "😚",
-    "😋",
-    "😛",
-    "😝",
-    "😜",
-    "🤪",
-    "🤨",
-    "🧐",
-    "🤓",
-    "😎",
-    "🤩",
-    "🥳",
-    "😏",
-    "😒",
-    "😞",
-    "😔",
-    "😟",
-    "😕",
-    "🙁",
-    "☹️",
-    "😣",
-    "😖",
-    "😫",
-    "😩",
-    "🥺",
-    "😢",
-    "😭",
-    "😤",
-    "😠",
-    "😡",
-    "🤬",
-    "🤯",
-    "😳",
-    "🥵",
-    "🥶",
-    "😱",
-    "😨",
-    "😰",
-    "😥",
-    "😓",
-    "🤔",
-    "🤭",
-    "🤫",
-    "🤥",
-    "😶",
-    "😐",
-    "😑",
-    "😬",
-    "🙄",
-    "😯",
-    "😦",
-    "😧",
-    "😮",
-    "😲",
-    "🥱",
-    "😴",
-    "🤤",
-    "😪",
-    "😵",
-    "🤐",
-    "🥴",
-    "🤢",
-    "🤮",
-    "🤧",
-    "😷",
-    "🤒",
-    "🤕",
-    "🤑",
-    "🤠",
-    "😈",
-    "👿",
-    "👹",
-    "👺",
-    "🤡",
-    "💩",
-    "👻",
-    "💀",
-    "☠️",
-    "👽",
-    "👾",
-    "🤖",
-    "🎃",
-    "😺",
-    "😸",
-    "😻",
+  const EMOJI_CATEGORIES = [
+    { name: "Smileys", emojis: ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘"] },
+    { name: "Gestures", emojis: ["👍", "👎", "👊", "✌️", "🤟", "🤘", "👌", "🤌", "🤏", "🖐️", "✋", "🖖", "👋", "🤙", "💪", "🖕"] },
+    { name: "Hearts", emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖"] },
+    { name: "Activities", emojis: ["⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸", "🏒", "🏑"] },
   ];
 
   // --- AUTHENTICATION LOGIC ---
@@ -548,8 +448,40 @@ function App() {
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
             {/* 1. THE MAIN CAPSULE (White/Gray background) */}
             <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm ${theme === "dark" ? "bg-[#2a3942]" : "bg-white"}`}>
+              {/* Emoji Picker Pop-up */}
+              {showEmojiPicker && (
+                <div className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-3 border-b border-white/5 bg-[#202c33] text-xs font-bold text-gray-400 uppercase tracking-widest">Emoji Picker</div>
+
+                  <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+                    {EMOJI_CATEGORIES.map((cat) => (
+                      <div key={cat.name} className="mb-4">
+                        <h4 className="text-[10px] text-gray-500 font-bold mb-2 uppercase">{cat.name}</h4>
+                        <div className="grid grid-cols-6 gap-2">
+                          {cat.emojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => {
+                                setNewMessage((prev) => prev + emoji);
+                                // WhatsApp usually keeps it open until you click away
+                              }}
+                              className="text-xl hover:bg-white/10 p-1 rounded-lg transition-colors active:scale-125"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Emoji Button */}
-              <button className="p-1 text-gray-400 hover:text-gray-200 transition-colors">
+              <button
+                type="button" // Important to prevent form submission
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className={`p-1 transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-gray-200"}`}
+              >
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                   <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
                 </svg>
@@ -587,7 +519,7 @@ function App() {
                     </svg>
                   </button>
 
-                  {/* Camera (Hidden if typing) */}
+                  {/* Contacts (Profile) */}
                   {!newMessage && (
                     <button
                       type="button"
