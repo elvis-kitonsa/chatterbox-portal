@@ -505,22 +505,39 @@ function App() {
                 .filter((m) => m.contactId === activeContactId || !m.contactId)
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
-                    {msg.sender === "me" ? (
-                      /* --- YOUR OUTGOING BUBBLE (STAYS THE SAME OR ADJUSTED) --- */
-                      <div className="p-4 rounded-[1.8rem] max-w-[70%] bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] rounded-tr-none shadow-xl shadow-[#00a884]/20">
-                        <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
-                        <div className="flex items-center justify-end gap-1.5 mt-2 opacity-70 text-[9px] font-bold">
-                          <span>{msg.time}</span>
-                          <span>✓✓</span>
+                    {/* --- BUBBLE CONTAINER --- */}
+                    <div className={`p-4 rounded-[1.8rem] max-w-[70%] shadow-xl transition-all ${msg.sender === "me" ? "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] rounded-tr-none shadow-[#00a884]/20" : "bg-[#2a3942] text-white rounded-tl-none border-t border-white/10"}`}>
+                      {/* CHECK: Is it a voice note or text? */}
+                      {msg.type === "voice" ? (
+                        <div className="flex items-center gap-3 min-w-[180px]">
+                          <button
+                            onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-transform active:scale-90 ${msg.sender === "me" ? "bg-[#111b21]/20 hover:bg-[#111b21]/40" : "bg-[#00a884] hover:bg-[#05cd99]"}`}
+                          >
+                            {playingAudioId === msg.id ? "⏸️" : "▶️"}
+                          </button>
+                          <div className="flex-1">
+                            {/* Visual Audio Progress Bar */}
+                            <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+                              <div className={`h-full bg-current transition-all duration-300 ${playingAudioId === msg.id ? "w-full animate-pulse" : "w-0"}`} />
+                            </div>
+                            <div className="flex justify-between mt-1.5 px-1">
+                              <span className="text-[9px] font-black uppercase">{formatTime(msg.duration)}</span>
+                              <span className="text-[9px] font-bold opacity-60 italic">{msg.time}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      /* --- PASTE THE UPDATED INCOMING BUBBLE HERE --- */
-                      <div className="bg-[#2a3942] text-white border-t border-white/10 rounded-[1.8rem] rounded-tl-none p-4 shadow-xl max-w-[70%]">
-                        <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
-                        <div className="text-[10px] text-gray-400 mt-2 text-right font-bold italic">{msg.time}</div>
-                      </div>
-                    )}
+                      ) : (
+                        /* STANDARD TEXT RENDER */
+                        <>
+                          <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
+                          <div className={`flex items-center justify-end gap-1.5 mt-2 text-[9px] font-bold ${msg.sender === "me" ? "opacity-70" : "text-gray-400"}`}>
+                            <span>{msg.time}</span>
+                            {msg.sender === "me" && <span className={msg.status === "read" ? "text-blue-700" : ""}>✓✓</span>}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               <div ref={messagesEndRef} />
@@ -528,31 +545,75 @@ function App() {
           </div>
 
           {/* Floating Input Pod */}
-          <footer className="mt-4 flex justify-center p-2">
-            <div className="w-full max-w-4xl bg-[#2a3942] backdrop-blur-3xl border border-white/15 rounded-[2.5rem] p-3 flex items-center gap-4 shadow-2xl">
-              <button className="w-12 h-12 rounded-2xl hover:bg-white/10 flex items-center justify-center text-xl">😊</button>
-              <input
-                type="text"
-                placeholder="Message secure workspace..."
-                className="flex-1 bg-transparent py-2 outline-none text-[15px] text-white placeholder:text-gray-400 font-medium"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              />
-              <button onClick={handleSendMessage} className="w-12 h-12 rounded-2xl bg-[#00a884] flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#00a884]/20" aria-label="Send Message">
-                {/* Actual Send Arrow SVG */}
-                <svg viewBox="0 0 24 24" width="24" height="24" className="fill-[#111b21] transform rotate-0 -translate-x-2.35">
-                  <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+          <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
+            {/* 1. THE MAIN CAPSULE (White/Gray background) */}
+            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm ${theme === "dark" ? "bg-[#2a3942]" : "bg-white"}`}>
+              {/* Emoji Button */}
+              <button className="p-1 text-gray-400 hover:text-gray-200 transition-colors">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
                 </svg>
               </button>
-              {/* ... Send Button ... */}
+
+              {isRecording ? (
+                /* RECORDING STATE: Show Timer & Visualizer inside capsule */
+                <div className="flex-1 flex items-center justify-between px-2">
+                  <span className="text-red-500 animate-pulse font-medium">{formatTime(recordingTime)}</span>
+                  <div className="flex gap-0.5 items-center h-4">
+                    {visualizerData.map((v, i) => (
+                      <div key={i} className="w-0.5 bg-gray-400 rounded-full" style={{ height: `${Math.max(20, v * 100)}%` }} />
+                    ))}
+                  </div>
+                  <button onClick={cancelRecording} className="text-[11px] font-bold text-gray-400 uppercase tracking-wider hover:text-red-500">
+                    Slide to cancel
+                  </button>
+                </div>
+              ) : (
+                /* NORMAL STATE: Input + Attachment */
+                <>
+                  <input
+                    type="text"
+                    placeholder="Message"
+                    className="flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] text-white placeholder:text-gray-400 outline-none"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  />
+
+                  {/* Attachment (Clip) */}
+                  <button onClick={() => fileInputRef.current?.click()} className="p-1 text-gray-400 hover:text-gray-200 -rotate-45">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                      <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
+                    </svg>
+                  </button>
+
+                  {/* Camera (Hidden if typing) */}
+                  {!newMessage && (
+                    <button className="p-1 text-gray-400 hover:text-gray-200">
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                      </svg>
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-            <input
-              type="file"
-              ref={fileInputRef} // This connects the variable to the element
-              onChange={handleFileUpload}
-              className="hidden" // Keeps it invisible
-            />
+
+            {/* 2. THE ACTION CIRCLE (Floating on the right) */}
+            <button onClick={newMessage.trim() ? handleSendMessage : isRecording ? stopAndSendVoiceNote : startRecording} className="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-white shadow-md hover:scale-105 active:scale-95 transition-all flex-shrink-0">
+              {newMessage.trim() ? (
+                /* Send Arrow */
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" className="ml-1">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+              ) : (
+                /* WhatsApp Microphone Icon */
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+                </svg>
+              )}
+            </button>
           </footer>
         </main>
       </div>
