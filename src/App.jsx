@@ -441,10 +441,12 @@ function App() {
                             <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
 
                             {msg.sender === "me" && (
-                              <span className="flex items-center ml-1 text-[11px] font-bold">
-                                {msg.status === "sent" && <span className="text-gray-400">✓</span>}
-                                {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
-                                {msg.status === "read" && <span className="text-blue-500">✓✓</span>}
+                              <span className="flex items-center ml-1 text-[12px] font-black">
+                                {msg.status === "sent" && <span className="text-black/30">✓</span>}
+                                {msg.status === "delivered" && <span className="text-black/30">✓✓</span>}
+
+                                {/* 🚀 THE VISIBILITY UPGRADE 🚀 */}
+                                {msg.status === "read" && <span className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.9)] animate-pulse-subtle">✓✓</span>}
                               </span>
                             )}
                           </div>
