@@ -293,6 +293,7 @@ function App() {
       audioPlayerRef.current.pause();
       setPlayingAudioId(null);
     } else {
+      setCurrentAudioTime(0);
       audioPlayerRef.current.src = url;
       audioPlayerRef.current.play();
       setPlayingAudioId(id);
@@ -637,6 +638,8 @@ function App() {
             </button>
           </footer>
         </main>
+        {/* Hidden Audio Engine */}
+        <audio ref={audioPlayerRef} className="hidden" />
       </div>
     );
   }
