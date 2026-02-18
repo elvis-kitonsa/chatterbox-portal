@@ -196,6 +196,10 @@ function App() {
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
+
+  // 1. Add this state variable at the top of your component logic
+  const [currentAudioTime, setCurrentAudioTime] = React.useState(0);
+
   // Actual Recording Logic
   const startRecording = async () => {
     try {
@@ -283,6 +287,7 @@ function App() {
   };
 
   // Playback Logic
+  // 2. Update your togglePlayVoiceNote function to track time
   const togglePlayVoiceNote = (id, url) => {
     if (playingAudioId === id) {
       audioPlayerRef.current.pause();
@@ -291,13 +296,23 @@ function App() {
       audioPlayerRef.current.src = url;
       audioPlayerRef.current.play();
       setPlayingAudioId(id);
-      audioPlayerRef.current.onended = () => setPlayingAudioId(null);
+
+      // This updates the timer as the audio plays
+      audioPlayerRef.current.ontimeupdate = () => {
+        setCurrentAudioTime(audioPlayerRef.current.currentTime);
+      };
+
+      audioPlayerRef.current.onended = () => {
+        setPlayingAudioId(null);
+        setCurrentAudioTime(0); // Reset when finished
+      };
     }
   };
 
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const s = seconds || 0;
+    const mins = Math.floor(s / 60);
+    const secs = Math.floor(s % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
   // --- NEW VOICE NOTE FUNCTIONS END ---
@@ -416,21 +431,45 @@ function App() {
                     >
                       {/* CHECK: Is it a voice note or text? */}
                       {msg.type === "voice" ? (
-                        <div className="flex items-center gap-3 min-w-[180px]">
-                          <button
-                            onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-transform active:scale-90 ${msg.sender === "me" ? "bg-[#111b21]/20 hover:bg-[#111b21]/40" : "bg-[#00a884] hover:bg-[#05cd99]"}`}
-                          >
-                            {playingAudioId === msg.id ? "⏸️" : "▶️"}
+                        <div className="flex items-center gap-3 min-w-[320px] py-2 px-1">
+                          {/* AUTHENTIC SPEED BADGE */}
+                          <div className="flex-shrink-0 bg-black/10 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold text-[#111b21]">1x</div>
+
+                          {/* 2. THE AUTHENTIC PLAY/PAUSE BUTTON */}
+                          <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-90">
+                            {playingAudioId === msg.id ? (
+                              <div className="flex gap-1">
+                                <div className="w-[3px] h-5 bg-[#111b21] rounded-full"></div>
+                                <div className="w-[3px] h-5 bg-[#111b21] rounded-full"></div>
+                              </div>
+                            ) : (
+                              <div className="ml-1 w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-[#111b21]"></div>
+                            )}
                           </button>
-                          <div className="flex-1">
-                            {/* Visual Audio Progress Bar */}
-                            <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
-                              <div className={`h-full bg-current transition-all duration-300 ${playingAudioId === msg.id ? "w-full animate-pulse" : "w-0"}`} />
+
+                          <div className="flex-1 flex flex-col pt-1">
+                            {/* DENSE WAVEFORM */}
+                            <div className="flex items-center gap-[1.5px] h-8 mb-1">
+                              {[...Array(40)].map((_, i) => {
+                                const heights = [20, 45, 30, 70, 25, 80, 50, 35, 90, 40, 60, 25, 75, 50, 30, 80, 45, 60, 95, 30, 55, 70, 35, 65, 45, 90, 55, 25, 80, 35, 65, 45, 75, 25, 90, 55, 30, 85, 40, 60];
+
+                                // Use a fallback of 0 to prevent white screen crashes
+                                const time = currentAudioTime || 0;
+                                const duration = msg.duration || 5;
+                                const progress = (time / duration) * 40;
+                                const isPlayed = playingAudioId === msg.id && i < progress;
+
+                                return <div key={i} className={`w-[2px] rounded-full transition-all duration-150 ${isPlayed ? "bg-[#111b21]" : "bg-[#111b21]/25"}`} style={{ height: `${heights[i]}%` }} />;
+                              })}
                             </div>
-                            <div className="flex justify-between mt-1.5 px-1">
-                              <span className="text-[9px] font-black uppercase">{formatTime(msg.duration)}</span>
-                              <span className="text-[9px] font-bold opacity-60 italic">{msg.time}</span>
+
+                            {/* TIMER AND DOUBLE TICKS */}
+                            <div className="flex justify-between items-center pr-1">
+                              <span className="text-[11px] font-medium text-[#111b21]/70 tabular-nums">{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-medium opacity-50">{msg.time}</span>
+                                {msg.sender === "me" && <span className="text-[#53bdeb] text-[16px] leading-none font-black">{msg.status === "read" ? "✓✓" : "✓"}</span>}
+                              </div>
                             </div>
                           </div>
                         </div>
