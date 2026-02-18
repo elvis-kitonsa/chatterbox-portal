@@ -45,7 +45,7 @@ function App() {
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
   const audioPlayerRef = useRef(new Audio()); // Global audio player instance
-  const analyzerRef = useRef(null);
+  const analyzerRef = useRef(null); // This creates the hook we will use to grab the hidden input file
 
   // 6. HELPER DATA (Emojis)
   const EMOJI_CATEGORIES = [
@@ -178,19 +178,21 @@ function App() {
 
     // For now, we create a local URL to preview the image
     const fileUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith("image/");
 
     const msg = {
       id: Date.now(),
       text: file.name,
       fileUrl: fileUrl,
-      type: file.type.startsWith("image/") ? "image" : "file",
+      type: isImage ? "image" : "file",
       sender: "me",
       contactId: activeContactId,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "sent",
     };
 
-    setMessages([...messages, msg]);
+    setMessages((prevMessages) => [...prevMessages, msg]);
+    e.target.value = "";
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
@@ -534,6 +536,9 @@ function App() {
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
                   </button>
+
+                  {/* HIDDEN INPUT BRIDGE */}
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} accept="image/,application/pdf" />
 
                   {/* Contacts (Profile) */}
                   {!newMessage && (
