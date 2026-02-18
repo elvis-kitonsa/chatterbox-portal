@@ -45,7 +45,7 @@ function App() {
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
   const audioPlayerRef = useRef(new Audio()); // Global audio player instance
-  const analyzerRef = useRef(null);
+  const analyzerRef = useRef(null); // This creates the hook we will use to grab the hidden input file
 
   // 6. HELPER DATA (Emojis)
   const EMOJI_CATEGORIES = [
@@ -178,19 +178,21 @@ function App() {
 
     // For now, we create a local URL to preview the image
     const fileUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith("image/");
 
     const msg = {
       id: Date.now(),
       text: file.name,
       fileUrl: fileUrl,
-      type: file.type.startsWith("image/") ? "image" : "file",
+      type: isImage ? "image" : "file",
       sender: "me",
       contactId: activeContactId,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "sent",
     };
 
-    setMessages([...messages, msg]);
+    setMessages((prevMessages) => [...prevMessages, msg]);
+    e.target.value = "";
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
@@ -435,20 +437,33 @@ function App() {
                       ) : (
                         /* STANDARD TEXT RENDER */
                         <>
-                          <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
-                          <div className="flex items-center justify-end gap-1.5 mt-2 text-[9px] font-bold">
-                            {/* 💡 Move opacity here so it doesn't dull the blue ticks */}
-                            <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
-
-                            {msg.sender === "me" && (
-                              <span className="flex items-center ml-1 text-[12px] font-black">
-                                {msg.status === "sent" && <span className="text-black/30">✓</span>}
-                                {msg.status === "delivered" && <span className="text-black/30">✓✓</span>}
-
-                                {/* 🚀 THE VISIBILITY UPGRADE 🚀 */}
-                                {msg.status === "read" && <span className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.9)] animate-pulse-subtle">✓✓</span>}
-                              </span>
+                          <div className="flex flex-col gap-2">
+                            {msg.type === "image" ? (
+                              <img src={msg.fileUrl} alt="attachment" className="max-w-[240px] rounded-2xl cursor-pointer hover:ring-2 hover:ring-white/20 transition-all" onClick={() => window.open(msg.fileUrl, "_blank")} />
+                            ) : msg.type === "file" ? (
+                              <a href={msg.fileUrl} download={msg.text} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-black/10 p-3 rounded-2xl hover:bg-black/20 transition-colors border border-white/5">
+                                <div className="w-10 h-10 bg-[#00a884] rounded-xl flex items-center justify-center shadow-lg">
+                                  <span className="text-white text-lg">📄</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-bold truncate pr-2">{msg.text}</p>
+                                  <p className="text-[10px] opacity-60 uppercase font-black">Open File</p>
+                                </div>
+                              </a>
+                            ) : (
+                              <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
                             )}
+
+                            <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-bold">
+                              <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
+                              {msg.sender === "me" && (
+                                <span className="flex items-center ml-1 text-[12px] font-black">
+                                  {msg.status === "sent" && <span className="text-black/30">✓</span>}
+                                  {msg.status === "delivered" && <span className="text-black/30">✓✓</span>}
+                                  {msg.status === "read" && <span className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.9)] animate-pulse-subtle">✓✓</span>}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </>
                       )}
@@ -534,6 +549,9 @@ function App() {
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
                   </button>
+
+                  {/* HIDDEN INPUT BRIDGE */}
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} accept="image/,application/pdf" />
 
                   {/* Contacts (Profile) */}
                   {!newMessage && (
