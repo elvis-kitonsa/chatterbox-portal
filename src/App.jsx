@@ -405,6 +405,7 @@ function App() {
                 .filter((m) => m.contactId === activeContactId || !m.contactId)
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
+<<<<<<< Updated upstream
                     {/* --- BUBBLE CONTAINER --- */}
                     <div className={`p-4 rounded-[1.8rem] max-w-[70%] shadow-xl transition-all ${msg.sender === "me" ? "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] rounded-tr-none shadow-[#00a884]/20" : "bg-[#2a3942] text-white rounded-tl-none border-t border-white/10"}`}>
                       {/* CHECK: Is it a voice note or text? */}
@@ -424,18 +425,119 @@ function App() {
                             <div className="flex justify-between mt-1.5 px-1">
                               <span className="text-[9px] font-black uppercase">{formatTime(msg.duration)}</span>
                               <span className="text-[9px] font-bold opacity-60 italic">{msg.time}</span>
+=======
+                    <div
+                      className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
+                        msg.sender === "me"
+                          ? "bg-[#054740] text-white shadow-[#054740]/20" // 🟢 New Sophisticated Dark Teal
+                          : "bg-[#2a3942] text-white border-t border-white/10"
+                      }`}
+                    >
+                      {msg.type === "voice" ? (
+                        <div className="flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-1 px-1">
+                          {/* 1. REFINED SPEED BADGE */}
+                          <div className="flex-shrink-0 bg-white/10 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold text-white border border-white/5">1x</div>
+
+                          {/* 2. WHITE PLAY/PAUSE BUTTON */}
+                          <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group">
+                            {playingAudioId === msg.id ? (
+                              <div className="flex gap-1.5">
+                                <div className="w-[3px] h-5 bg-white rounded-full animate-pulse"></div>
+                                <div className="w-[3px] h-5 bg-white rounded-full animate-pulse"></div>
+                              </div>
+                            ) : (
+                              <div className="ml-1 w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-white group-hover:border-l-[#05cd99] transition-colors"></div>
+                            )}
+                          </button>
+
+                          <div className="flex-1 flex flex-col pt-1">
+                            {/* 3. ADAPTIVE WAVEFORM */}
+                            <div className="flex items-center gap-[1.5px] h-8 mb-1">
+                              {[...Array(35)].map((_, i) => {
+                                const heights = [20, 45, 30, 70, 25, 80, 50, 35, 90, 40, 60, 25, 75, 50, 30, 80, 45, 60, 95, 30, 55, 70, 35, 65, 45, 90, 55, 25, 80, 35, 65, 45, 75, 25, 90];
+                                const time = currentAudioTime || 0;
+                                const duration = msg.duration || 5;
+                                const progress = (time / duration) * 35;
+                                const isPlayed = playingAudioId === msg.id && i < progress;
+
+                                return <div key={i} className={`w-[2px] rounded-full transition-all duration-150 ${isPlayed ? "bg-white" : "bg-white/30"}`} style={{ height: `${heights[i % heights.length]}%` }} />;
+                              })}
+                            </div>
+
+                            {/* 4. TIMER AND SVG TICKS */}
+                            <div className="flex justify-between items-center pr-1">
+                              <span className="text-[10px] font-medium text-white/70 tabular-nums">{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] font-bold text-white/50">{msg.time}</span>
+                                {msg.sender === "me" && (
+                                  <span className="flex items-center">
+                                    {msg.status === "read" ? (
+                                      /* Enhanced Blue Ticks for Dark Mode */
+                                      <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                        <path d="M1 5L5 9L15 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M5 5L9 9L19 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />
+                                      </svg>
+                                    ) : (
+                                      /* Clean White Ticks */
+                                      <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                        <path d="M1 5L5 9L15 1" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        {msg.status === "delivered" && <path d="M5 5L9 9L19 1" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />}
+                                      </svg>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+>>>>>>> Stashed changes
                             </div>
                           </div>
                         </div>
                       ) : (
+<<<<<<< Updated upstream
                         /* STANDARD TEXT RENDER */
                         <>
                           <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
                           <div className={`flex items-center justify-end gap-1.5 mt-2 text-[9px] font-bold ${msg.sender === "me" ? "opacity-70" : "text-gray-400"}`}>
                             <span>{msg.time}</span>
                             {msg.sender === "me" && <span className={msg.status === "read" ? "text-blue-700" : ""}>✓✓</span>}
+=======
+                        <div className="flex flex-col gap-2">
+                          {/* Image/File/Text Logic */}
+                          {msg.type === "image" ? (
+                            <img src={msg.fileUrl} alt="attachment" className="max-w-[240px] rounded-2xl cursor-pointer" />
+                          ) : msg.type === "file" ? (
+                            /* File Link UI */
+                            <div className="flex items-center gap-3 bg-black/10 p-3 rounded-2xl">
+                              <span className="text-white">📄</span>
+                              <p className="text-[13px] font-bold truncate">{msg.text}</p>
+                            </div>
+                          ) : (
+                            <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
+                          )}
+
+                          {/* --- THE FIX: UNIFORM TICK CATALOGUE --- */}
+                          <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-bold">
+                            <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
+
+                            {msg.sender === "me" && (
+                              <span className="flex items-center ml-1">
+                                {msg.status === "read" ? (
+                                  /* Blue Ticks */
+                                  <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                    <path d="M1 5L5 9L15 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M5 5L9 9L19 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />
+                                  </svg>
+                                ) : (
+                                  /* Uniform White Ticks */
+                                  <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                    <path d="M1 5L5 9L15 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                                    {msg.status === "delivered" && <path d="M5 5L9 9L19 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform="translate(-4, 0)" />}
+                                  </svg>
+                                )}
+                              </span>
+                            )}
+>>>>>>> Stashed changes
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
