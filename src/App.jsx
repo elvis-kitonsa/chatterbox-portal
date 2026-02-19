@@ -38,6 +38,7 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
   const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
+  const [isSharingContact, setIsSharingContact] = useState(false);
 
   // 5. REFS
   const messagesEndRef = useRef(null);
@@ -79,6 +80,21 @@ function App() {
     } else {
       alert("Invalid code. Check the simulation box!");
     }
+  };
+
+  const handleShareContact = (contact) => {
+    const contactMsg = {
+      id: Date.now(),
+      sender: "me",
+      type: "contact", // This triggers your contact card UI
+      text: contact.name,
+      phone: contact.phone,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: "sent",
+      contactId: activeContactId,
+    };
+    setMessages([...messages, contactMsg]);
+    setIsSharingContact(false);
   };
 
   // --- CHAT EFFECTS ---
@@ -405,6 +421,36 @@ function App() {
         {/* 💬 2. FLOATING MESSAGING HUB */}
         <main className="flex-1 m-4 flex flex-col relative z-10">
           {/* Floating Header */}
+          {isSharingContact && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-in fade-in duration-200">
+              <div className="bg-[#202c33] w-full max-w-sm rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#111b21]">
+                  <h3 className="text-white font-black tracking-tight">Select Contact</h3>
+                  <button onClick={() => setIsSharingContact(false)} className="text-gray-400 hover:text-white text-xl">
+                    ✕
+                  </button>
+                </div>
+                <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
+                  {contacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      onClick={() => {
+                        handleShareContact(contact);
+                        setIsSharingContact(false); // Auto-close after selection
+                      }}
+                      className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl cursor-pointer transition-all active:scale-95"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#05cd99] flex items-center justify-center text-[#111b21] font-bold text-lg">{contact.name.charAt(0)}</div>
+                      <div>
+                        <p className="text-white font-bold text-sm">{contact.name}</p>
+                        <p className="text-gray-500 text-xs">{contact.phone}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           <header className={`p-4 rounded-[2rem] border border-white/5 backdrop-blur-xl mb-4 flex items-center justify-between shadow-xl ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
@@ -508,10 +554,26 @@ function App() {
                       ) : (
                         <div className="flex flex-col gap-2">
                           {/* Image/File/Text Logic */}
-                          {msg.type === "image" ? (
+                          {/* 1. Insert the check for "contact" type here */}
+                          {msg.type === "contact" ? (
+                            <div className="flex flex-col gap-3 min-w-[220px] p-1">
+                              <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                                {/* Avatar with dynamic initial based on contact name */}
+                                <div className="w-11 h-11 rounded-full bg-[#00a884] flex items-center justify-center text-white font-bold text-lg shadow-inner">{msg.text?.charAt(0)}</div>
+                                <div className="flex-1">
+                                  <p className="text-[14px] font-bold text-white">{msg.text}</p>
+                                  <p className="text-[10px] text-white/50 uppercase tracking-wider font-black">Contact</p>
+                                </div>
+                              </div>
+
+                              {/* Action Button to start a chat with the shared contact */}
+                              <button className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[12px] font-bold transition-all border border-white/5 active:scale-95 text-white" onClick={() => console.log("Messaging:", msg.phone)}>
+                                Message
+                              </button>
+                            </div>
+                          ) : msg.type === "image" ? (
                             <img src={msg.fileUrl} alt="attachment" className="max-w-[240px] rounded-2xl cursor-pointer" />
                           ) : msg.type === "file" ? (
-                            /* File Link UI */
                             <div className="flex items-center gap-3 bg-black/10 p-3 rounded-2xl">
                               <span className="text-white">📄</span>
                               <p className="text-[13px] font-bold truncate">{msg.text}</p>
@@ -631,14 +693,9 @@ function App() {
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} accept="image/,application/pdf" />
 
                   {/* Contacts (Profile) */}
+                  {/* Contacts Sharing Button */}
                   {!newMessage && (
-                    <button
-                      type="button"
-                      className="p-1 text-gray-400 hover:text-gray-200"
-                      onClick={() => {
-                        /* This should open profile or contact info, NOT recording */
-                      }}
-                    >
+                    <button type="button" className="p-1 text-gray-400 hover:text-gray-200 transition-colors" onClick={() => setIsSharingContact(true)}>
                       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
                       </svg>
