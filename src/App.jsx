@@ -3,169 +3,160 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function App() {
-  // Your list of contacts
-  // State to hold the list of contacts, each with an id, name, status, and color for the avatar.
-  // This will be used to render the contact list in the sidebar.
+  // 1. AUTHENTICATION & PORTAL STATES
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [generatedOTP, setGeneratedOTP] = useState(""); // Needed for simulation
+  const [showSimulation, setShowSimulation] = useState(false); // Needed for modal
+  const [isExpired, setIsExpired] = useState(false); // For OTP countdown
+
+  // 2. CHAT & CONTACT STATES
   const [contacts, setContacts] = useState([
     { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500" },
     { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500" },
     { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500" },
   ]);
-
-  // Track which contact is currently selected
-  const [activeContactId, setActiveContactId] = useState("tech-lead");
-
-  // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
-  const [isTyping, setIsTyping] = useState(false);
-
-  // States to track if the user is unlocked, to store the phone number, and to manage OTP input
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-
-  // State to make the top search bar filter messages and contacts in real-time as the user types.
-  // This will be used to implement the search functionality in the sidebar.
-  const [searchTerm, setSearchTerm] = useState("");
-
-  //Live Chat Functionality States:
+  const [activeContactId, setActiveContactId] = useState("tech-lead"); // Track which contact is currently selected
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
-    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
+    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read" /*Options: "sent", "delivered", "read" */ },
+    { id: 3, text: "Hello chat", sender: "me", time: "3:29 PM", status: "delivered" },
   ]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState(""); // This will be used to store the text of the new message being typed in the input field.
+  const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
 
-  const messagesEndRef = useRef(null);
+  // 3. UI & THEME STATES
+  const [theme, setTheme] = useState("dark"); // Default to dark
+  const [isTyping, setIsTyping] = useState(false); // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [wallpaper, setWallpaper] = useState("classic"); // State to manage the current wallpaper selection for the chat background. This allows users to switch between different wallpapers, enhancing personalization.
 
-  // Add this near your other useState hooks
-  // This will track if the user is currently recording a voice message and how long they've been
-  // recording.
+  // 4. VOICE & MEDIA STATES (Keep these for later)
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const timerRef = useRef(null);
+  const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
+  const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
+  const [isSharingContact, setIsSharingContact] = useState(false);
 
-  // Refs to handle media recording and audio playback
+  // 5. REFS
+  const messagesEndRef = useRef(null);
+  const timerRef = useRef(null);
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
-  const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
   const audioPlayerRef = useRef(new Audio()); // Global audio player instance
+  const analyzerRef = useRef(null); // This creates the hook we will use to grab the hidden input file
+  const emojiPickerRef = useRef(null); // To track the picker and a useEffect to listen for clicks on the rest of the document
 
-  // This ref will be used to visualize the audio levels while recording a voice note.
-  // In other words, it will allow us to create a dynamic visualizer that reacts to the user's voice input in real-time.
-  const analyzerRef = useRef(null);
-  const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
-
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  // A small sample of emojis. You can expand this list or group them by category!
-  // State to manage the visibility of the emoji picker and a list of emojis to display in the picker.
-  // This will allow users to insert emojis into their messages.
-  const emojiList = [
-    "😀",
-    "😃",
-    "😄",
-    "😁",
-    "😆",
-    "😅",
-    "😂",
-    "🤣",
-    "😊",
-    "😇",
-    "🙂",
-    "🙃",
-    "😉",
-    "😌",
-    "😍",
-    "🥰",
-    "😘",
-    "😗",
-    "😙",
-    "😚",
-    "😋",
-    "😛",
-    "😝",
-    "😜",
-    "🤪",
-    "🤨",
-    "🧐",
-    "🤓",
-    "😎",
-    "🤩",
-    "🥳",
-    "😏",
-    "😒",
-    "😞",
-    "😔",
-    "😟",
-    "😕",
-    "🙁",
-    "☹️",
-    "😣",
-    "😖",
-    "😫",
-    "😩",
-    "🥺",
-    "😢",
-    "😭",
-    "😤",
-    "😠",
-    "😡",
-    "🤬",
-    "🤯",
-    "😳",
-    "🥵",
-    "🥶",
-    "😱",
-    "😨",
-    "😰",
-    "😥",
-    "😓",
-    "🤔",
-    "🤭",
-    "🤫",
-    "🤥",
-    "😶",
-    "😐",
-    "😑",
-    "😬",
-    "🙄",
-    "😯",
-    "😦",
-    "😧",
-    "😮",
-    "😲",
-    "🥱",
-    "😴",
-    "🤤",
-    "😪",
-    "😵",
-    "🤐",
-    "🥴",
-    "🤢",
-    "🤮",
-    "🤧",
-    "😷",
-    "🤒",
-    "🤕",
-    "🤑",
-    "🤠",
-    "😈",
-    "👿",
-    "👹",
-    "👺",
-    "🤡",
-    "💩",
-    "👻",
-    "💀",
-    "☠️",
-    "👽",
-    "👾",
-    "🤖",
-    "🎃",
-    "😺",
-    "😸",
-    "😻",
+  // 6. HELPER DATA (Emojis)
+  const EMOJI_CATEGORIES = [
+    { name: "Smileys", emojis: ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘"] },
+    { name: "Gestures", emojis: ["👍", "👎", "👊", "✌️", "🤟", "🤘", "👌", "🤌", "🤏", "🖐️", "✋", "🖖", "👋", "🤙", "💪", "🖕"] },
+    { name: "Hearts", emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖"] },
+    { name: "Activities", emojis: ["⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸", "🏒", "🏑"] },
   ];
+
+  // --- AUTHENTICATION LOGIC ---
+
+  // Updated to trigger the Simulation Modal
+  const handleRequestOtp = () => {
+    if (phone && phone.length > 5) {
+      // Create a random 6-digit code for the simulation
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOTP(newOtp);
+      setShowSimulation(true); // This opens the "Secure Access" modal we built
+    } else {
+      alert("Please enter a valid phone number.");
+    }
+  };
+
+  // Updated to check against the generated code
+  const handleVerifyOtp = () => {
+    // For development, let's use '123456' as our secret code
+    if (otp === generatedOTP || otp === "123456") {
+      setIsUnlocked(true);
+      setIsVerifying(false);
+    } else {
+      alert("Invalid code. Check the simulation box!");
+    }
+  };
+
+  const handleShareContact = (contact) => {
+    const contactMsg = {
+      id: Date.now(),
+      sender: "me",
+      type: "contact", // This triggers your contact card UI
+      text: contact.name,
+      phone: contact.phone,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: "sent",
+      contactId: activeContactId,
+    };
+    setMessages([...messages, contactMsg]);
+    setIsSharingContact(false);
+  };
+
+  // --- CHAT EFFECTS ---
+  // This sets a typing indicator and simulates a reply from the other person after you send a message.
+  // It checks if the last message was sent by "me" and then sets a timer to show "typing..." and another
+  // timer to add a reply message after a delay.
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+
+    if (lastMessage?.sender === "me" && !lastMessage.isReplyGenerated) {
+      // Mark as processed so we don't trigger infinite loops
+      lastMessage.isReplyGenerated = true;
+
+      const typingTimer = setTimeout(() => setIsTyping(true), 1500);
+
+      const replyTimer = setTimeout(() => {
+        const activeContact = contacts.find((c) => c.id === activeContactId);
+        const reply = {
+          id: Date.now(),
+          text: `Hey! This is ${activeContact?.name}. Received your message: "${lastMessage.text}"`,
+          sender: "them",
+          contactId: activeContactId,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, reply]);
+        setIsTyping(false);
+      }, 4000);
+
+      return () => {
+        clearTimeout(typingTimer);
+        clearTimeout(replyTimer);
+      };
+    }
+  }, [messages, activeContactId, contacts]);
+
+  // This handles the global click event to close the emoji picker
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // If the picker is open AND the click was NOT inside the picker ref
+      if (showEmojiPicker && emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+
+    // Bind the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Unbind the listener on clean up
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
+  // Helper to get theme-based classes
+  const themeClasses = {
+    bg: theme === "dark" ? "bg-[#111b21]" : "bg-[#f0f2f5]",
+    sidebarBg: theme === "dark" ? "bg-[#111b21]" : "bg-white",
+    headerBg: theme === "dark" ? "bg-[#202c33]" : "bg-[#f0f2f5]",
+    chatBg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#efeae2]",
+    text: theme === "dark" ? "text-[#e9edef]" : "text-[#111b21]",
+    secondaryText: theme === "dark" ? "text-gray-400" : "text-gray-600",
+    inputBg: theme === "dark" ? "bg-[#2a3942]" : "bg-white",
+  };
 
   // Function to scroll to the bottom
   const scrollToBottom = () => {
@@ -211,36 +202,6 @@ function App() {
     }
   }, [messages]);
 
-  // This sets a typing indicator and simulates a reply from the other person after you send a message.
-  // It checks if the last message was sent by "me" and then sets a timer to show "typing..." and another
-  // timer to add a reply message after a delay.
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-
-    if (lastMessage?.sender === "me") {
-      const typingTimer = setTimeout(() => {
-        setIsTyping(true);
-      }, 1000);
-
-      const replyTimer = setTimeout(() => {
-        const reply = {
-          id: Date.now(),
-          text: "Got it! I'm looking into the ChatterBox code now. 👍",
-          sender: "them",
-          contactId: activeContactId,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        };
-        setMessages((prev) => [...prev, reply]);
-        setIsTyping(false);
-      }, 4000);
-
-      return () => {
-        clearTimeout(typingTimer);
-        clearTimeout(replyTimer);
-      };
-    }
-  }, [messages, activeContactId]);
-
   // This function handles file uploads in the chat.
   // It creates a new message with the file information and updates the messages state.
   const fileInputRef = useRef(null);
@@ -251,22 +212,28 @@ function App() {
 
     // For now, we create a local URL to preview the image
     const fileUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith("image/");
 
     const msg = {
       id: Date.now(),
       text: file.name,
       fileUrl: fileUrl,
-      type: file.type.startsWith("image/") ? "image" : "file",
+      type: isImage ? "image" : "file",
       sender: "me",
       contactId: activeContactId,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "sent",
     };
 
-    setMessages([...messages, msg]);
+    setMessages((prevMessages) => [...prevMessages, msg]);
+    e.target.value = "";
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
+
+  // 1. Add this state variable at the top of your component logic
+  const [currentAudioTime, setCurrentAudioTime] = React.useState(0);
+
   // Actual Recording Logic
   const startRecording = async () => {
     try {
@@ -354,6 +321,7 @@ function App() {
   };
 
   // Playback Logic
+  // 2. Update your togglePlayVoiceNote function to track time
   const togglePlayVoiceNote = (id, url) => {
     if (playingAudioId === id) {
       audioPlayerRef.current.pause();
@@ -362,282 +330,547 @@ function App() {
       audioPlayerRef.current.src = url;
       audioPlayerRef.current.play();
       setPlayingAudioId(id);
-      audioPlayerRef.current.onended = () => setPlayingAudioId(null);
+
+      // This updates the timer as the audio plays
+      audioPlayerRef.current.ontimeupdate = () => {
+        setCurrentAudioTime(audioPlayerRef.current.currentTime);
+      };
+
+      audioPlayerRef.current.onended = () => {
+        setPlayingAudioId(null);
+        setCurrentAudioTime(0); // Reset when finished
+      };
     }
   };
 
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const s = seconds || 0;
+    const mins = Math.floor(s / 60);
+    const secs = Math.floor(s % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
   // --- NEW VOICE NOTE FUNCTIONS END ---
-
-  // This was the missing function causing the white screen!
-  const handleRequestOtp = () => {
-    if (phone.length > 10) {
-      setIsVerifying(true);
-    } else {
-      alert("Please enter a valid phone number.");
-    }
-  };
-
-  const handleVerifyOtp = () => {
-    // For development, let's use '123456' as our secret code
-    if (otp === "123456") {
-      setIsUnlocked(true);
-    } else {
-      alert("Invalid OTP. Try '123456'");
-    }
-  };
 
   // This function allows users to add emojis to their message input.
   const addEmoji = (emoji) => {
     setNewMessage((prev) => prev + emoji);
     // Optional: Auto-close after picking? Usually, WhatsApp stays open.
   };
-  // 1. Dashboard Screen (Dark Mode)
+
+  // 1. Dashboard Screen (Dark Mode - To match the color aesthetic of Whatsapp)
   if (isUnlocked) {
     return (
-      <div className="flex h-screen bg-[#111b21] text-[#e9edef] overflow-hidden">
-        {/* 1. Left Sidebar: Contacts & Chats */}
-        <div className="w-[30%] border-r border-gray-700 flex flex-col bg-[#111b21]">
-          {/* Profile Header */}
-          <div className="p-4 bg-[#202c33] flex justify-between items-center">
-            <div className="w-10 h-10 bg-[#00a884] rounded-full flex items-center justify-center font-bold text-[#111b21]">ME</div>
-            <div className="flex gap-5 text-gray-400">
-              <button className="hover:text-white">👥</button>
-              <button className="hover:text-white">💬</button>
-              <button onClick={() => setIsUnlocked(false)} className="hover:text-red-400">
-                🔒
-              </button>
+      <div className={`flex h-screen overflow-hidden transition-all duration-700 font-sans relative ${theme === "dark" ? "bg-[#080c0e] text-white" : "bg-gray-50 text-gray-900"}`}>
+        {/* 🌌 DYNAMIC BACKGROUND BLUR NODES */}
+        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-[#00a884]/10 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
+        <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[150px] pointer-events-none"></div>
+
+        {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
+        <aside className={`w-[340px] m-4 mr-0 rounded-[2.5rem] border border-white/5 flex flex-col backdrop-blur-3xl shadow-2xl z-20 overflow-hidden ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+          {/* Top Branding/Profile Area */}
+          <div className="p-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center shadow-lg shadow-[#00a884]/20 transform hover:rotate-6 transition-transform cursor-pointer">
+                <span className="text-xl text-[#111b21]">💬</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-black tracking-tighter">
+                  Chatter<span className="text-[#00a884]">Box</span>
+                </h1>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-300 font-bold">Workspace</p>
+              </div>
+            </div>
+            <button onClick={() => setIsUnlocked(false)} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all">
+              🔒
+            </button>
+          </div>
+
+          {/* Search Capsule: For searching conversations and contacts within the sidebar */}
+          <div className="px-6 pb-4">
+            <div className="bg-[#2a3942] border border-white/10 rounded-2xl flex items-center px-4 py-3 shadow-inner">
+              <span className="text-gray-400 mr-3">🔍</span>
+              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-300 font-medium" />
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="p-3">
-            <div className="bg-[#202c33] flex items-center px-4 py-1.5 rounded-lg">
-              <span className="text-gray-500 mr-3">🔍</span>
-              <input type="text" placeholder="Search or start new chat" className="bg-transparent text-sm w-full outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
-          </div>
-
-          {/* Conversation List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {contacts.map((contact) => (
-              <div key={contact.id} onClick={() => setActiveContactId(contact.id)} className={`p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-800/50 ${activeContactId === contact.id ? "bg-[#2a3942]" : "hover:bg-[#2a3942]/50"}`}>
-                <div className={`w-12 h-12 ${contact.color} rounded-full flex-shrink-0`}></div>
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-sm">{contact.name}</h3>
+          {/* Modern List */}
+          <div className="flex-1 overflow-y-auto px-3 custom-scrollbar">
+            {contacts
+              .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((contact) => (
+                <div
+                  key={contact.id}
+                  onClick={() => setActiveContactId(contact.id)}
+                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${activeContactId === contact.id ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1" : "border-transparent hover:bg-white/5 hover:translate-x-1"}`}
+                >
+                  <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#00a884] rounded-full border-2 border-[#111b21]"></div>
                   </div>
-                  <p className="text-xs text-gray-400 truncate mt-1">Click to chat</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 2. Main Window: Active Messaging Area */}
-        <div className="flex-1 flex flex-col bg-[#0b141a] relative">
-          {/* Chat Header */}
-          {(() => {
-            const activeContact = contacts.find((c) => c.id === activeContactId);
-            return (
-              <div className="p-3 bg-[#202c33] flex items-center gap-4 shadow-md">
-                <div className={`w-10 h-10 ${activeContact?.color} rounded-full`}></div>
-                <div>
-                  <h2 className="font-medium text-sm">{activeContact?.name}</h2>
-                  <p className="text-[10px] text-[#00a884]">{isTyping ? "typing..." : activeContact?.status}</p>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Messages Container */}
-          <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-3" style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')", backgroundOpacity: 0.05 }}>
-            {messages
-              .filter((msg) => {
-                // Filter messages to show only those that belong to the active chat and match the search term
-                const isCurrentChat = msg.contactId === activeContactId || !msg.contactId;
-                const matchesSearch = (msg.text || "").toLowerCase().includes(searchTerm.toLowerCase());
-                return isCurrentChat && matchesSearch;
-              })
-              .map((msg) => (
-                <div key={msg.id} className={`p-2.5 rounded-lg max-w-md text-sm shadow-sm ${msg.sender === "me" ? "bg-[#005c4b] self-end rounded-tr-none" : "bg-[#202c33] self-start rounded-tl-none"}`}>
-                  {/* --- INSERTED MEDIA LOGIC START --- */}
-                  {msg.fileUrl && msg.type === "image" && <img src={msg.fileUrl} alt="attachment" className="rounded-lg mb-2 max-h-60 w-full object-cover" />}
-
-                  {/* voice and audio message UI */}
-                  {msg.type === "voice" && (
-                    <div className="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg mb-2 min-w-[200px]">
-                      <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="text-xl text-[#00a884] hover:scale-110 transition-transform">
-                        {playingAudioId === msg.id ? "⏸️" : "▶️"}
-                      </button>
-                      <div className="flex-1 h-1 bg-gray-600 rounded-full relative">
-                        <div className={`absolute left-0 top-0 h-full bg-[#00a884] rounded-full transition-all duration-300 ${playingAudioId === msg.id ? "w-full" : "w-0"}`}></div>
-                      </div>
-                      <span className="text-[10px] text-gray-400">{formatTime(msg.duration)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      {/* This makes the active name bright white and the others readable gray */}
+                      <h3 className={`font-bold text-sm truncate ${activeContactId === contact.id ? "text-white" : "text-gray-300"}`}>{contact.name}</h3> <span className="text-[9px] font-bold opacity-30 italic">12:45</span>
                     </div>
-                  )}
-
-                  {!msg.fileUrl && msg.type !== "voice" && <div>{msg.text}</div>}
-                  {/* --- INSERTED MEDIA LOGIC END --- */}
-
-                  <div className="flex items-center justify-end gap-1 mt-1">
-                    <span className={`text-[9px] block text-right ${msg.sender === "me" ? "text-[#ffffff80]" : "text-gray-500"}`}>{msg.time}</span>
-                    {msg.sender === "me" && (
-                      <span className="text-[12px] leading-none flex">
-                        {msg.status === "sent" && <span className="text-gray-400">✓</span>}
-                        {msg.status === "delivered" && <span className="text-gray-400">✓✓</span>}
-                        {msg.status === "read" && <span className="text-[#53bdeb]">✓✓</span>}
-                      </span>
-                    )}
+                    <p className="text-[11px] opacity-40 font-medium truncate">Online • Secure</p>
                   </div>
                 </div>
               ))}
-            <div ref={messagesEndRef} />
           </div>
+        </aside>
 
-          {/* Bottom Input Field */}
-
-          {/* EMOJI PICKER POPUP */}
-          {showEmojiPicker && (
-            <div className="absolute bottom-[70px] left-4 w-72 h-64 bg-[#2a3942] rounded-xl shadow-2xl border border-gray-700 overflow-y-auto p-3 custom-scrollbar z-50">
-              <div className="grid grid-cols-6 gap-2">
-                {emojiList.map((emoji, index) => (
-                  <button key={index} onClick={() => addEmoji(emoji)} className="text-2xl hover:bg-[#374151] rounded p-1 transition-colors">
-                    {emoji}
+        {/* 💬 2. FLOATING MESSAGING HUB */}
+        <main className="flex-1 m-4 flex flex-col relative z-10">
+          {/* Floating Header */}
+          {isSharingContact && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-in fade-in duration-200">
+              <div className="bg-[#202c33] w-full max-w-sm rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#111b21]">
+                  <h3 className="text-white font-black tracking-tight">Select Contact</h3>
+                  <button onClick={() => setIsSharingContact(false)} className="text-gray-400 hover:text-white text-xl">
+                    ✕
                   </button>
-                ))}
+                </div>
+                <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
+                  {contacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      onClick={() => {
+                        handleShareContact(contact);
+                        setIsSharingContact(false); // Auto-close after selection
+                      }}
+                      className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl cursor-pointer transition-all active:scale-95"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#05cd99] flex items-center justify-center text-[#111b21] font-bold text-lg">{contact.name.charAt(0)}</div>
+                      <div>
+                        <p className="text-white font-bold text-sm">{contact.name}</p>
+                        <p className="text-gray-500 text-xs">{contact.phone}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
+          <header className={`p-4 rounded-[2rem] border border-white/5 backdrop-blur-xl mb-4 flex items-center justify-between shadow-xl ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+            {(() => {
+              const activeContact = contacts.find((c) => c.id === activeContactId);
+              return (
+                <div className="flex items-center gap-4 ml-2">
+                  <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner`}></div>
+                  <div>
+                    <h2 className="text-sm font-black tracking-tight">{activeContact?.name}</h2>
+                    <p className="text-[10px] text-[#00a884] font-bold uppercase tracking-widest animate-pulse">● Active Now</p>
+                  </div>
+                </div>
+              );
+            })()}
 
-          <div className="p-3 bg-[#202c33] flex items-center gap-4">
-            {isRecording ? (
-              <div className="flex flex-1 items-center justify-between bg-[#2a3942] px-4 py-2 rounded-xl">
-                <div className="flex items-center gap-3">
-                  {/* TRASH ICON: The Cancellation feature */}
-                  <button onClick={cancelRecording} className="text-gray-400 hover:text-red-500 transition-colors">
-                    🗑️
-                  </button>
+            <div className="flex items-center gap-3 bg-black/30 p-2 rounded-2xl border border-white/5 mr-2">
+              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform">
+                {theme === "dark" ? "☀️" : "🌙"}
+              </button>
+              <div className="w-[1px] h-4 bg-white/10"></div>
+              <div className="flex gap-1.5 px-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+              </div>
+            </div>
+          </header>
 
-                  {/* THE DANCING WAVEFORM */}
-                  <div className="flex items-end gap-[3px] h-5">
-                    {visualizerData.map((val, i) => (
-                      <div key={i} className="w-[3px] bg-[#00a884] rounded-full transition-all duration-75" style={{ height: `${Math.max(20, val * 100)}%` }}></div>
+          {/* Message Viewport - Floating Cards Style */}
+          <div className={`flex-1 rounded-[2.5rem] border border-white/5 overflow-hidden relative shadow-2xl ${theme === "dark" ? "bg-[#0b141a]/60" : "bg-white/40"}`}>
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none grayscale" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
+
+            <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
+              {messages
+                .filter((m) => m.contactId === activeContactId || !m.contactId)
+                .map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
+                        msg.sender === "me"
+                          ? "bg-[#054740] text-white shadow-[#054740]/20" // 🟢 New Sophisticated Dark Teal
+                          : "bg-[#2a3942] text-white border-t border-white/10"
+                      }`}
+                    >
+                      {msg.type === "voice" ? (
+                        <div className="flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-1 px-1">
+                          {/* 1. REFINED SPEED BADGE */}
+                          <div className="flex-shrink-0 bg-white/10 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold text-white border border-white/5">1x</div>
+
+                          {/* 2. WHITE PLAY/PAUSE BUTTON */}
+                          <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group">
+                            {playingAudioId === msg.id ? (
+                              <div className="flex gap-1.5">
+                                <div className="w-[3px] h-5 bg-white rounded-full animate-pulse"></div>
+                                <div className="w-[3px] h-5 bg-white rounded-full animate-pulse"></div>
+                              </div>
+                            ) : (
+                              <div className="ml-1 w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-white group-hover:border-l-[#05cd99] transition-colors"></div>
+                            )}
+                          </button>
+
+                          <div className="flex-1 flex flex-col pt-1">
+                            {/* 3. ADAPTIVE WAVEFORM */}
+                            <div className="flex items-center gap-[1.5px] h-8 mb-1">
+                              {[...Array(35)].map((_, i) => {
+                                const heights = [20, 45, 30, 70, 25, 80, 50, 35, 90, 40, 60, 25, 75, 50, 30, 80, 45, 60, 95, 30, 55, 70, 35, 65, 45, 90, 55, 25, 80, 35, 65, 45, 75, 25, 90];
+                                const time = currentAudioTime || 0;
+                                const duration = msg.duration || 5;
+                                const progress = (time / duration) * 35;
+                                const isPlayed = playingAudioId === msg.id && i < progress;
+
+                                return <div key={i} className={`w-[2px] rounded-full transition-all duration-150 ${isPlayed ? "bg-white" : "bg-white/30"}`} style={{ height: `${heights[i % heights.length]}%` }} />;
+                              })}
+                            </div>
+
+                            {/* 4. TIMER AND SVG TICKS */}
+                            <div className="flex justify-between items-center pr-1">
+                              <span className="text-[10px] font-medium text-white/70 tabular-nums">{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] font-bold text-white/50">{msg.time}</span>
+                                {msg.sender === "me" && (
+                                  <span className="flex items-center">
+                                    {msg.status === "read" ? (
+                                      /* Enhanced Blue Ticks for Dark Mode */
+                                      <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                        <path d="M1 5L5 9L15 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M5 5L9 9L19 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />
+                                      </svg>
+                                    ) : (
+                                      /* Clean White Ticks */
+                                      <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                        <path d="M1 5L5 9L15 1" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        {msg.status === "delivered" && <path d="M5 5L9 9L19 1" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />}
+                                      </svg>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          {/* Image/File/Text Logic */}
+                          {/* 1. Insert the check for "contact" type here */}
+                          {msg.type === "contact" ? (
+                            <div className="flex flex-col gap-3 min-w-[220px] p-1">
+                              <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                                {/* Avatar with dynamic initial based on contact name */}
+                                <div className="w-11 h-11 rounded-full bg-[#00a884] flex items-center justify-center text-white font-bold text-lg shadow-inner">{msg.text?.charAt(0)}</div>
+                                <div className="flex-1">
+                                  <p className="text-[14px] font-bold text-white">{msg.text}</p>
+                                  <p className="text-[10px] text-white/50 uppercase tracking-wider font-black">Contact</p>
+                                </div>
+                              </div>
+
+                              {/* Action Button to start a chat with the shared contact */}
+                              <button className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[12px] font-bold transition-all border border-white/5 active:scale-95 text-white" onClick={() => console.log("Messaging:", msg.phone)}>
+                                Message
+                              </button>
+                            </div>
+                          ) : msg.type === "image" ? (
+                            <img src={msg.fileUrl} alt="attachment" className="max-w-[240px] rounded-2xl cursor-pointer" />
+                          ) : msg.type === "file" ? (
+                            <div className="flex items-center gap-3 bg-black/10 p-3 rounded-2xl">
+                              <span className="text-white">📄</span>
+                              <p className="text-[13px] font-bold truncate">{msg.text}</p>
+                            </div>
+                          ) : (
+                            <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
+                          )}
+
+                          {/* --- THE FIX: UNIFORM TICK CATALOGUE --- */}
+                          <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-bold">
+                            <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
+
+                            {msg.sender === "me" && (
+                              <span className="flex items-center ml-1">
+                                {msg.status === "read" ? (
+                                  /* Blue Ticks */
+                                  <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                    <path d="M1 5L5 9L15 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M5 5L9 9L19 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />
+                                  </svg>
+                                ) : (
+                                  /* Uniform White Ticks */
+                                  <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
+                                    <path d="M1 5L5 9L15 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                                    {msg.status === "delivered" && <path d="M5 5L9 9L19 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform="translate(-4, 0)" />}
+                                  </svg>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Floating Input Pod */}
+          <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
+            {/* 1. THE MAIN CAPSULE (White/Gray background) */}
+            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm ${theme === "dark" ? "bg-[#2a3942]" : "bg-white"}`}>
+              {/* Emoji Picker Pop-up */}
+              {showEmojiPicker && (
+                <div ref={emojiPickerRef} className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-3 border-b border-white/5 bg-[#202c33] text-xs font-bold text-gray-400 uppercase tracking-widest">Emoji Picker</div>
+
+                  <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+                    {EMOJI_CATEGORIES.map((cat) => (
+                      <div key={cat.name} className="mb-4">
+                        <h4 className="text-[10px] text-gray-500 font-bold mb-2 uppercase">{cat.name}</h4>
+                        <div className="grid grid-cols-6 gap-2">
+                          {cat.emojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => {
+                                setNewMessage((prev) => prev + emoji);
+                                // WhatsApp usually keeps it open until you click away
+                              }}
+                              className="text-xl hover:bg-white/10 p-1 rounded-lg transition-colors active:scale-125"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
-
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
                 </div>
-                <button onClick={stopAndSendVoiceNote} className="text-[#00a884] font-bold text-sm hover:underline">
-                  DONE
-                </button>
-              </div>
-            ) : (
-              // NORMAL INPUT UI
-              <>
-                {/* 1. Added toggle logic and dynamic coloring to the emoji button */}
-                <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className={`text-xl transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-white"}`}>
-                  😊
-                </button>
-
-                <button onClick={() => fileInputRef.current.click()} className="text-xl text-gray-400 hover:text-white">
-                  📎
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,.pdf" />
-
-                {/* 2. Added onFocus to auto-close the picker when the user starts typing */}
-                <input type="text" placeholder="Type a message" className="flex-1 bg-[#2a3942] py-2.5 px-4 rounded-xl outline-none text-sm text-white" value={newMessage} onFocus={() => setShowEmojiPicker(false)} onChange={(e) => setNewMessage(e.target.value)} />
-              </>
-            )}
-
-            {/* TOGGLE MICROPHONE / SEND */}
-            {newMessage.trim() === "" && !isRecording ? (
-              <button onClick={startRecording} className="text-xl text-gray-400 hover:text-[#00a884]">
-                🎤
+              )}
+              {/* Emoji Button */}
+              <button
+                type="button" // Important to prevent form submission
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className={`p-1 transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-gray-200"}`}
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
+                </svg>
               </button>
-            ) : (
-              !isRecording && (
-                <button onClick={handleSendMessage} className="bg-[#00a884] p-2 rounded-full text-[#111b21]">
-                  ➤
-                </button>
-              )
-            )}
-          </div>
-        </div>
+
+              {isRecording ? (
+                /* RECORDING STATE: Show Timer & Visualizer inside capsule */
+                <div className="flex-1 flex items-center justify-between px-2">
+                  <span className="text-red-500 animate-pulse font-medium">{formatTime(recordingTime)}</span>
+                  <div className="flex gap-0.5 items-center h-4">
+                    {visualizerData.map((v, i) => (
+                      <div key={i} className="w-0.5 bg-gray-400 rounded-full" style={{ height: `${Math.max(20, v * 100)}%` }} />
+                    ))}
+                  </div>
+                  <button onClick={cancelRecording} className="text-[11px] font-bold text-gray-400 uppercase tracking-wider hover:text-red-500">
+                    Slide to cancel
+                  </button>
+                </div>
+              ) : (
+                /* NORMAL STATE: Input + Attachment */
+                <>
+                  <input
+                    type="text"
+                    placeholder="Message"
+                    className="flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] text-white placeholder:text-gray-400 outline-none"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                    onFocus={() => setShowEmojiPicker(false)}
+                  />
+
+                  {/* Attachment (Clip) */}
+                  <button onClick={() => fileInputRef.current?.click()} className="p-1 text-gray-400 hover:text-gray-200 -rotate-45">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                      <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
+                    </svg>
+                  </button>
+
+                  {/* HIDDEN INPUT BRIDGE */}
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} accept="image/,application/pdf" />
+
+                  {/* Contacts (Profile) */}
+                  {/* Contacts Sharing Button */}
+                  {!newMessage && (
+                    <button type="button" className="p-1 text-gray-400 hover:text-gray-200 transition-colors" onClick={() => setIsSharingContact(true)}>
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                      </svg>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* 2. THE ACTION CIRCLE (Floating on the right) */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevents the click from bubbling up to other elements
+                if (newMessage.trim()) {
+                  handleSendMessage();
+                } else {
+                  isRecording ? stopAndSendVoiceNote() : startRecording();
+                }
+              }}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition-all flex-shrink-0 z-50 ${isRecording ? "bg-red-500 animate-pulse" : "bg-[#00a884]"}`}
+            >
+              {newMessage.trim() ? (
+                /* Send Arrow SVG */
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" className="ml-1">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+              ) : (
+                /* WhatsApp Microphone SVG */
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+                </svg>
+              )}
+            </button>
+          </footer>
+        </main>
       </div>
     );
   }
 
-  // 2. OTP Verification Screen
+  // OPTION 2: THE OTP VERIFICATION (Show this if they just clicked 'Send Code')
   if (isVerifying) {
     return (
-      <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-        <div className="bg-[#202c33] p-10 rounded-2xl border border-gray-800 max-w-sm w-full text-center">
-          <h2 className="text-2xl font-bold mb-6">Enter OTP</h2>
-          <input type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full bg-[#2a3942] text-center text-3xl py-4 rounded-xl mb-6 border border-transparent focus:border-[#00a884] outline-none" placeholder="000000" />
-          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] py-4 rounded-full font-bold text-[#111b21]">
-            Verify
+      <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
+        <div className="bg-[#202c33] p-12 rounded-[2.5rem] border border-[#00a884]/30 max-w-sm w-full text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden">
+          {/* Subtle Background Glow */}
+          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#00a884]/5 rounded-full blur-3xl"></div>
+
+          {/* Updated Chat Logo (Matches Login) */}
+          <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20">
+            <span className="text-3xl text-[#111b21]">💬</span>
+          </div>
+
+          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Verify it's you</h2>
+          <p className="text-gray-400 text-sm mb-10 leading-relaxed">
+            We sent a code to <br />
+            <span className="text-[#00a884] font-bold">+{phone}</span>
+          </p>
+
+          <div className="group mb-8">
+            <input
+              type="text"
+              maxLength="6"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full bg-[#2a3942] text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl border-2 border-transparent group-hover:border-gray-600 focus:border-[#00a884] outline-none transition-all duration-300 shadow-inner"
+              placeholder="000000"
+            />
+          </div>
+
+          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_10px_20px_rgba(0,168,132,0.3)] py-4 rounded-2xl font-black text-[#111b21] uppercase tracking-widest transition-all duration-300 active:scale-95 mb-4">
+            Confirm Code
+          </button>
+
+          {/* Expiry Warning UI */}
+          {/* Add a visual cue to indicate the code is about to expire */}
+          <div className="mt-4">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-300 text-[10px] uppercase tracking-tighter">Valid for 3 minutes only</p>}</div>
+
+          <button onClick={() => setIsVerifying(false)} className="text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
+            ← Use different number
           </button>
         </div>
       </div>
     );
   }
 
-  // 3. Login Screen (Dark Mode)
   return (
-    <div className="min-h-screen w-full bg-[#111b21] flex items-center justify-center p-6 text-white">
-      <div className="bg-[#202c33] p-10 rounded-2xl shadow-2xl border border-gray-800 max-w-sm w-full">
-        <div className="w-16 h-16 bg-[#00a884]/20 rounded-full flex items-center justify-center mb-6 mx-auto">
-          <span className="text-2xl">🛡️</span>
+    <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
+      <div className="bg-[#202c33] p-10 rounded-[2.5rem] shadow-2xl border border-[#00a884]/20 max-w-sm w-full relative overflow-hidden group">
+        {/* Dynamic Glow Effect */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00a884]/10 rounded-full blur-3xl group-hover:bg-[#00a884]/20 transition-all duration-700"></div>
+
+        {/* New Chat Logo */}
+        <div className="w-20 h-20 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20 transform transition-transform hover:rotate-6">
+          <span className="text-4xl text-[#111b21]">💬</span>
         </div>
-        <h1 className="text-3xl font-bold text-[#00a884] mb-2 text-center">ChatterBox</h1>
-        <p className="text-gray-400 mb-8 text-center text-sm">Secure Phone Login</p>
+
+        <h1 className="text-4xl font-black text-white mb-2 text-center tracking-tight">
+          Chatter<span className="text-[#00a884]">Box</span>
+        </h1>
+        <p className="text-gray-400 mb-10 text-center text-sm font-medium tracking-wide">Engage. Talk. Interact.</p>
 
         <div className="mb-8">
+          <label className="text-[10px] font-bold text-[#00a884] uppercase tracking-[0.2em] ml-1 mb-2 block">Phone Number</label>
           <PhoneInput
             country={"ug"}
             value={phone}
             onChange={(p) => setPhone(p)}
-            enableSearch={true} // Adds a search bar for easier navigation
             containerStyle={{ width: "100%" }}
             inputStyle={{
               backgroundColor: "#2a3942",
               color: "white",
               width: "100%",
-              height: "56px",
-              borderRadius: "12px",
-              border: "1px solid #374151",
+              height: "60px",
+              borderRadius: "18px",
+              border: "2px solid transparent",
+              fontSize: "16px",
             }}
             buttonStyle={{
               backgroundColor: "#2a3942",
-              border: "1px solid #374151",
-              borderRadius: "12px 0 0 12px",
-            }}
-            // FIXES THE DROPDOWN VISIBILITY:
-            dropdownStyle={{
-              backgroundColor: "#2a3942",
-              color: "#ffffff",
-              textAlign: "left",
-              width: "300px",
-            }}
-            searchStyle={{
-              backgroundColor: "#111b21",
-              color: "white",
-              width: "90%",
-              margin: "10px auto",
+              border: "none",
+              borderRadius: "18px 0 0 18px",
+              paddingLeft: "10px",
             }}
           />
         </div>
 
-        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-4 rounded-full transition-all shadow-lg">
-          Get OTP Code
+        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
+          Send Verification Code
         </button>
       </div>
+
+      {showSimulation && (
+        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
+          {/* Main Card */}
+          <div className="bg-[#111b21] border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-[0_40px_80px_rgba(0,0,0,0.7)] relative overflow-hidden ring-1 ring-white/10">
+            {/* Subtle brand glow in the background */}
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00a884]/10 rounded-full blur-[80px]"></div>
+
+            <div className="relative z-10">
+              {/* REPLACED: Shield is gone. Using your branded chat logo with a glow */}
+              <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-[0_0_20px_rgba(0,168,132,0.4)]">
+                <span className="text-3xl filter drop-shadow-sm">💬</span>
+              </div>
+
+              <h3 className="text-white text-2xl font-black tracking-tight mb-2">Secure Access</h3>
+              <p className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">
+                Confirm the code below to enter your <br />
+                <span className="text-[#00a884] opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">verified workspace</span>
+              </p>
+
+              {/* Improved Code Box: Deeper contrast and neon text */}
+              <div className="bg-[#202c33] py-8 rounded-[2rem] border border-white/5 mb-10 shadow-inner group">
+                <span className="text-5xl font-mono font-black text-[#00a884] tracking-[0.15em] drop-shadow-[0_0_12px_rgba(0,168,132,0.3)] group-hover:scale-110 transition-transform duration-500 block">{generatedOTP}</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedOTP);
+                  setShowSimulation(false);
+                  setIsVerifying(true);
+                }}
+                className="w-full py-5 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-bold rounded-2xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-[0.2em] active:scale-95"
+              >
+                Copy & Continue
+              </button>
+
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-pulse"></div>
+                <span className="text-[10px] text-gray-300 uppercase tracking-[0.3em] font-bold">Secure Simulation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
