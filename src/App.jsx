@@ -469,12 +469,6 @@ function App() {
               <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform">
                 {theme === "dark" ? "☀️" : "🌙"}
               </button>
-              <div className="w-[1px] h-4 bg-white/10"></div>
-              <div className="flex gap-1.5 px-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
-              </div>
             </div>
           </header>
 
