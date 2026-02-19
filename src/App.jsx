@@ -405,27 +405,6 @@ function App() {
                 .filter((m) => m.contactId === activeContactId || !m.contactId)
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
-<<<<<<< Updated upstream
-                    {/* --- BUBBLE CONTAINER --- */}
-                    <div className={`p-4 rounded-[1.8rem] max-w-[70%] shadow-xl transition-all ${msg.sender === "me" ? "bg-gradient-to-br from-[#00a884] to-[#05cd99] text-[#111b21] rounded-tr-none shadow-[#00a884]/20" : "bg-[#2a3942] text-white rounded-tl-none border-t border-white/10"}`}>
-                      {/* CHECK: Is it a voice note or text? */}
-                      {msg.type === "voice" ? (
-                        <div className="flex items-center gap-3 min-w-[180px]">
-                          <button
-                            onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-transform active:scale-90 ${msg.sender === "me" ? "bg-[#111b21]/20 hover:bg-[#111b21]/40" : "bg-[#00a884] hover:bg-[#05cd99]"}`}
-                          >
-                            {playingAudioId === msg.id ? "⏸️" : "▶️"}
-                          </button>
-                          <div className="flex-1">
-                            {/* Visual Audio Progress Bar */}
-                            <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
-                              <div className={`h-full bg-current transition-all duration-300 ${playingAudioId === msg.id ? "w-full animate-pulse" : "w-0"}`} />
-                            </div>
-                            <div className="flex justify-between mt-1.5 px-1">
-                              <span className="text-[9px] font-black uppercase">{formatTime(msg.duration)}</span>
-                              <span className="text-[9px] font-bold opacity-60 italic">{msg.time}</span>
-=======
                     <div
                       className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
                         msg.sender === "me"
@@ -487,19 +466,10 @@ function App() {
                                   </span>
                                 )}
                               </div>
->>>>>>> Stashed changes
                             </div>
                           </div>
                         </div>
                       ) : (
-<<<<<<< Updated upstream
-                        /* STANDARD TEXT RENDER */
-                        <>
-                          <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
-                          <div className={`flex items-center justify-end gap-1.5 mt-2 text-[9px] font-bold ${msg.sender === "me" ? "opacity-70" : "text-gray-400"}`}>
-                            <span>{msg.time}</span>
-                            {msg.sender === "me" && <span className={msg.status === "read" ? "text-blue-700" : ""}>✓✓</span>}
-=======
                         <div className="flex flex-col gap-2">
                           {/* Image/File/Text Logic */}
                           {msg.type === "image" ? (
@@ -535,7 +505,6 @@ function App() {
                                 )}
                               </span>
                             )}
->>>>>>> Stashed changes
                           </div>
                         </div>
                       )}
