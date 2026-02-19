@@ -33,14 +33,10 @@
 chatterbox-portal/
 ├── public/              # Static assets (logos, notification sounds)
 ├── src/
-│   ├── assets/          # Project images and global icons
-│   ├── components/      # Modular UI components (Planned)
-│   │   ├── Auth/        # Biometric & OTP Login logic
-│   │   ├── Chat/        # Message bubbles and voice note UI
-│   │   └── Expenses/    # Budgeting and payment features
-│   ├── App.jsx          # Main application logic & state management
-│   ├── index.css        # Tailwind directives and global styles
-│   └── main.jsx         # React DOM entry point
+│   |__assets/          # Project images and global icons
+│       ├── App.jsx          # Main application logic & state management
+│       ├── index.css        # Tailwind directives and global styles
+│       └── main.jsx         # React DOM entry point
 ├── .gitignore           # Standard excludes (node_modules, .env)
 ├── index.html           # Main HTML template
 ├── package.json         # Dependencies and scripts
