@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { Sun, Moon } from "lucide-react";
 
 function App() {
   // 1. AUTHENTICATION & PORTAL STATES
@@ -149,13 +150,17 @@ function App() {
 
   // Helper to get theme-based classes
   const themeClasses = {
-    bg: theme === "dark" ? "bg-[#111b21]" : "bg-[#f0f2f5]",
-    sidebarBg: theme === "dark" ? "bg-[#111b21]" : "bg-white",
-    headerBg: theme === "dark" ? "bg-[#202c33]" : "bg-[#f0f2f5]",
-    chatBg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#efeae2]",
-    text: theme === "dark" ? "text-[#e9edef]" : "text-[#111b21]",
-    secondaryText: theme === "dark" ? "text-gray-400" : "text-gray-600",
-    inputBg: theme === "dark" ? "bg-[#2a3942]" : "bg-white",
+    // Main background
+    bg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#f0f2f5]",
+
+    // Sidebar items
+    sidebarItem: theme === "dark" ? "text-[#e9edef] hover:bg-[#202c33]" : "text-[#111b21] hover:bg-[#f5f6f6]",
+
+    // Message Bubbles
+    incomingMsg: theme === "dark" ? "bg-[#202c33] text-[#e9edef]" : "bg-white text-[#111b21] shadow-sm border border-gray-100",
+
+    // Subtext (Timestamps/Status)
+    subtext: theme === "dark" ? "text-[#8696a0]" : "text-[#667781]",
   };
 
   // Function to scroll to the bottom
@@ -377,19 +382,44 @@ function App() {
                 <h1 className="text-lg font-black tracking-tighter">
                   Chatter<span className="text-[#00a884]">Box</span>
                 </h1>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-300 font-bold">Workspace</p>
+                <p
+                  className={`text-[10px] uppercase tracking-[0.2em] font-bold ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-500"
+                  }`}
+                >
+                  Workspace
+                </p>
               </div>
             </div>
-            <button onClick={() => setIsUnlocked(false)} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all">
+            <button
+              onClick={() => setIsUnlocked(false)}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                theme === "dark"
+                  ? "bg-white/5 hover:bg-red-500/10 hover:text-red-400"
+                  : "bg-black/5 text-gray-600 hover:bg-red-50 hover:text-red-500"
+              }`}
+            >
               🔒
             </button>
           </div>
 
           {/* Search Capsule: For searching conversations and contacts within the sidebar */}
           <div className="px-6 pb-4">
-            <div className="bg-[#2a3942] border border-white/10 rounded-2xl flex items-center px-4 py-3 shadow-inner">
-              <span className="text-gray-400 mr-3">🔍</span>
-              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-300 font-medium" />
+            <div
+              className={`rounded-2xl flex items-center px-4 py-3 shadow-inner ${
+                theme === "dark" ? "bg-[#2a3942] border border-white/10" : "bg-white border-2 border-gray-300 shadow-sm"
+              }`}
+            >
+              <span className={theme === "dark" ? "text-gray-400 mr-3" : "text-gray-600 mr-3"}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                className={`bg-transparent w-full outline-none text-sm font-medium ${
+                  theme === "dark" ? "text-white placeholder:text-gray-300" : "text-gray-900 placeholder:text-gray-700"
+                }`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
 
@@ -401,17 +431,36 @@ function App() {
                 <div
                   key={contact.id}
                   onClick={() => setActiveContactId(contact.id)}
-                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${activeContactId === contact.id ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1" : "border-transparent hover:bg-white/5 hover:translate-x-1"}`}
+                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${
+                    activeContactId === contact.id
+                      ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1"
+                      : theme === "dark"
+                      ? "border-transparent hover:bg-white/5 hover:translate-x-1"
+                      : "border-transparent hover:bg-gray-100 hover:translate-x-1"
+                  }`}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#00a884] rounded-full border-2 border-[#111b21]"></div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
-                      {/* This makes the active name bright white and the others readable gray */}
-                      <h3 className={`font-bold text-sm truncate ${activeContactId === contact.id ? "text-white" : "text-gray-300"}`}>{contact.name}</h3> <span className="text-[9px] font-bold opacity-30 italic">12:45</span>
+                      {/* This makes the active name adapt to theme and selection */}
+                      <h3
+                        className={`font-bold text-sm truncate ${
+                          theme === "dark"
+                            ? activeContactId === contact.id
+                              ? "text-white"
+                              : "text-gray-300"
+                            : activeContactId === contact.id
+                            ? "text-gray-900"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {contact.name}
+                      </h3>
+                      <span className={`text-[9px] font-bold italic ${theme === "dark" ? "opacity-30 text-gray-300" : "text-gray-600"}`}>12:45</span>
                     </div>
-                    <p className="text-[11px] opacity-40 font-medium truncate">Online • Secure</p>
+                    <p className={`text-[11px] font-medium truncate ${theme === "dark" ? "opacity-40 text-gray-300" : "text-gray-700"}`}>Online • Secure</p>
                   </div>
                 </div>
               ))}
@@ -451,30 +500,38 @@ function App() {
               </div>
             </div>
           )}
-          <header className={`p-4 rounded-[2rem] border border-white/5 backdrop-blur-xl mb-4 flex items-center justify-between shadow-xl ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+          <header className={`p-4 rounded-[2rem] border border-white/5 backdrop-blur-xl mb-4 flex items-center justify-between shadow-xl ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/80 border-gray-200"}`}>
+            {/* Active Contact Info remains the same */}
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
               return (
                 <div className="flex items-center gap-4 ml-2">
                   <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner`}></div>
                   <div>
-                    <h2 className="text-sm font-black tracking-tight">{activeContact?.name}</h2>
-                    <p className="text-[10px] text-[#00a884] font-bold uppercase tracking-widest animate-pulse">● Active Now</p>
+                    <h2 className={`text-sm font-black tracking-tight ${theme === "dark" ? "text-white" : "text-[#111b21]"}`}>{activeContact?.name}</h2>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === "dark" ? "text-[#00a884] animate-pulse" : "text-[#00a884] font-semibold"}`}>● Active Now</p>
                   </div>
                 </div>
               );
             })()}
 
-            <div className="flex items-center gap-3 bg-black/30 p-2 rounded-2xl border border-white/5 mr-2">
-              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform">
-                {theme === "dark" ? "☀️" : "🌙"}
+            {/* 2. REPLACED THEME TOGGLE AREA */}
+            <div className={`flex items-center gap-3 p-1.5 rounded-2xl border mr-2 ${
+              theme === "dark" ? "bg-black/10 border-white/5" : "bg-gray-100 border-gray-300"
+            }`}>
+              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 ${theme === "dark" ? "hover:bg-yellow-500/10" : "hover:bg-indigo-500/10"}`}>
+                {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-500" strokeWidth={2.5} /> : <Moon className="w-5 h-5 text-indigo-600" strokeWidth={2.5} />}
               </button>
             </div>
           </header>
 
           {/* Message Viewport - Floating Cards Style */}
-          <div className={`flex-1 rounded-[2.5rem] border border-white/5 overflow-hidden relative shadow-2xl ${theme === "dark" ? "bg-[#0b141a]/60" : "bg-white/40"}`}>
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none grayscale" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
+          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-2xl ${
+            theme === "dark" ? "bg-[#0b141a]/60 border-white/5" : "bg-gray-50 border-gray-300"
+          }`}>
+            <div className={`absolute inset-0 pointer-events-none grayscale ${
+              theme === "dark" ? "opacity-[0.03]" : "opacity-[0.02]"
+            }`} style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
               {messages
@@ -484,24 +541,46 @@ function App() {
                     <div
                       className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
                         msg.sender === "me"
-                          ? "bg-[#054740] text-white shadow-[#054740]/20" // 🟢 New Sophisticated Dark Teal
-                          : "bg-[#2a3942] text-white border-t border-white/10"
+                          ? theme === "dark"
+                            ? "bg-[#054740] text-white shadow-[#054740]/20" // Dark theme: deep teal bubble
+                            : "bg-[#d9fdd3] text-[#111b21] shadow-md" // Light theme: WhatsApp-style green bubble
+                          : theme === "dark"
+                          ? "bg-[#2a3942] text-white border-t border-white/10" // Dark theme: graphite bubble
+                          : "bg-white text-[#111b21] border-2 border-gray-300 shadow-lg" // Light theme: white bubble with dark text and strong border
                       }`}
                     >
                       {msg.type === "voice" ? (
                         <div className="flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-1 px-1">
                           {/* 1. REFINED SPEED BADGE */}
-                          <div className="flex-shrink-0 bg-white/10 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold text-white border border-white/5">1x</div>
+                          <div className={`flex-shrink-0 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold border ${
+                            msg.sender === "me" && theme === "light"
+                              ? "bg-white/20 text-[#111b21] border-gray-300"
+                              : theme === "light"
+                              ? "bg-gray-200 text-[#111b21] border-gray-300"
+                              : "bg-white/10 text-white border-white/5"
+                          }`}>1x</div>
 
-                          {/* 2. WHITE PLAY/PAUSE BUTTON */}
+                          {/* 2. PLAY/PAUSE BUTTON */}
                           <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group">
                             {playingAudioId === msg.id ? (
                               <div className="flex gap-1.5">
-                                <div className="w-[3px] h-5 bg-white rounded-full animate-pulse"></div>
-                                <div className="w-[3px] h-5 bg-white rounded-full animate-pulse"></div>
+                                <div className={`w-[3px] h-5 rounded-full animate-pulse ${
+                                  msg.sender === "me" && theme === "light" ? "bg-[#111b21]" :
+                                  theme === "light" ? "bg-[#111b21]" : "bg-white"
+                                }`}></div>
+                                <div className={`w-[3px] h-5 rounded-full animate-pulse ${
+                                  msg.sender === "me" && theme === "light" ? "bg-[#111b21]" :
+                                  theme === "light" ? "bg-[#111b21]" : "bg-white"
+                                }`}></div>
                               </div>
                             ) : (
-                              <div className="ml-1 w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-white group-hover:border-l-[#05cd99] transition-colors"></div>
+                              <div className={`ml-1 w-0 h-0 border-y-[10px] border-y-transparent transition-colors ${
+                                msg.sender === "me" && theme === "light"
+                                  ? "border-l-[16px] border-l-[#111b21] group-hover:border-l-[#00a884]"
+                                  : theme === "light"
+                                  ? "border-l-[16px] border-l-[#111b21] group-hover:border-l-[#00a884]"
+                                  : "border-l-[16px] border-l-white group-hover:border-l-[#05cd99]"
+                              }`}></div>
                             )}
                           </button>
 
@@ -514,29 +593,63 @@ function App() {
                                 const duration = msg.duration || 5;
                                 const progress = (time / duration) * 35;
                                 const isPlayed = playingAudioId === msg.id && i < progress;
+                                const waveColor = msg.sender === "me" && theme === "light" 
+                                  ? (isPlayed ? "bg-[#111b21]" : "bg-[#111b21]/40")
+                                  : theme === "light"
+                                  ? (isPlayed ? "bg-[#111b21]" : "bg-[#111b21]/40")
+                                  : (isPlayed ? "bg-white" : "bg-white/30");
 
-                                return <div key={i} className={`w-[2px] rounded-full transition-all duration-150 ${isPlayed ? "bg-white" : "bg-white/30"}`} style={{ height: `${heights[i % heights.length]}%` }} />;
+                                return <div key={i} className={`w-[2px] rounded-full transition-all duration-150 ${waveColor}`} style={{ height: `${heights[i % heights.length]}%` }} />;
                               })}
                             </div>
 
                             {/* 4. TIMER AND SVG TICKS */}
                             <div className="flex justify-between items-center pr-1">
-                              <span className="text-[10px] font-medium text-white/70 tabular-nums">{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
+                              <span className={`text-[10px] font-medium tabular-nums ${
+                                msg.sender === "me" && theme === "light" ? "text-[#111b21]/80" :
+                                theme === "light" ? "text-[#111b21]/80" : "text-white/70"
+                              }`}>{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
                               <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] font-bold text-white/50">{msg.time}</span>
+                                <span className={`text-[9px] font-bold ${
+                                  msg.sender === "me" && theme === "light" ? "text-[#111b21]/70" :
+                                  theme === "light" ? "text-[#111b21]/70" : "text-white/50"
+                                }`}>{msg.time}</span>
                                 {msg.sender === "me" && (
                                   <span className="flex items-center">
                                     {msg.status === "read" ? (
-                                      /* Enhanced Blue Ticks for Dark Mode */
-                                      <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
-                                        <path d="M1 5L5 9L15 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                        <path d="M5 5L9 9L19 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />
+                                      /* WhatsApp-style blue double ticks */
+                                      <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2 7L5 10L12 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M6 7L9 10L16 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    ) : msg.status === "delivered" ? (
+                                      /* WhatsApp-style double gray ticks */
+                                      <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                          d="M2 7L5 10L12 3"
+                                          stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
+                                          strokeWidth="1.8"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                        <path
+                                          d="M6 7L9 10L16 3"
+                                          stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
+                                          strokeWidth="1.8"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
                                       </svg>
                                     ) : (
-                                      /* Clean White Ticks */
-                                      <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
-                                        <path d="M1 5L5 9L15 1" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        {msg.status === "delivered" && <path d="M5 5L9 9L19 1" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />}
+                                      /* WhatsApp-style single gray tick */
+                                      <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                          d="M2 7L5 10L12 3"
+                                          stroke={theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(17,27,33,0.5)"}
+                                          strokeWidth="1.8"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
                                       </svg>
                                     )}
                                   </span>
@@ -578,21 +691,48 @@ function App() {
 
                           {/* --- THE FIX: UNIFORM TICK CATALOGUE --- */}
                           <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-bold">
-                            <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
+                            <span className={
+                              msg.sender === "me" 
+                                ? theme === "dark" ? "opacity-70 text-white" : "text-gray-600"
+                                : theme === "dark" ? "text-gray-400" : "text-gray-600"
+                            }>{msg.time}</span>
 
                             {msg.sender === "me" && (
                               <span className="flex items-center ml-1">
                                 {msg.status === "read" ? (
-                                  /* Blue Ticks */
-                                  <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
-                                    <path d="M1 5L5 9L15 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    <path d="M5 5L9 9L19 1" stroke="#34B7F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(-4, 0)" />
+                                  /* WhatsApp-style blue double ticks */
+                                  <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 7L5 10L12 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M6 7L9 10L16 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                ) : msg.status === "delivered" ? (
+                                  /* WhatsApp-style double gray ticks */
+                                  <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                      d="M2 7L5 10L12 3"
+                                      stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
+                                      strokeWidth="1.8"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                    <path
+                                      d="M6 7L9 10L16 3"
+                                      stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
+                                      strokeWidth="1.8"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
                                   </svg>
                                 ) : (
-                                  /* Uniform White Ticks */
-                                  <svg viewBox="0 0 16 11" width="14" height="10" fill="none">
-                                    <path d="M1 5L5 9L15 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-                                    {msg.status === "delivered" && <path d="M5 5L9 9L19 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform="translate(-4, 0)" />}
+                                  /* WhatsApp-style single gray tick */
+                                  <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                      d="M2 7L5 10L12 3"
+                                      stroke={theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(17,27,33,0.5)"}
+                                      strokeWidth="1.8"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
                                   </svg>
                                 )}
                               </span>
@@ -610,7 +750,9 @@ function App() {
           {/* Floating Input Pod */}
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
             {/* 1. THE MAIN CAPSULE (White/Gray background) */}
-            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm ${theme === "dark" ? "bg-[#2a3942]" : "bg-white"}`}>
+            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${
+              theme === "dark" ? "bg-[#2a3942] border-transparent" : "bg-white border-2 border-gray-300"
+            }`}>
               {/* Emoji Picker Pop-up */}
               {showEmojiPicker && (
                 <div ref={emojiPickerRef} className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
@@ -643,7 +785,11 @@ function App() {
               <button
                 type="button" // Important to prevent form submission
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className={`p-1 transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-gray-200"}`}
+                className={`p-1 transition-colors ${
+                  showEmojiPicker 
+                    ? "text-[#00a884]" 
+                    : theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"
+                }`}
               >
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                   <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
@@ -669,7 +815,9 @@ function App() {
                   <input
                     type="text"
                     placeholder="Message"
-                    className="flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] text-white placeholder:text-gray-400 outline-none"
+                    className={`flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] outline-none ${
+                      theme === "dark" ? "text-white placeholder:text-gray-400" : "text-gray-900 placeholder:text-gray-700"
+                    }`}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
@@ -677,7 +825,9 @@ function App() {
                   />
 
                   {/* Attachment (Clip) */}
-                  <button onClick={() => fileInputRef.current?.click()} className="p-1 text-gray-400 hover:text-gray-200 -rotate-45">
+                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-colors ${
+                    theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"
+                  }`}>
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
@@ -689,7 +839,9 @@ function App() {
                   {/* Contacts (Profile) */}
                   {/* Contacts Sharing Button */}
                   {!newMessage && (
-                    <button type="button" className="p-1 text-gray-400 hover:text-gray-200 transition-colors" onClick={() => setIsSharingContact(true)}>
+                    <button type="button" className={`p-1 transition-colors ${
+                      theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"
+                    }`} onClick={() => setIsSharingContact(true)}>
                       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
                       </svg>
