@@ -39,7 +39,8 @@ function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingAudioId, setPlayingAudioId] = useState(null); // Track which audio is playing
   const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
-  const [isSharingContact, setIsSharingContact] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState({}); // Playback speed per message: { messageId: 1 }
+  const [voiceWaveforms, setVoiceWaveforms] = useState({}); // Store waveform data per message
 
   // 5. REFS
   const messagesEndRef = useRef(null);
@@ -173,6 +174,19 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
+  // Generate waveforms for voice messages that don't have them yet
+  useEffect(() => {
+    const newWaveforms = {};
+    messages.forEach((msg) => {
+      if (msg.type === "voice" && !voiceWaveforms[msg.id]) {
+        newWaveforms[msg.id] = generateWaveformData(msg.duration || 5);
+      }
+    });
+    if (Object.keys(newWaveforms).length > 0) {
+      setVoiceWaveforms((prev) => ({ ...prev, ...newWaveforms }));
+    }
+  }, [messages]);
+
   // This function handles sending a new message in the chat.
   // It checks if the input is not empty, creates a new message object, updates the messages state, and clears the input field.
   const handleSendMessage = () => {
@@ -238,6 +252,7 @@ function App() {
 
   // 1. Add this state variable at the top of your component logic
   const [currentAudioTime, setCurrentAudioTime] = React.useState(0);
+  const waveformContainerRef = useRef({}); // Refs for waveform containers to enable click-to-seek
 
   // Actual Recording Logic
   const startRecording = async () => {
@@ -304,6 +319,12 @@ function App() {
         status: "sent",
       };
 
+      // Generate waveform data for the new voice message
+      setVoiceWaveforms((prev) => ({
+        ...prev,
+        [voiceMsg.id]: generateWaveformData(recordingTime),
+      }));
+
       setMessages((prev) => [...prev, voiceMsg]);
       audioChunks.current = [];
     };
@@ -325,26 +346,98 @@ function App() {
     setRecordingTime(0);
   };
 
-  // Playback Logic
-  // 2. Update your togglePlayVoiceNote function to track time
-  const togglePlayVoiceNote = (id, url) => {
+  // Generate realistic waveform data for a voice message
+  const generateWaveformData = (duration) => {
+    const bars = 50; // WhatsApp uses around 50 bars
+    const data = [];
+    for (let i = 0; i < bars; i++) {
+      // Create realistic voice waveform pattern
+      const baseHeight = 20 + Math.random() * 60;
+      const variation = Math.sin(i * 0.3) * 15 + Math.cos(i * 0.7) * 10;
+      data.push(Math.max(15, Math.min(95, baseHeight + variation)));
+    }
+    return data;
+  };
+
+  // Playback Logic with speed control and seeking
+  const togglePlayVoiceNote = (id, url, duration) => {
     if (playingAudioId === id) {
       audioPlayerRef.current.pause();
       setPlayingAudioId(null);
     } else {
+      // Stop any currently playing audio
+      if (playingAudioId) {
+        audioPlayerRef.current.pause();
+      }
+
+      // Generate waveform if not exists
+      if (!voiceWaveforms[id]) {
+        setVoiceWaveforms((prev) => ({
+          ...prev,
+          [id]: generateWaveformData(duration),
+        }));
+      }
+
+      setCurrentAudioTime(0);
       audioPlayerRef.current.src = url;
+      const speed = playbackSpeed[id] || 1;
+      audioPlayerRef.current.playbackRate = speed;
       audioPlayerRef.current.play();
       setPlayingAudioId(id);
 
-      // This updates the timer as the audio plays
+      // Update timer and progress as audio plays
+      const updateProgress = () => {
+        if (audioPlayerRef.current) {
+          setCurrentAudioTime(audioPlayerRef.current.currentTime);
+          requestAnimationFrame(updateProgress);
+        }
+      };
+      updateProgress();
+
       audioPlayerRef.current.ontimeupdate = () => {
         setCurrentAudioTime(audioPlayerRef.current.currentTime);
       };
 
       audioPlayerRef.current.onended = () => {
         setPlayingAudioId(null);
-        setCurrentAudioTime(0); // Reset when finished
+        setCurrentAudioTime(0);
+        // Reset playback speed for this message
+        setPlaybackSpeed((prev) => ({ ...prev, [id]: 1 }));
       };
+
+      audioPlayerRef.current.onpause = () => {
+        if (playingAudioId !== id) {
+          setCurrentAudioTime(0);
+        }
+      };
+    }
+  };
+
+  // Handle waveform click for seeking
+  const handleWaveformClick = (e, msgId, duration) => {
+    if (!playingAudioId || playingAudioId !== msgId) return;
+    
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const seekTime = percentage * duration;
+
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.currentTime = seekTime;
+      setCurrentAudioTime(seekTime);
+    }
+  };
+
+  // Toggle playback speed (1x -> 1.5x -> 2x -> 1x) per message
+  const togglePlaybackSpeed = (e, msgId) => {
+    e.stopPropagation();
+    const currentSpeed = playbackSpeed[msgId] || 1;
+    const newSpeed = currentSpeed === 1 ? 1.5 : currentSpeed === 1.5 ? 2 : 1;
+    setPlaybackSpeed((prev) => ({ ...prev, [msgId]: newSpeed }));
+    
+    if (audioPlayerRef.current && playingAudioId === msgId) {
+      audioPlayerRef.current.playbackRate = newSpeed;
     }
   };
 
@@ -550,80 +643,122 @@ function App() {
                       }`}
                     >
                       {msg.type === "voice" ? (
-                        <div className="flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-1 px-1">
-                          {/* 1. REFINED SPEED BADGE */}
-                          <div className={`flex-shrink-0 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold border ${
-                            msg.sender === "me" && theme === "light"
-                              ? "bg-white/20 text-[#111b21] border-gray-300"
-                              : theme === "light"
-                              ? "bg-gray-200 text-[#111b21] border-gray-300"
-                              : "bg-white/10 text-white border-white/5"
-                          }`}>1x</div>
+                        <div className={`flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-2 px-1 ${
+                          theme === "dark" ? "" : ""
+                        }`}>
+                          {/* WhatsApp-style Speed Badge - Clickable */}
+                          <button
+                            onClick={(e) => togglePlaybackSpeed(e, msg.id)}
+                            className={`flex-shrink-0 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold border transition-all hover:scale-110 active:scale-95 ${
+                              theme === "dark"
+                                ? "bg-white/10 text-white border-white/20 hover:bg-white/15"
+                                : msg.sender === "me"
+                                ? "bg-white/30 text-[#111b21] border-gray-300 hover:bg-white/40"
+                                : "bg-gray-200 text-[#111b21] border-gray-300 hover:bg-gray-300"
+                            }`}
+                          >
+                            {(playbackSpeed[msg.id] || 1) === 1 ? "1x" : (playbackSpeed[msg.id] || 1) === 1.5 ? "1.5x" : "2x"}
+                          </button>
 
-                          {/* 2. PLAY/PAUSE BUTTON */}
-                          <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group">
+                          {/* WhatsApp-style Play/Pause Button */}
+                          <button
+                            onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl, msg.duration)}
+                            className={`flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 rounded-full hover:bg-black/5 ${
+                              theme === "light" && msg.sender === "me" ? "hover:bg-white/20" : ""
+                            }`}
+                          >
                             {playingAudioId === msg.id ? (
-                              <div className="flex gap-1.5">
-                                <div className={`w-[3px] h-5 rounded-full animate-pulse ${
-                                  msg.sender === "me" && theme === "light" ? "bg-[#111b21]" :
-                                  theme === "light" ? "bg-[#111b21]" : "bg-white"
+                              <div className="flex gap-1">
+                                <div className={`w-[3px] h-5 rounded-full ${
+                                  theme === "dark" ? "bg-white" : "bg-[#111b21]"
                                 }`}></div>
-                                <div className={`w-[3px] h-5 rounded-full animate-pulse ${
-                                  msg.sender === "me" && theme === "light" ? "bg-[#111b21]" :
-                                  theme === "light" ? "bg-[#111b21]" : "bg-white"
+                                <div className={`w-[3px] h-5 rounded-full ${
+                                  theme === "dark" ? "bg-white" : "bg-[#111b21]"
                                 }`}></div>
                               </div>
                             ) : (
-                              <div className={`ml-1 w-0 h-0 border-y-[10px] border-y-transparent transition-colors ${
-                                msg.sender === "me" && theme === "light"
-                                  ? "border-l-[16px] border-l-[#111b21] group-hover:border-l-[#00a884]"
-                                  : theme === "light"
-                                  ? "border-l-[16px] border-l-[#111b21] group-hover:border-l-[#00a884]"
-                                  : "border-l-[16px] border-l-white group-hover:border-l-[#05cd99]"
+                              <div className={`ml-1 w-0 h-0 border-y-[10px] border-y-transparent ${
+                                theme === "dark"
+                                  ? "border-l-[16px] border-l-white"
+                                  : "border-l-[16px] border-l-[#111b21]"
                               }`}></div>
                             )}
                           </button>
 
-                          <div className="flex-1 flex flex-col pt-1">
-                            {/* 3. ADAPTIVE WAVEFORM */}
-                            <div className="flex items-center gap-[1.5px] h-8 mb-1">
-                              {[...Array(35)].map((_, i) => {
-                                const heights = [20, 45, 30, 70, 25, 80, 50, 35, 90, 40, 60, 25, 75, 50, 30, 80, 45, 60, 95, 30, 55, 70, 35, 65, 45, 90, 55, 25, 80, 35, 65, 45, 75, 25, 90];
-                                const time = currentAudioTime || 0;
+                          <div className="flex-1 flex flex-col pt-1 min-w-0">
+                            {/* WhatsApp-style Interactive Waveform */}
+                            <div
+                              ref={(el) => (waveformContainerRef.current[msg.id] = el)}
+                              onClick={(e) => handleWaveformClick(e, msg.id, msg.duration)}
+                              className={`flex items-end gap-[2px] h-8 mb-1 cursor-pointer px-1 ${
+                                theme === "light" && msg.sender === "me" ? "hover:opacity-80" : ""
+                              }`}
+                            >
+                              {(voiceWaveforms[msg.id] || Array.from({ length: 50 }, () => 20 + Math.random() * 60)).map((height, i) => {
+                                const time = playingAudioId === msg.id ? currentAudioTime : 0;
                                 const duration = msg.duration || 5;
-                                const progress = (time / duration) * 35;
+                                const totalBars = voiceWaveforms[msg.id]?.length || 50;
+                                const progress = (time / duration) * totalBars;
                                 const isPlayed = playingAudioId === msg.id && i < progress;
-                                const waveColor = msg.sender === "me" && theme === "light" 
-                                  ? (isPlayed ? "bg-[#111b21]" : "bg-[#111b21]/40")
-                                  : theme === "light"
-                                  ? (isPlayed ? "bg-[#111b21]" : "bg-[#111b21]/40")
-                                  : (isPlayed ? "bg-white" : "bg-white/30");
+                                const isActive = playingAudioId === msg.id && Math.abs(i - progress) < 2;
 
-                                return <div key={i} className={`w-[2px] rounded-full transition-all duration-150 ${waveColor}`} style={{ height: `${heights[i % heights.length]}%` }} />;
+                                return (
+                                  <div
+                                    key={i}
+                                    className={`w-[2.5px] rounded-full transition-all duration-75 ${
+                                      isPlayed
+                                        ? theme === "dark"
+                                          ? "bg-white"
+                                          : msg.sender === "me"
+                                          ? "bg-[#111b21]"
+                                          : "bg-[#111b21]"
+                                        : theme === "dark"
+                                        ? "bg-white/30"
+                                        : msg.sender === "me"
+                                        ? "bg-[#111b21]/30"
+                                        : "bg-[#111b21]/30"
+                                    } ${isActive ? "opacity-100" : ""}`}
+                                    style={{
+                                      height: `${height}%`,
+                                      minHeight: "4px",
+                                      transition: isActive ? "height 0.1s ease-out" : "none",
+                                    }}
+                                  />
+                                );
                               })}
                             </div>
 
-                            {/* 4. TIMER AND SVG TICKS */}
+                            {/* Timer and Status */}
                             <div className="flex justify-between items-center pr-1">
                               <span className={`text-[10px] font-medium tabular-nums ${
-                                msg.sender === "me" && theme === "light" ? "text-[#111b21]/80" :
-                                theme === "light" ? "text-[#111b21]/80" : "text-white/70"
-                              }`}>{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
+                                theme === "dark"
+                                  ? "text-white/70"
+                                  : msg.sender === "me"
+                                  ? "text-[#111b21]/70"
+                                  : "text-[#111b21]/70"
+                              }`}>
+                                {playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}
+                              </span>
                               <div className="flex items-center gap-1.5">
                                 <span className={`text-[9px] font-bold ${
-                                  msg.sender === "me" && theme === "light" ? "text-[#111b21]/70" :
-                                  theme === "light" ? "text-[#111b21]/70" : "text-white/50"
-                                }`}>{msg.time}</span>
+                                  theme === "dark"
+                                    ? "text-white/50"
+                                    : msg.sender === "me"
+                                    ? "text-[#111b21]/60"
+                                    : "text-[#111b21]/60"
+                                }`}>
+                                  {msg.time}
+                                </span>
                                 {msg.sender === "me" && (
-                                  <span className="flex items-center">
+                                  <span className="flex items-center ml-1">
                                     {msg.status === "read" ? (
-                                      /* WhatsApp-style blue double ticks */
+                                      /* WhatsApp Blue Double Ticks */
                                       <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M2 7L5 10L12 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                         <path d="M6 7L9 10L16 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                       </svg>
                                     ) : msg.status === "delivered" ? (
-                                      /* WhatsApp-style double gray ticks */
+                                      /* WhatsApp Double Gray Ticks */
                                       <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path
                                           d="M2 7L5 10L12 3"
@@ -641,7 +776,7 @@ function App() {
                                         />
                                       </svg>
                                     ) : (
-                                      /* WhatsApp-style single gray tick */
+                                      /* WhatsApp Single Gray Tick */
                                       <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path
                                           d="M2 7L5 10L12 3"
@@ -878,6 +1013,8 @@ function App() {
             </button>
           </footer>
         </main>
+        {/* Hidden Audio Engine */}
+        <audio ref={audioPlayerRef} className="hidden" />
       </div>
     );
   }
