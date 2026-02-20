@@ -41,6 +41,7 @@ function App() {
   const [visualizerData, setVisualizerData] = useState(new Array(10).fill(0));
   const [playbackSpeed, setPlaybackSpeed] = useState({}); // Playback speed per message: { messageId: 1 }
   const [voiceWaveforms, setVoiceWaveforms] = useState({}); // Store waveform data per message
+  const [isSharingContact, setIsSharingContact] = useState(false);
 
   // 5. REFS
   const messagesEndRef = useRef(null);
