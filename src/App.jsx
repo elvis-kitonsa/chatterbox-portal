@@ -50,6 +50,7 @@ function App() {
   const audioChunks = useRef([]);
   const audioPlayerRef = useRef(new Audio()); // Global audio player instance
   const analyzerRef = useRef(null); // This creates the hook we will use to grab the hidden input file
+  const emojiPickerRef = useRef(null); // To track the picker and a useEffect to listen for clicks on the rest of the document
 
   // 6. HELPER DATA (Emojis)
   const EMOJI_CATEGORIES = [
@@ -131,6 +132,23 @@ function App() {
       };
     }
   }, [messages, activeContactId, contacts]);
+
+  // This handles the global click event to close the emoji picker
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // If the picker is open AND the click was NOT inside the picker ref
+      if (showEmojiPicker && emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+
+    // Bind the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Unbind the listener on clean up
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   // Helper to get theme-based classes
   const themeClasses = {
@@ -873,7 +891,7 @@ function App() {
             }`}>
               {/* Emoji Picker Pop-up */}
               {showEmojiPicker && (
-                <div className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div ref={emojiPickerRef} className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-3 border-b border-white/5 bg-[#202c33] text-xs font-bold text-gray-400 uppercase tracking-widest">Emoji Picker</div>
 
                   <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
