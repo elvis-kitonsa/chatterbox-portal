@@ -526,7 +526,8 @@ function App() {
                     onEmojiSelect={(emoji) => setNewMessage((prev) => prev + emoji.native)}
                     onClickOutside={() => setShowEmojiPicker(false)}
                     theme="dark"
-                    set="native"
+                    set="apple"
+                    getSpritesheetURL={() => "https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.0.1/img/apple/sheets-256/64.png"}
                     previewPosition="none"
                     skinTonePosition="search"
                     perLine={8}
