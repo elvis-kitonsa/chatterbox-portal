@@ -31,6 +31,8 @@ function App() {
   const [theme, setTheme] = useState("dark"); // Default to dark
   const [isTyping, setIsTyping] = useState(false); // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeEmojiTab, setActiveEmojiTab] = useState(0);
+  const [emojiSearch, setEmojiSearch] = useState("");
   const [wallpaper, setWallpaper] = useState("classic"); // State to manage the current wallpaper selection for the chat background. This allows users to switch between different wallpapers, enhancing personalization.
 
   // 4. VOICE & MEDIA STATES (Keep these for later)
@@ -50,10 +52,38 @@ function App() {
 
   // 6. HELPER DATA (Emojis)
   const EMOJI_CATEGORIES = [
-    { name: "Smileys", emojis: ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘"] },
-    { name: "Gestures", emojis: ["👍", "👎", "👊", "✌️", "🤟", "🤘", "👌", "🤌", "🤏", "🖐️", "✋", "🖖", "👋", "🤙", "💪", "🖕"] },
-    { name: "Hearts", emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖"] },
-    { name: "Activities", emojis: ["⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱", "🪀", "🏓", "🏸", "🏒", "🏑"] },
+    {
+      name: "Smileys & People", icon: "😀",
+      emojis: ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤗","🫡","🤔","🫠","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🙏","✍️","💅","🤳","💪","🦾","🦵","🦶","👂","🦻","👃","🫀","🫁","🧠","🦷","🦴","👀","👁️","👅","👄","🫦","👶","🧒","👦","👧","🧑","👱","👨","🧔","👩","🧓","👴","👵"],
+    },
+    {
+      name: "Animals & Nature", icon: "🐶",
+      emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🦣","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐈‍⬛","🪶","🐓","🦃","🦤","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦫","🦦","🦥","🐁","🐀","🐿️","🌵","🎄","🌲","🌳","🌴","🪵","🌱","🌿","☘️","🍀","🎋","🎍","🍃","🍂","🍁","🍄","🐚","🪸","🌾","💐","🌷","🌹","🥀","🌺","🌸","🌼","🌻","🌞","🌝","🌛","🌜","🌚","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌙","🌟","⭐","🌠","🌌","☀️","🌤️","⛅","🌥️","☁️","🌦️","🌧️","⛈️","🌩️","🌨️","❄️","☃️","⛄","🌬️","💨","💧","💦","🌊"],
+    },
+    {
+      name: "Food & Drink", icon: "🍎",
+      emojis: ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🫑","🧄","🧅","🥔","🍠","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🫓","🥪","🥙","🧆","🌮","🌯","🫔","🥗","🥘","🫕","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥮","🍢","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜","🍯","🧃","🥤","🧋","☕","🫖","🍵","🧉","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧊","🥄","🍴","🍽️","🥢","🧂"],
+    },
+    {
+      name: "Activities", icon: "⚽",
+      emojis: ["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🪀","🏓","🏸","🏒","🏑","🥍","🏏","🪃","🥅","⛳","🪁","🏹","🎣","🤿","🥊","🥋","🎽","🛹","🛼","🛷","⛸️","🥌","🎿","⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️","🏇","🧘","🏄","🏊","🤽","🚣","🧗","🚵","🚴","🏆","🥇","🥈","🥉","🏅","🎖️","🏵️","🎗️","🎫","🎟️","🎪","🤹","🎭","🩰","🎨","🎬","🎤","🎧","🎼","🎹","🥁","🪘","🎷","🎺","🎸","🪕","🎻","🎲","♟️","🎯","🎳","🎮","🎰","🧩"],
+    },
+    {
+      name: "Travel & Places", icon: "✈️",
+      emojis: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🏍️","🛵","🛺","🚲","🛴","🛹","🛼","🚏","🛣️","🛤️","⛽","🛞","🚨","🚥","🚦","🛑","🚧","⚓","🛟","⛵","🚤","🛥️","🛳️","⛴️","🚢","✈️","🛩️","🛫","🛬","🪂","💺","🚁","🚟","🚠","🚡","🛰️","🚀","🛸","🎆","🎇","🗺️","🧭","🏔️","⛰️","🌋","🗻","🏕️","🏖️","🏜️","🏝️","🏞️","🏟️","🏛️","🏗️","🧱","🪨","🪵","🛖","🏘️","🏚️","🏠","🏡","🏢","🏣","🏤","🏥","🏦","🏨","🏩","🏪","🏫","🏬","🏭","🏯","🏰","💒","🗼","🗽","⛪","🕌","🛕","🕍","⛩️","🕋","⛲","⛺","🌁","🌃","🏙️","🌄","🌅","🌆","🌇","🌉","♾️","🎠","💈","🎡","🎢","🎪","🛎️","🗿"],
+    },
+    {
+      name: "Objects", icon: "💡",
+      emojis: ["💡","🔦","🕯️","🪔","💰","💴","💵","💶","💷","💸","💳","🪙","💹","📈","📉","📊","💼","🛍️","🎒","🧳","🌂","☂️","🧵","🪡","🧶","🥽","🥼","🦺","👔","👕","👖","🧣","🧤","🧥","🧦","👗","👘","🥻","🩱","🩲","🩳","👙","👚","👛","👜","👝","🛒","🎩","🧢","⛑️","📿","💄","💍","💎","🔔","🔕","🎵","🎶","📣","📢","📱","📲","☎️","📞","📟","📠","🔋","🪫","🔌","💻","🖥️","🖨️","⌨️","🖱️","🖲️","💾","💿","📀","🎥","📷","📸","📹","📼","🔍","🔎","💊","🩺","🩻","🩹","🩼","🩺","💉","🩸","🧬","🦠","🧫","🧪","🌡️","🧲","🪜","🧰","🔧","🪛","🔩","⚙️","🗜️","🔗","⛓️","🪝","🧲","🪤","🔑","🗝️","🔐","🔓","🔒","🛡️","🗡️","⚔️","🛠️","🔨","🪚","🪓","⛏️","🔑"],
+    },
+    {
+      name: "Symbols", icon: "❤️",
+      emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉️","☸️","✡️","🔯","🕎","☯️","☦️","🛐","⛎","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🆔","⚛️","🉑","☢️","☣️","📴","📳","🈶","🈚","🈸","🈺","🈷️","✴️","🆚","💮","🉐","㊙️","㊗️","🈴","🈵","🈹","🈲","🅰️","🅱️","🆎","🆑","🅾️","🆘","❌","⭕","🛑","⛔","📛","🚫","💯","💢","♨️","🚷","🚯","🚳","🚱","🔞","📵","🚭","❗","❕","❓","❔","‼️","⁉️","🔅","🔆","〽️","⚠️","🚸","🔱","⚜️","🔰","♻️","✅","🈯","💹","❎","🌐","💠","Ⓜ️","🌀","💤","🏧","🚾","♿","🅿️","🛗","🈳","🈂️","🛂","🛃","🛄","🛅","🚹","🚺","🚼","⚧️","🚻","🚮","🎦","📶","🈁","🔣","ℹ️","🔤","🔡","🔢","🔠","🆖","🆗","🆙","🆒","🆕","🆓","0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟","🔂","🔁","🔀","▶️","⏩","⏭️","⏯️","◀️","⏪","⏮️","🔼","⏫","🔽","⏬","⏸️","⏹️","⏺️","🎦","🔅","🔆","📶","🔔","🔕","📳","📴","📵","📲"],
+    },
+    {
+      name: "Flags", icon: "🏳️",
+      emojis: ["🏳️","🏴","🏴‍☠️","🏁","🚩","🏳️‍🌈","🏳️‍⚧️","🇺🇳","🇦🇫","🇦🇱","🇩🇿","🇦🇩","🇦🇴","🇦🇬","🇦🇷","🇦🇲","🇦🇺","🇦🇹","🇦🇿","🇧🇸","🇧🇭","🇧🇩","🇧🇧","🇧🇾","🇧🇪","🇧🇿","🇧🇯","🇧🇹","🇧🇴","🇧🇦","🇧🇼","🇧🇷","🇧🇳","🇧🇬","🇧🇫","🇧🇮","🇨🇻","🇰🇭","🇨🇲","🇨🇦","🇨🇫","🇹🇩","🇨🇱","🇨🇳","🇨🇴","🇰🇲","🇨🇬","🇨🇩","🇨🇷","🇨🇮","🇭🇷","🇨🇺","🇨🇾","🇨🇿","🇩🇰","🇩🇯","🇩🇲","🇩🇴","🇪🇨","🇪🇬","🇸🇻","🇬🇶","🇪🇷","🇪🇪","🇸🇿","🇪🇹","🇫🇯","🇫🇮","🇫🇷","🇬🇦","🇬🇲","🇬🇪","🇩🇪","🇬🇭","🇬🇷","🇬🇩","🇬🇹","🇬🇳","🇬🇼","🇬🇾","🇭🇹","🇭🇳","🇭🇺","🇮🇸","🇮🇳","🇮🇩","🇮🇷","🇮🇶","🇮🇪","🇮🇱","🇮🇹","🇯🇲","🇯🇵","🇯🇴","🇰🇿","🇰🇪","🇰🇮","🇽🇰","🇰🇼","🇰🇬","🇱🇦","🇱🇻","🇱🇧","🇱🇸","🇱🇷","🇱🇾","🇱🇮","🇱🇹","🇱🇺","🇲🇬","🇲🇼","🇲🇾","🇲🇻","🇲🇱","🇲🇹","🇲🇭","🇲🇷","🇲🇺","🇲🇽","🇫🇲","🇲🇩","🇲🇨","🇲🇳","🇲🇪","🇲🇦","🇲🇿","🇲🇲","🇳🇦","🇳🇷","🇳🇵","🇳🇱","🇳🇿","🇳🇮","🇳🇪","🇳🇬","🇲🇰","🇳🇴","🇴🇲","🇵🇰","🇵🇼","🇵🇦","🇵🇬","🇵🇾","🇵🇪","🇵🇭","🇵🇱","🇵🇹","🇶🇦","🇷🇴","🇷🇺","🇷🇼","🇰🇳","🇱🇨","🇻🇨","🇼🇸","🇸🇲","🇸🇹","🇸🇦","🇸🇳","🇷🇸","🇸🇱","🇸🇬","🇸🇰","🇸🇮","🇸🇧","🇸🇴","🇿🇦","🇸🇸","🇪🇸","🇱🇰","🇸🇩","🇸🇷","🇸🇪","🇨🇭","🇸🇾","🇹🇼","🇹🇯","🇹🇿","🇹🇭","🇹🇱","🇹🇬","🇹🇴","🇹🇹","🇹🇳","🇹🇷","🇹🇲","🇺🇬","🇺🇦","🇦🇪","🇬🇧","🏴󠁧󠁢󠁥󠁮󠁧󠁿","🏴󠁧󠁢󠁳󠁣󠁴󠁿","🏴󠁧󠁢󠁷󠁬󠁳󠁿","🇺🇸","🇺🇾","🇺🇿","🇻🇺","🇻🇪","🇻🇳","🇾🇪","🇿🇲","🇿🇼"],
+    },
   ];
 
   // --- AUTHENTICATION LOGIC ---
@@ -537,28 +567,81 @@ function App() {
             <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm ${theme === "dark" ? "bg-[#2a3942]" : "bg-white"}`}>
               {/* Emoji Picker Pop-up */}
               {showEmojiPicker && (
-                <div ref={emojiPickerRef} className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-3 border-b border-white/5 bg-[#202c33] text-xs font-bold text-gray-400 uppercase tracking-widest">Emoji Picker</div>
+                <div
+                  ref={emojiPickerRef}
+                  className="absolute bottom-[4.5rem] left-0 w-80 h-[26rem] bg-[#1f2c33] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50"
+                  style={{ animation: "emojiPickerIn 0.15s ease-out" }}
+                >
+                  {/* Search Bar */}
+                  <div className="px-3 pt-3 pb-2 bg-[#1f2c33]">
+                    <div className="flex items-center gap-2 bg-[#111b21] rounded-full px-3 py-1.5">
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400 shrink-0">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search emoji"
+                        value={emojiSearch}
+                        onChange={(e) => setEmojiSearch(e.target.value)}
+                        className="flex-1 bg-transparent text-[13px] text-gray-200 placeholder:text-gray-500 outline-none border-none"
+                      />
+                      {emojiSearch && (
+                        <button onClick={() => setEmojiSearch("")} className="text-gray-400 hover:text-gray-200 text-xs leading-none">✕</button>
+                      )}
+                    </div>
+                  </div>
 
-                  <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
-                    {EMOJI_CATEGORIES.map((cat) => (
-                      <div key={cat.name} className="mb-4">
-                        <h4 className="text-[10px] text-gray-500 font-bold mb-2 uppercase">{cat.name}</h4>
-                        <div className="grid grid-cols-6 gap-2">
-                          {cat.emojis.map((emoji) => (
+                  {/* Category Label */}
+                  <div className="px-4 py-1">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                      {emojiSearch ? "Search Results" : EMOJI_CATEGORIES[activeEmojiTab].name}
+                    </span>
+                  </div>
+
+                  {/* Emoji Grid */}
+                  <div className="flex-1 overflow-y-auto px-2 pb-1 custom-scrollbar">
+                    {(() => {
+                      const displayEmojis = emojiSearch
+                        ? EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => e.includes(emojiSearch))
+                        : EMOJI_CATEGORIES[activeEmojiTab].emojis;
+
+                      return displayEmojis.length > 0 ? (
+                        <div className="grid grid-cols-8 gap-0.5">
+                          {displayEmojis.map((emoji, i) => (
                             <button
-                              key={emoji}
-                              onClick={() => {
-                                setNewMessage((prev) => prev + emoji);
-                                // WhatsApp usually keeps it open until you click away
-                              }}
-                              className="text-xl hover:bg-white/10 p-1 rounded-lg transition-colors active:scale-125"
+                              key={`${emoji}-${i}`}
+                              onClick={() => setNewMessage((prev) => prev + emoji)}
+                              className="text-[1.45rem] p-1.5 rounded-lg hover:bg-white/10 transition-colors active:scale-110 flex items-center justify-center"
                             >
                               {emoji}
                             </button>
                           ))}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-500">
+                          <span className="text-3xl">🔍</span>
+                          <p className="text-[12px]">No emojis found</p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Category Tab Bar */}
+                  <div className="flex items-center justify-around border-t border-white/10 bg-[#202c33] px-1 pt-1 pb-1">
+                    {EMOJI_CATEGORIES.map((cat, i) => (
+                      <button
+                        key={cat.name}
+                        onClick={() => { setActiveEmojiTab(i); setEmojiSearch(""); }}
+                        className="flex flex-col items-center gap-0.5 px-1 pb-0.5 relative"
+                        title={cat.name}
+                      >
+                        <span className={`text-[1.25rem] transition-all ${activeEmojiTab === i && !emojiSearch ? "opacity-100 scale-110" : "opacity-40 hover:opacity-70"}`}>
+                          {cat.icon}
+                        </span>
+                        {activeEmojiTab === i && !emojiSearch && (
+                          <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-[2.5px] bg-[#00a884] rounded-full" />
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>
