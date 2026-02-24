@@ -314,7 +314,7 @@ function App() {
         <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[150px] pointer-events-none"></div>
 
         {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
-        <aside className={`w-[340px] m-4 mr-0 rounded-[2.5rem] border border-white/5 flex flex-col backdrop-blur-3xl shadow-2xl z-20 overflow-hidden ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+        <aside className={`w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white/60 border-white/5 backdrop-blur-3xl"}`}>
           {/* Top Branding/Profile Area */}
           <div className="p-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ function App() {
                 <h1 className="text-lg font-black tracking-tighter">
                   Chatter<span className="text-[#00a884]">Box</span>
                 </h1>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-300 font-bold">Workspace</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">Workspace</p>
               </div>
             </div>
             <button onClick={() => setIsUnlocked(false)} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all">
@@ -335,9 +335,9 @@ function App() {
 
           {/* Search Capsule: For searching conversations and contacts within the sidebar */}
           <div className="px-6 pb-4">
-            <div className="bg-[#2a3942] border border-white/10 rounded-2xl flex items-center px-4 py-3 shadow-inner">
+            <div className="bg-[#0d1c24] border border-white/[0.12] rounded-2xl flex items-center px-4 py-3 shadow-inner">
               <span className="text-gray-400 mr-3">🔍</span>
-              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-300 font-medium" />
+              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-400 font-medium" />
             </div>
           </div>
 
@@ -349,7 +349,7 @@ function App() {
                 <div
                   key={contact.id}
                   onClick={() => setActiveContactId(contact.id)}
-                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${activeContactId === contact.id ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1" : "border-transparent hover:bg-white/5 hover:translate-x-1"}`}
+                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${activeContactId === contact.id ? "bg-[#00a884]/15 border-[#00a884]/40 shadow-lg translate-x-1" : "border-transparent hover:bg-white/[0.07] hover:translate-x-1"}`}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#00a884] rounded-full border-2 border-[#111b21]"></div>
@@ -357,9 +357,9 @@ function App() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       {/* This makes the active name bright white and the others readable gray */}
-                      <h3 className={`font-bold text-sm truncate ${activeContactId === contact.id ? "text-white" : "text-gray-300"}`}>{contact.name}</h3> <span className="text-[9px] font-bold opacity-30 italic">12:45</span>
+                      <h3 className={`font-bold text-sm truncate ${activeContactId === contact.id ? "text-white" : "text-gray-200"}`}>{contact.name}</h3> <span className="text-[9px] font-bold text-gray-500 italic">12:45</span>
                     </div>
-                    <p className="text-[11px] opacity-40 font-medium truncate">Online • Secure</p>
+                    <p className="text-[11px] text-gray-500 font-medium truncate">Online • Secure</p>
                   </div>
                 </div>
               ))}
@@ -369,7 +369,7 @@ function App() {
         {/* 💬 2. FLOATING MESSAGING HUB */}
         <main className="flex-1 m-4 flex flex-col relative z-10">
           {/* Floating Header */}
-          <header className={`p-4 rounded-[2rem] border border-white/5 backdrop-blur-xl mb-4 flex items-center justify-between shadow-xl ${theme === "dark" ? "bg-[#111b21]/40" : "bg-white/60"}`}>
+          <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-xl border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white/60 border-white/5 backdrop-blur-xl"}`}>
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
               return (
@@ -397,7 +397,7 @@ function App() {
           </header>
 
           {/* Message Viewport - Floating Cards Style */}
-          <div className={`flex-1 rounded-[2.5rem] border border-white/5 overflow-hidden relative shadow-2xl ${theme === "dark" ? "bg-[#0b141a]/60" : "bg-white/40"}`}>
+          <div className={`flex-1 rounded-[2.5rem] overflow-hidden relative shadow-2xl border ${theme === "dark" ? "bg-[#0d1c24] border-white/[0.08]" : "bg-white/40 border-white/5"}`}>
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none grayscale" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
@@ -408,8 +408,8 @@ function App() {
                     <div
                       className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
                         msg.sender === "me"
-                          ? "bg-[#054740] text-white shadow-[#054740]/20" // 🟢 New Sophisticated Dark Teal
-                          : "bg-[#2a3942] text-white border-t border-white/10"
+                          ? "bg-[#054740] text-white shadow-[#054740]/20"
+                          : "bg-[#273b48] text-white border border-white/[0.1]"
                       }`}
                     >
                       {msg.type === "voice" ? (
@@ -518,7 +518,7 @@ function App() {
           {/* Floating Input Pod */}
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
             {/* 1. THE MAIN CAPSULE (White/Gray background) */}
-            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm ${theme === "dark" ? "bg-[#2a3942]" : "bg-white"}`}>
+            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white border-gray-200"}`}>
               {/* Emoji Picker Pop-up */}
               {showEmojiPicker && (
                 <div className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
