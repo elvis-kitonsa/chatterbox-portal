@@ -656,163 +656,168 @@ function App() {
     );
   }
 
-  // 2. OTP Verification Screen
-  // Replace your verification screen 'if' block with this:
-  if (isVerifying) {
-    return (
-      <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
-        <div className="bg-[#202c33] p-12 rounded-[2.5rem] border border-[#00a884]/30 max-w-sm w-full text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden">
-          {/* Subtle Background Glow */}
-          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#00a884]/5 rounded-full blur-3xl"></div>
+  return (
+    <>
+      {/* ── Page background + card (switches between login and verify) ── */}
+      <div className="min-h-screen w-full flex items-center justify-center p-6 font-sans" style={{ background: "linear-gradient(135deg, #0f1729 0%, #1a2340 50%, #0f2027 100%)" }}>
 
-          {/* Updated Chat Logo (Matches Login) */}
-          <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20">
-            <span className="text-3xl text-[#111b21]">💬</span>
-          </div>
+        {isVerifying ? (
+          /* ── OTP VERIFICATION CARD ── */
+          <div className="w-full max-w-sm rounded-3xl p-10 text-center" style={{ backgroundColor: "#1e2a3a", border: "1px solid rgba(99,179,237,0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto" style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 8px 24px rgba(59,130,246,0.4)" }}>
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+              </svg>
+            </div>
 
-          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Verify it's you</h2>
-          <p className="text-gray-400 text-sm mb-10 leading-relaxed">
-            We sent a code to <br />
-            <span className="text-[#00a884] font-bold">+{phone}</span>
-          </p>
+            <h2 className="text-2xl font-black mb-1 tracking-tight" style={{ color: "#e2e8f0" }}>Check your phone</h2>
+            <p className="text-sm mb-7" style={{ color: "#64748b" }}>
+              Enter the code sent to <span className="font-bold" style={{ color: "#38bdf8" }}>+{phone}</span>
+            </p>
 
-          <div className="group mb-8">
+            <label className="text-[11px] font-bold uppercase tracking-[0.15em] mb-2 block text-left" style={{ color: "#38bdf8" }}>Verification Code</label>
             <input
               type="text"
               maxLength="6"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full bg-[#2a3942] text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl border-2 border-transparent group-hover:border-gray-600 focus:border-[#00a884] outline-none transition-all duration-300 shadow-inner"
+              className="w-full text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl outline-none transition-all duration-200 mb-5"
+              style={{ backgroundColor: "#111d2b", color: "#e2e8f0", border: "2px solid #2d4a6b" }}
+              onFocus={(e) => (e.target.style.borderColor = "#38bdf8")}
+              onBlur={(e) => (e.target.style.borderColor = "#2d4a6b")}
               placeholder="000000"
             />
-          </div>
 
-          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_10px_20px_rgba(0,168,132,0.3)] py-4 rounded-2xl font-black text-[#111b21] uppercase tracking-widest transition-all duration-300 active:scale-95 mb-4">
-            Confirm Code
-          </button>
+            <button
+              onClick={handleVerifyOtp}
+              className="w-full py-4 rounded-2xl font-bold text-white tracking-wide transition-all duration-200 active:scale-95 mb-4 text-[15px]"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Verify &amp; Sign In →
+            </button>
 
-          {/* Expiry Warning UI */}
-          {/* Add a visual cue to indicate the code is about to expire */}
-          <div className="mt-4">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-500 text-[10px] uppercase tracking-tighter">Valid for 3 minutes only</p>}</div>
-
-          <button onClick={() => setIsVerifying(false)} className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
-            ← Use different number
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. Login Screen (Dark Mode)
-  // Replace your "3. Login Screen" return block with this:
-  return (
-    <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
-      <div className="bg-[#202c33] p-10 rounded-[2.5rem] shadow-2xl border border-[#00a884]/20 max-w-sm w-full relative overflow-hidden group">
-        {/* Dynamic Glow Effect */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00a884]/10 rounded-full blur-3xl group-hover:bg-[#00a884]/20 transition-all duration-700"></div>
-
-        {/* New Chat Logo */}
-        <div className="w-20 h-20 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20 transform transition-transform hover:rotate-6">
-          <span className="text-4xl text-[#111b21]">💬</span>
-        </div>
-
-        <h1 className="text-4xl font-black text-white mb-2 text-center tracking-tight">
-          Chatter<span className="text-[#00a884]">Box</span>
-        </h1>
-        <p className="text-gray-400 mb-10 text-center text-sm font-medium tracking-wide">Engage. Talk. Interact.</p>
-
-        <div className="mb-8 relative group">
-          <label className="text-[10px] font-bold text-[#00a884] uppercase tracking-[0.2em] ml-1 mb-2 block">Phone Number</label>
-
-          <div className="flex items-center bg-[#2a3942] rounded-2xl border-2 border-transparent focus-within:border-[#00a884]/50 transition-all duration-300 overflow-hidden shadow-inner h-[60px]">
-            {/* Custom Styled Country Trigger */}
-            <div className="flex items-center gap-2 cursor-pointer hover:bg-white/5 h-full px-4 transition-colors border-r border-white/10" onClick={() => setShowCountryList(!showCountryList)}>
-              <span className="text-xl">{selectedCountry.flag}</span>
-              <span className="text-white font-bold text-sm">{selectedCountry.code}</span>
-              <span className={`text-[#00a884] text-[10px] transition-transform duration-300 ${showCountryList ? "rotate-180" : ""}`}>▼</span>
+            <div className="mb-4">
+              {isExpired
+                ? <p className="text-red-400 text-xs font-bold animate-pulse">CODE EXPIRED</p>
+                : <p className="text-xs" style={{ color: "#475569" }}>Valid for 3 minutes only</p>
+              }
             </div>
 
-            {/* Clean, Branded Input */}
-            <input type="tel" placeholder="0700 000 000" className="flex-1 bg-transparent border-none outline-none text-white px-4 font-bold placeholder:text-gray-600 text-lg" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <button
+              onClick={() => setIsVerifying(false)}
+              className="text-xs font-semibold transition-colors duration-200"
+              style={{ color: "#475569" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#38bdf8")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+            >
+              ← Use a different number
+            </button>
           </div>
-
-          {/* THE FIX: Premium Custom Dropdown List */}
-          {showCountryList && (
-            <div className="absolute top-[100%] left-0 w-full mt-2 bg-[#202c33] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[110] overflow-hidden backdrop-blur-xl max-h-[220px] overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-200">
-              {[
-                { code: "+256", flag: "🇺🇬", name: "Uganda" },
-                { code: "+254", flag: "🇰🇪", name: "Kenya" },
-                { code: "+255", flag: "🇹🇿", name: "Tanzania" },
-                { code: "+234", flag: "🇳🇬", name: "Nigeria" },
-                { code: "+1", flag: "🇺🇸", name: "USA" },
-              ].map((country) => (
-                <div
-                  key={country.code}
-                  onClick={() => {
-                    setSelectedCountry(country);
-                    setShowCountryList(false);
-                    // Optional: You could update the phone prefix here if needed
-                  }}
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-[#00a884]/10 cursor-pointer transition-colors border-b border-white/5 last:border-none"
-                >
-                  <span className="text-xl">{country.flag}</span>
-                  <span className="text-white text-sm font-semibold">{country.name}</span>
-                  <span className="ml-auto text-[#00a884] text-xs font-mono font-bold">{country.code}</span>
-                </div>
-              ))}
+        ) : (
+          /* ── LOGIN CARD ── */
+          <div className="w-full max-w-sm rounded-3xl p-10" style={{ backgroundColor: "#1e2a3a", border: showSimulation ? "1px solid rgba(56,189,248,0.6)" : "1px solid rgba(99,179,237,0.15)", boxShadow: showSimulation ? "0 25px 60px rgba(0,0,0,0.5), 0 0 80px rgba(56,189,248,0.55), 0 0 0 3px rgba(56,189,248,0.3)" : "0 25px 60px rgba(0,0,0,0.5)", transform: showSimulation ? "scale(0.95)" : "scale(1)", transition: "all 0.35s ease" }}>
+            <div
+              className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6 mx-auto hover:scale-105 transition-transform duration-200 cursor-default"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 10px 30px rgba(59,130,246,0.4)" }}
+            >
+              <svg viewBox="0 0 24 24" width="38" height="38" fill="white">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+              </svg>
             </div>
-          )}
-        </div>
 
-        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
-          Send Verification Code
-        </button>
+            <h1 className="text-3xl font-black mb-1 text-center tracking-tight" style={{ color: "#e2e8f0" }}>
+              Chatter<span style={{ color: "#38bdf8" }}>Box</span>
+            </h1>
+            <p className="text-sm text-center mb-8" style={{ color: "#475569" }}>Your space to connect &amp; communicate</p>
+
+            <label className="text-[11px] font-bold uppercase tracking-[0.15em] mb-2 block" style={{ color: "#38bdf8" }}>Phone Number</label>
+            <PhoneInput
+              country={"ug"}
+              value={phone}
+              onChange={(p) => setPhone(p)}
+              containerStyle={{ width: "100%", marginBottom: "20px" }}
+              inputStyle={{
+                backgroundColor: "#111d2b",
+                color: "#e2e8f0",
+                width: "100%",
+                height: "58px",
+                borderRadius: "14px",
+                border: "2px solid #2d4a6b",
+                fontSize: "16px",
+              }}
+              buttonStyle={{
+                backgroundColor: "#111d2b",
+                border: "none",
+                borderRadius: "14px 0 0 14px",
+                paddingLeft: "10px",
+              }}
+              dropdownStyle={{
+                backgroundColor: "#1e2a3a",
+                color: "#e2e8f0",
+              }}
+            />
+
+            <button
+              onClick={handleRequestOtp}
+              className="w-full active:scale-95 text-white font-bold py-4 rounded-2xl transition-all duration-200 text-[15px] tracking-wide mb-5"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Continue →
+            </button>
+
+            <p className="text-center text-xs" style={{ color: "#475569" }}>
+              By continuing you agree to our{" "}
+              <span className="font-semibold cursor-pointer hover:underline" style={{ color: "#38bdf8" }}>Terms</span>
+              {" "}&amp;{" "}
+              <span className="font-semibold cursor-pointer hover:underline" style={{ color: "#38bdf8" }}>Privacy Policy</span>
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* ── OTP SIMULATION POPUP — always at root level, overlays everything ── */}
       {showSimulation && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
-          {/* Main Card */}
-          <div className="bg-[#111b21] border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-[0_40px_80px_rgba(0,0,0,0.7)] relative overflow-hidden ring-1 ring-white/10">
-            {/* Subtle brand glow in the background */}
-            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00a884]/10 rounded-full blur-[80px]"></div>
+        <div className="fixed inset-0 flex items-center justify-center z-[200] backdrop-blur-md" style={{ backgroundColor: "rgba(5,10,20,0.5)" }}>
+          <div className="max-w-sm w-full text-center mx-4 rounded-3xl p-10" style={{ backgroundColor: "#1e2a3a", border: "1px solid rgba(56,189,248,0.3)", boxShadow: "0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.08)" }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 mx-auto" style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 8px 24px rgba(59,130,246,0.4)" }}>
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+            </div>
 
-            <div className="relative z-10">
-              {/* REPLACED: Shield is gone. Using your branded chat logo with a glow */}
-              <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-[0_0_20px_rgba(0,168,132,0.4)]">
-                <span className="text-3xl filter drop-shadow-sm">💬</span>
-              </div>
+            <h3 className="text-2xl font-black tracking-tight mb-1" style={{ color: "#e2e8f0" }}>Your Access Code</h3>
+            <p className="text-sm mb-6" style={{ color: "#64748b" }}>Use this code to verify your identity</p>
 
-              <h3 className="text-white text-2xl font-black tracking-tight mb-2">Secure Access</h3>
-              <p className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">
-                Confirm the code below to enter your <br />
-                <span className="text-[#00a884] opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">verified workspace</span>
-              </p>
+            <div className="py-7 rounded-2xl mb-6" style={{ backgroundColor: "#111d2b", border: "2px solid #2d4a6b" }}>
+              <span className="text-5xl font-mono font-black tracking-[0.15em] block" style={{ color: "#38bdf8" }}>{generatedOTP}</span>
+            </div>
 
-              {/* Improved Code Box: Deeper contrast and neon text */}
-              <div className="bg-[#202c33] py-8 rounded-[2rem] border border-white/5 mb-10 shadow-inner group">
-                <span className="text-5xl font-mono font-black text-[#00a884] tracking-[0.15em] drop-shadow-[0_0_12px_rgba(0,168,132,0.3)] group-hover:scale-110 transition-transform duration-500 block">{generatedOTP}</span>
-              </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(generatedOTP);
+                setShowSimulation(false);
+                setIsVerifying(true);
+              }}
+              className="w-full py-4 text-white font-bold rounded-2xl transition-all active:scale-95 tracking-wide"
+              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Copy Code &amp; Continue →
+            </button>
 
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedOTP);
-                  setShowSimulation(false);
-                  setIsVerifying(true);
-                }}
-                className="w-full py-5 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-bold rounded-2xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-[0.2em] active:scale-95"
-              >
-                Copy & Continue
-              </button>
-
-              <div className="mt-8 flex items-center justify-center gap-2">
-                <div className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-pulse"></div>
-                <span className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Secure Simulation</span>
-              </div>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#38bdf8" }}></div>
+              <span className="text-[11px] uppercase tracking-[0.2em] font-semibold" style={{ color: "#475569" }}>Simulation Mode</span>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
