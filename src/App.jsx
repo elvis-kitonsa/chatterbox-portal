@@ -3,6 +3,8 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { Sun, Moon } from "lucide-react";
 
+// Emoji keywords mapping for search functionality
+// Allows users to search for emojis using descriptive keywords
 const EMOJI_KEYWORDS = {
   // Smileys & People
   "😀": "happy grinning smile laugh face",
@@ -896,8 +898,8 @@ function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [generatedOTP, setGeneratedOTP] = useState(""); // Needed for simulation
+  const [otp, setOtp] = useState(""); // This state will be used to store the OTP entered by the user in the input field. It will be updated as the user types and can be used for verification when the user submits the OTP.
+  const [generatedOTP, setGeneratedOTP] = useState(""); // Needed for verification simulation
   const [showSimulation, setShowSimulation] = useState(false); // Needed for modal
   const [isExpired, setIsExpired] = useState(false); // For OTP countdown
 
@@ -944,6 +946,7 @@ function App() {
   const emojiPickerRef = useRef(null); // To track the picker and a useEffect to listen for clicks on the rest of the document
 
   // --- EMOJI DATA ---
+  // This is a structured array of emoji categories, where each category has a name, an icon representing it, and a list of emojis that belong to that category. This structure allows for easy rendering of the emoji picker with categorized tabs and efficient searching/filtering of emojis based on user input.
   const EMOJI_CATEGORIES = [
     {
       name: "Smileys & People",
@@ -2117,9 +2120,9 @@ function App() {
 
   // --- AUTHENTICATION LOGIC ---
 
-  // Updated to trigger the Simulation Modal
+  // This function simulates the process of requesting an OTP (One-Time Password) for authentication. It checks if the entered phone number is valid (length greater than 9), generates a random 6-digit OTP, and then opens a modal to show the generated OTP for simulation purposes.
   const handleRequestOtp = () => {
-    if (phone && phone.length > 5) {
+    if (phone && phone.length > 9) {
       // Create a random 6-digit code for the simulation
       const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOTP(newOtp);
@@ -2129,7 +2132,7 @@ function App() {
     }
   };
 
-  // Updated to check against the generated code
+  // This function checks if the entered OTP matches the generated OTP. If it does, it unlocks the app; if not, it shows an error message.
   const handleVerifyOtp = () => {
     // For development, let's use '123456' as our secret code
     if (otp === generatedOTP || otp === "123456") {
@@ -2140,6 +2143,7 @@ function App() {
     }
   };
 
+  // This function simulates sharing a contact in the chat. When you select a contact to share, it creates a new message of type "contact" with the contact's information and adds it to the messages state. It then closes the contact sharing UI.
   const handleShareContact = (contact) => {
     const contactMsg = {
       id: Date.now(),
@@ -2156,9 +2160,7 @@ function App() {
   };
 
   // --- CHAT EFFECTS ---
-  // This sets a typing indicator and simulates a reply from the other person after you send a message.
-  // It checks if the last message was sent by "me" and then sets a timer to show "typing..." and another
-  // timer to add a reply message after a delay.
+  // This effect simulates receiving a reply from the other person after you send a message. It checks the last message sent by "me" and if it hasn't already triggered a reply, it sets timers to show a typing indicator and then add a reply message from "them". It also ensures that we don't trigger multiple replies for the same message by marking it as processed.
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
 
@@ -2454,7 +2456,7 @@ function App() {
   // Handle waveform click for seeking
   const handleWaveformClick = (e, msgId, duration) => {
     if (!playingAudioId || playingAudioId !== msgId) return;
-    
+
     const container = e.currentTarget;
     const rect = container.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -2473,7 +2475,7 @@ function App() {
     const currentSpeed = playbackSpeed[msgId] || 1;
     const newSpeed = currentSpeed === 1 ? 1.5 : currentSpeed === 1.5 ? 2 : 1;
     setPlaybackSpeed((prev) => ({ ...prev, [msgId]: newSpeed }));
-    
+
     if (audioPlayerRef.current && playingAudioId === msgId) {
       audioPlayerRef.current.playbackRate = newSpeed;
     }
@@ -2513,41 +2515,22 @@ function App() {
                 <h1 className="text-lg font-black tracking-tighter">
                   Chatter<span className="text-[#00a884]">Box</span>
                 </h1>
-                <p
-                  className={`text-[10px] uppercase tracking-[0.2em] font-bold ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-500"
-                  }`}
-                >
-                  Workspace
-                </p>
+                <p className={`text-[10px] uppercase tracking-[0.2em] font-bold ${theme === "dark" ? "text-gray-300" : "text-gray-500"}`}>Workspace</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsUnlocked(false)}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                theme === "dark"
-                  ? "bg-white/5 hover:bg-red-500/10 hover:text-red-400"
-                  : "bg-black/5 text-gray-600 hover:bg-red-50 hover:text-red-500"
-              }`}
-            >
+            <button onClick={() => setIsUnlocked(false)} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${theme === "dark" ? "bg-white/5 hover:bg-red-500/10 hover:text-red-400" : "bg-black/5 text-gray-600 hover:bg-red-50 hover:text-red-500"}`}>
               🔒
             </button>
           </div>
 
           {/* Search Capsule: For searching conversations and contacts within the sidebar */}
           <div className="px-6 pb-4">
-            <div
-              className={`rounded-2xl flex items-center px-4 py-3 shadow-inner ${
-                theme === "dark" ? "bg-[#2a3942] border border-white/10" : "bg-white border-2 border-gray-300 shadow-sm"
-              }`}
-            >
+            <div className={`rounded-2xl flex items-center px-4 py-3 shadow-inner ${theme === "dark" ? "bg-[#2a3942] border border-white/10" : "bg-white border-2 border-gray-300 shadow-sm"}`}>
               <span className={theme === "dark" ? "text-gray-400 mr-3" : "text-gray-600 mr-3"}>🔍</span>
               <input
                 type="text"
                 placeholder="Search conversations..."
-                className={`bg-transparent w-full outline-none text-sm font-medium ${
-                  theme === "dark" ? "text-white placeholder:text-gray-300" : "text-gray-900 placeholder:text-gray-700"
-                }`}
+                className={`bg-transparent w-full outline-none text-sm font-medium ${theme === "dark" ? "text-white placeholder:text-gray-300" : "text-gray-900 placeholder:text-gray-700"}`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -2563,11 +2546,7 @@ function App() {
                   key={contact.id}
                   onClick={() => setActiveContactId(contact.id)}
                   className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${
-                    activeContactId === contact.id
-                      ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1"
-                      : theme === "dark"
-                      ? "border-transparent hover:bg-white/5 hover:translate-x-1"
-                      : "border-transparent hover:bg-gray-100 hover:translate-x-1"
+                    activeContactId === contact.id ? "bg-[#00a884]/10 border-[#00a884]/30 shadow-lg translate-x-1" : theme === "dark" ? "border-transparent hover:bg-white/5 hover:translate-x-1" : "border-transparent hover:bg-gray-100 hover:translate-x-1"
                   }`}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
@@ -2576,19 +2555,7 @@ function App() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       {/* This makes the active name adapt to theme and selection */}
-                      <h3
-                        className={`font-bold text-sm truncate ${
-                          theme === "dark"
-                            ? activeContactId === contact.id
-                              ? "text-white"
-                              : "text-gray-300"
-                            : activeContactId === contact.id
-                            ? "text-gray-900"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {contact.name}
-                      </h3>
+                      <h3 className={`font-bold text-sm truncate ${theme === "dark" ? (activeContactId === contact.id ? "text-white" : "text-gray-300") : activeContactId === contact.id ? "text-gray-900" : "text-gray-600"}`}>{contact.name}</h3>
                       <span className={`text-[9px] font-bold italic ${theme === "dark" ? "opacity-30 text-gray-300" : "text-gray-600"}`}>12:45</span>
                     </div>
                     <p className={`text-[11px] font-medium truncate ${theme === "dark" ? "opacity-40 text-gray-300" : "text-gray-700"}`}>Online • Secure</p>
@@ -2647,9 +2614,7 @@ function App() {
             })()}
 
             {/* 2. REPLACED THEME TOGGLE AREA */}
-            <div className={`flex items-center gap-3 p-1.5 rounded-2xl border mr-2 ${
-              theme === "dark" ? "bg-black/10 border-white/5" : "bg-gray-100 border-gray-300"
-            }`}>
+            <div className={`flex items-center gap-3 p-1.5 rounded-2xl border mr-2 ${theme === "dark" ? "bg-black/10 border-white/5" : "bg-gray-100 border-gray-300"}`}>
               <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 ${theme === "dark" ? "hover:bg-yellow-500/10" : "hover:bg-indigo-500/10"}`}>
                 {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-500" strokeWidth={2.5} /> : <Moon className="w-5 h-5 text-indigo-600" strokeWidth={2.5} />}
               </button>
@@ -2657,12 +2622,8 @@ function App() {
           </header>
 
           {/* Message Viewport - Floating Cards Style */}
-          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-2xl ${
-            theme === "dark" ? "bg-[#0b141a]/60 border-white/5" : "bg-gray-50 border-gray-300"
-          }`}>
-            <div className={`absolute inset-0 pointer-events-none grayscale ${
-              theme === "dark" ? "opacity-[0.03]" : "opacity-[0.02]"
-            }`} style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
+          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-2xl ${theme === "dark" ? "bg-[#0b141a]/60 border-white/5" : "bg-gray-50 border-gray-300"}`}>
+            <div className={`absolute inset-0 pointer-events-none grayscale ${theme === "dark" ? "opacity-[0.03]" : "opacity-[0.02]"}`} style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
               {messages
@@ -2676,23 +2637,17 @@ function App() {
                             ? "bg-[#054740] text-white shadow-[#054740]/20" // Dark theme: deep teal bubble
                             : "bg-[#d9fdd3] text-[#111b21] shadow-md" // Light theme: WhatsApp-style green bubble
                           : theme === "dark"
-                          ? "bg-[#2a3942] text-white border-t border-white/10" // Dark theme: graphite bubble
-                          : "bg-white text-[#111b21] border-2 border-gray-300 shadow-lg" // Light theme: white bubble with dark text and strong border
+                            ? "bg-[#2a3942] text-white border-t border-white/10" // Dark theme: graphite bubble
+                            : "bg-white text-[#111b21] border-2 border-gray-300 shadow-lg" // Light theme: white bubble with dark text and strong border
                       }`}
                     >
                       {msg.type === "voice" ? (
-                        <div className={`flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-2 px-1 ${
-                          theme === "dark" ? "" : ""
-                        }`}>
+                        <div className={`flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-2 px-1 ${theme === "dark" ? "" : ""}`}>
                           {/* WhatsApp-style Speed Badge - Clickable */}
                           <button
                             onClick={(e) => togglePlaybackSpeed(e, msg.id)}
                             className={`flex-shrink-0 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold border transition-all hover:scale-110 active:scale-95 ${
-                              theme === "dark"
-                                ? "bg-white/10 text-white border-white/20 hover:bg-white/15"
-                                : msg.sender === "me"
-                                ? "bg-white/30 text-[#111b21] border-gray-300 hover:bg-white/40"
-                                : "bg-gray-200 text-[#111b21] border-gray-300 hover:bg-gray-300"
+                              theme === "dark" ? "bg-white/10 text-white border-white/20 hover:bg-white/15" : msg.sender === "me" ? "bg-white/30 text-[#111b21] border-gray-300 hover:bg-white/40" : "bg-gray-200 text-[#111b21] border-gray-300 hover:bg-gray-300"
                             }`}
                           >
                             {(playbackSpeed[msg.id] || 1) === 1 ? "1x" : (playbackSpeed[msg.id] || 1) === 1.5 ? "1.5x" : "2x"}
@@ -2701,37 +2656,21 @@ function App() {
                           {/* WhatsApp-style Play/Pause Button */}
                           <button
                             onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl, msg.duration)}
-                            className={`flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 rounded-full hover:bg-black/5 ${
-                              theme === "light" && msg.sender === "me" ? "hover:bg-white/20" : ""
-                            }`}
+                            className={`flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 rounded-full hover:bg-black/5 ${theme === "light" && msg.sender === "me" ? "hover:bg-white/20" : ""}`}
                           >
                             {playingAudioId === msg.id ? (
                               <div className="flex gap-1">
-                                <div className={`w-[3px] h-5 rounded-full ${
-                                  theme === "dark" ? "bg-white" : "bg-[#111b21]"
-                                }`}></div>
-                                <div className={`w-[3px] h-5 rounded-full ${
-                                  theme === "dark" ? "bg-white" : "bg-[#111b21]"
-                                }`}></div>
+                                <div className={`w-[3px] h-5 rounded-full ${theme === "dark" ? "bg-white" : "bg-[#111b21]"}`}></div>
+                                <div className={`w-[3px] h-5 rounded-full ${theme === "dark" ? "bg-white" : "bg-[#111b21]"}`}></div>
                               </div>
                             ) : (
-                              <div className={`ml-1 w-0 h-0 border-y-[10px] border-y-transparent ${
-                                theme === "dark"
-                                  ? "border-l-[16px] border-l-white"
-                                  : "border-l-[16px] border-l-[#111b21]"
-                              }`}></div>
+                              <div className={`ml-1 w-0 h-0 border-y-[10px] border-y-transparent ${theme === "dark" ? "border-l-[16px] border-l-white" : "border-l-[16px] border-l-[#111b21]"}`}></div>
                             )}
                           </button>
 
                           <div className="flex-1 flex flex-col pt-1 min-w-0">
                             {/* WhatsApp-style Interactive Waveform */}
-                            <div
-                              ref={(el) => (waveformContainerRef.current[msg.id] = el)}
-                              onClick={(e) => handleWaveformClick(e, msg.id, msg.duration)}
-                              className={`flex items-end gap-[2px] h-8 mb-1 cursor-pointer px-1 ${
-                                theme === "light" && msg.sender === "me" ? "hover:opacity-80" : ""
-                              }`}
-                            >
+                            <div ref={(el) => (waveformContainerRef.current[msg.id] = el)} onClick={(e) => handleWaveformClick(e, msg.id, msg.duration)} className={`flex items-end gap-[2px] h-8 mb-1 cursor-pointer px-1 ${theme === "light" && msg.sender === "me" ? "hover:opacity-80" : ""}`}>
                               {(voiceWaveforms[msg.id] || Array.from({ length: 50 }, () => 20 + Math.random() * 60)).map((height, i) => {
                                 const time = playingAudioId === msg.id ? currentAudioTime : 0;
                                 const duration = msg.duration || 5;
@@ -2744,17 +2683,7 @@ function App() {
                                   <div
                                     key={i}
                                     className={`w-[2.5px] rounded-full transition-all duration-75 ${
-                                      isPlayed
-                                        ? theme === "dark"
-                                          ? "bg-white"
-                                          : msg.sender === "me"
-                                          ? "bg-[#111b21]"
-                                          : "bg-[#111b21]"
-                                        : theme === "dark"
-                                        ? "bg-white/30"
-                                        : msg.sender === "me"
-                                        ? "bg-[#111b21]/30"
-                                        : "bg-[#111b21]/30"
+                                      isPlayed ? (theme === "dark" ? "bg-white" : msg.sender === "me" ? "bg-[#111b21]" : "bg-[#111b21]") : theme === "dark" ? "bg-white/30" : msg.sender === "me" ? "bg-[#111b21]/30" : "bg-[#111b21]/30"
                                     } ${isActive ? "opacity-100" : ""}`}
                                     style={{
                                       height: `${height}%`,
@@ -2768,25 +2697,9 @@ function App() {
 
                             {/* Timer and Status */}
                             <div className="flex justify-between items-center pr-1">
-                              <span className={`text-[10px] font-medium tabular-nums ${
-                                theme === "dark"
-                                  ? "text-white/70"
-                                  : msg.sender === "me"
-                                  ? "text-[#111b21]/70"
-                                  : "text-[#111b21]/70"
-                              }`}>
-                                {playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}
-                              </span>
+                              <span className={`text-[10px] font-medium tabular-nums ${theme === "dark" ? "text-white/70" : msg.sender === "me" ? "text-[#111b21]/70" : "text-[#111b21]/70"}`}>{playingAudioId === msg.id ? formatTime(currentAudioTime) : formatTime(msg.duration)}</span>
                               <div className="flex items-center gap-1.5">
-                                <span className={`text-[9px] font-bold ${
-                                  theme === "dark"
-                                    ? "text-white/50"
-                                    : msg.sender === "me"
-                                    ? "text-[#111b21]/60"
-                                    : "text-[#111b21]/60"
-                                }`}>
-                                  {msg.time}
-                                </span>
+                                <span className={`text-[9px] font-bold ${theme === "dark" ? "text-white/50" : msg.sender === "me" ? "text-[#111b21]/60" : "text-[#111b21]/60"}`}>{msg.time}</span>
                                 {msg.sender === "me" && (
                                   <span className="flex items-center ml-1">
                                     {msg.status === "read" ? (
@@ -2798,31 +2711,13 @@ function App() {
                                     ) : msg.status === "delivered" ? (
                                       /* WhatsApp Double Gray Ticks */
                                       <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                          d="M2 7L5 10L12 3"
-                                          stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
-                                          strokeWidth="1.8"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                        <path
-                                          d="M6 7L9 10L16 3"
-                                          stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
-                                          strokeWidth="1.8"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
+                                        <path d="M2 7L5 10L12 3" stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M6 7L9 10L16 3" stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                       </svg>
                                     ) : (
                                       /* WhatsApp Single Gray Tick */
                                       <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                          d="M2 7L5 10L12 3"
-                                          stroke={theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(17,27,33,0.5)"}
-                                          strokeWidth="1.8"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
+                                        <path d="M2 7L5 10L12 3" stroke={theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(17,27,33,0.5)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                       </svg>
                                     )}
                                   </span>
@@ -2864,11 +2759,7 @@ function App() {
 
                           {/* --- THE FIX: UNIFORM TICK CATALOGUE --- */}
                           <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-bold">
-                            <span className={
-                              msg.sender === "me" 
-                                ? theme === "dark" ? "opacity-70 text-white" : "text-gray-600"
-                                : theme === "dark" ? "text-gray-400" : "text-gray-600"
-                            }>{msg.time}</span>
+                            <span className={msg.sender === "me" ? (theme === "dark" ? "opacity-70 text-white" : "text-gray-600") : theme === "dark" ? "text-gray-400" : "text-gray-600"}>{msg.time}</span>
 
                             {msg.sender === "me" && (
                               <span className="flex items-center ml-1">
@@ -2881,31 +2772,13 @@ function App() {
                                 ) : msg.status === "delivered" ? (
                                   /* WhatsApp-style double gray ticks */
                                   <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                      d="M2 7L5 10L12 3"
-                                      stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
-                                      strokeWidth="1.8"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                    <path
-                                      d="M6 7L9 10L16 3"
-                                      stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"}
-                                      strokeWidth="1.8"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
+                                    <path d="M2 7L5 10L12 3" stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M6 7L9 10L16 3" stroke={theme === "dark" ? "rgba(255,255,255,0.7)" : "rgba(17,27,33,0.6)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
                                 ) : (
                                   /* WhatsApp-style single gray tick */
                                   <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                      d="M2 7L5 10L12 3"
-                                      stroke={theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(17,27,33,0.5)"}
-                                      strokeWidth="1.8"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
+                                    <path d="M2 7L5 10L12 3" stroke={theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(17,27,33,0.5)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
                                 )}
                               </span>
@@ -3029,9 +2902,7 @@ function App() {
                   <input
                     type="text"
                     placeholder="Message"
-                    className={`flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] outline-none ${
-                      theme === "dark" ? "text-white placeholder:text-gray-400" : "text-gray-900 placeholder:text-gray-700"
-                    }`}
+                    className={`flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] outline-none ${theme === "dark" ? "text-white placeholder:text-gray-400" : "text-gray-900 placeholder:text-gray-700"}`}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
@@ -3039,9 +2910,7 @@ function App() {
                   />
 
                   {/* Attachment (Clip) */}
-                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-colors ${
-                    theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"
-                  }`}>
+                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"}`}>
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
@@ -3053,9 +2922,7 @@ function App() {
                   {/* Contacts (Profile) */}
                   {/* Contacts Sharing Button */}
                   {!newMessage && (
-                    <button type="button" className={`p-1 transition-colors ${
-                      theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"
-                    }`} onClick={() => setIsSharingContact(true)}>
+                    <button type="button" className={`p-1 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-600 hover:text-gray-800"}`} onClick={() => setIsSharingContact(true)}>
                       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
                       </svg>
@@ -3100,142 +2967,193 @@ function App() {
 
   return (
     <>
-      {/* ── Page background + card (switches between login and verify) ── */}
-      <div className="min-h-screen w-full flex items-center justify-center p-6 font-sans" style={{ background: "linear-gradient(135deg, #0f1729 0%, #1a2340 50%, #0f2027 100%)" }}>
+      {/* SPLIT SCREEN AUTH */}
+      <div className="min-h-screen w-full flex font-sans">
 
-        {isVerifying ? (
-          /* ── OTP VERIFICATION CARD ── */
-          <div className="w-full max-w-sm rounded-3xl p-10 text-center" style={{ backgroundColor: "#1e2a3a", border: "1px solid rgba(99,179,237,0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}>
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto" style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 8px 24px rgba(59,130,246,0.4)" }}>
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        {/* LEFT PANEL */}
+        <div
+          className="hidden lg:flex lg:w-[45%] flex-col p-12 relative overflow-hidden"
+          style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}
+        >
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 440, height: 440, background: "rgba(255,255,255,0.07)", top: "-130px", right: "-110px" }} />
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 340, height: 340, background: "rgba(255,255,255,0.05)", bottom: "-90px", left: "-90px" }} />
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 200, height: 200, background: "rgba(255,255,255,0.04)", bottom: "30%", right: "8%" }} />
+
+          <div className="relative z-10 flex items-center gap-3 mb-16">
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
               </svg>
             </div>
-
-            <h2 className="text-2xl font-black mb-1 tracking-tight" style={{ color: "#e2e8f0" }}>Check your phone</h2>
-            <p className="text-sm mb-7" style={{ color: "#64748b" }}>
-              Enter the code sent to <span className="font-bold" style={{ color: "#38bdf8" }}>+{phone}</span>
-            </p>
-
-            <label className="text-[11px] font-bold uppercase tracking-[0.15em] mb-2 block text-left" style={{ color: "#38bdf8" }}>Verification Code</label>
-            <input
-              type="text"
-              maxLength="6"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="w-full text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl outline-none transition-all duration-200 mb-5"
-              style={{ backgroundColor: "#111d2b", color: "#e2e8f0", border: "2px solid #2d4a6b" }}
-              onFocus={(e) => (e.target.style.borderColor = "#38bdf8")}
-              onBlur={(e) => (e.target.style.borderColor = "#2d4a6b")}
-              placeholder="000000"
-            />
-
-            <button
-              onClick={handleVerifyOtp}
-              className="w-full py-4 rounded-2xl font-bold text-white tracking-wide transition-all duration-200 active:scale-95 mb-4 text-[15px]"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              Verify &amp; Sign In →
-            </button>
-
-            <div className="mb-4">
-              {isExpired
-                ? <p className="text-red-400 text-xs font-bold animate-pulse">CODE EXPIRED</p>
-                : <p className="text-xs" style={{ color: "#475569" }}>Valid for 3 minutes only</p>
-              }
-            </div>
-
-            <button
-              onClick={() => setIsVerifying(false)}
-              className="text-xs font-semibold transition-colors duration-200"
-              style={{ color: "#475569" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#38bdf8")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
-            >
-              ← Use a different number
-            </button>
+            <span className="text-white text-xl font-black tracking-tight">ChatterBox</span>
           </div>
-        ) : (
-          /* ── LOGIN CARD ── */
-          <div className="w-full max-w-sm rounded-3xl p-10" style={{ backgroundColor: "#1e2a3a", border: showSimulation ? "1px solid rgba(56,189,248,0.6)" : "1px solid rgba(99,179,237,0.15)", boxShadow: showSimulation ? "0 25px 60px rgba(0,0,0,0.5), 0 0 80px rgba(56,189,248,0.55), 0 0 0 3px rgba(56,189,248,0.3)" : "0 25px 60px rgba(0,0,0,0.5)", transform: showSimulation ? "scale(0.95)" : "scale(1)", transition: "all 0.35s ease" }}>
-            <div
-              className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6 mx-auto hover:scale-105 transition-transform duration-200 cursor-default"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 10px 30px rgba(59,130,246,0.4)" }}
-            >
-              <svg viewBox="0 0 24 24" width="38" height="38" fill="white">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-              </svg>
-            </div>
 
-            <h1 className="text-3xl font-black mb-1 text-center tracking-tight" style={{ color: "#e2e8f0" }}>
-              Chatter<span style={{ color: "#38bdf8" }}>Box</span>
-            </h1>
-            <p className="text-sm text-center mb-8" style={{ color: "#475569" }}>Your space to connect &amp; communicate</p>
-
-            <label className="text-[11px] font-bold uppercase tracking-[0.15em] mb-2 block" style={{ color: "#38bdf8" }}>Phone Number</label>
-            <PhoneInput
-              country={"ug"}
-              value={phone}
-              onChange={(p) => setPhone(p)}
-              containerStyle={{ width: "100%", marginBottom: "20px" }}
-              inputStyle={{
-                backgroundColor: "#111d2b",
-                color: "#e2e8f0",
-                width: "100%",
-                height: "58px",
-                borderRadius: "14px",
-                border: "2px solid #2d4a6b",
-                fontSize: "16px",
-              }}
-              buttonStyle={{
-                backgroundColor: "#111d2b",
-                border: "none",
-                borderRadius: "14px 0 0 14px",
-                paddingLeft: "10px",
-              }}
-              dropdownStyle={{
-                backgroundColor: "#1e2a3a",
-                color: "#e2e8f0",
-              }}
-            />
-
-            <button
-              onClick={handleRequestOtp}
-              className="w-full active:scale-95 text-white font-bold py-4 rounded-2xl transition-all duration-200 text-[15px] tracking-wide mb-5"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              Continue →
-            </button>
-
-            <p className="text-center text-xs" style={{ color: "#475569" }}>
-              By continuing you agree to our{" "}
-              <span className="font-semibold cursor-pointer hover:underline" style={{ color: "#38bdf8" }}>Terms</span>
-              {" "}&amp;{" "}
-              <span className="font-semibold cursor-pointer hover:underline" style={{ color: "#38bdf8" }}>Privacy Policy</span>
+          <div className="relative z-10 flex-1 flex flex-col justify-center">
+            <h2 className="font-black text-white leading-[1.15] mb-5" style={{ fontSize: "2.5rem" }}>
+              Connect with<br />the people that<br />matter most
+            </h2>
+            <p className="text-base mb-12 leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+              Fast, secure messaging for teams and friends. Stay in sync wherever you are.
             </p>
+            <div className="space-y-5">
+              {[
+                { icon: "💬", label: "Real-time messaging and emoji reactions" },
+                { icon: "🔒", label: "End-to-end encrypted conversations" },
+                { icon: "🎙️", label: "Voice messages and file sharing" },
+              ].map((f) => (
+                <div key={f.label} className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)" }}>
+                    <span className="text-lg">{f.icon}</span>
+                  </div>
+                  <span className="text-white text-sm font-semibold">{f.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+
+          <div className="relative z-10 pt-8" style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+            <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>Trusted by thousands of users worldwide</p>
+            <div className="flex gap-8">
+              {[["50K+", "Active Users"], ["99.9%", "Uptime"], ["256-bit", "Encryption"]].map(([val, lbl]) => (
+                <div key={lbl}>
+                  <p className="text-white font-black text-xl">{val}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{lbl}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL */}
+        <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-white">
+          {isVerifying ? (
+            <div className="w-full max-w-sm">
+              <div className="lg:hidden flex items-center gap-2 mb-8">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                </div>
+                <span className="font-black text-gray-900">ChatterBox</span>
+              </div>
+
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.3)" }}>
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+              </div>
+
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-1">Check your phone</h2>
+              <p className="text-gray-400 text-sm mb-8">
+                Enter the 6-digit code sent to{" "}
+                <span className="font-bold text-violet-600">+{phone}</span>
+              </p>
+
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-2">Verification Code</label>
+              <input
+                type="text"
+                maxLength="6"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="w-full text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl outline-none transition-all duration-200 mb-5"
+                style={{ backgroundColor: "#f8fafc", color: "#1e293b", border: "2px solid #e2e8f0" }}
+                onFocus={(e) => (e.target.style.borderColor = "#8b5cf6")}
+                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+                placeholder="000000"
+              />
+
+              <button
+                onClick={handleVerifyOtp}
+                className="w-full py-4 rounded-2xl font-bold text-white text-[15px] tracking-wide transition-all duration-200 active:scale-95 mb-4"
+                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                Verify &amp; Sign In &rarr;
+              </button>
+
+              <div className="mb-5 text-center">
+                {isExpired
+                  ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p>
+                  : <p className="text-gray-400 text-xs">Valid for 3 minutes only</p>
+                }
+              </div>
+
+              <button onClick={() => setIsVerifying(false)} className="text-gray-400 text-xs font-semibold transition-colors hover:text-violet-600">
+                &larr; Use a different number
+              </button>
+            </div>
+          ) : (
+            <div className="w-full max-w-sm">
+              <div className="lg:hidden flex items-center gap-2 mb-8">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                </div>
+                <span className="font-black text-gray-900">ChatterBox</span>
+              </div>
+
+              <h1 className="font-black text-gray-900 tracking-tight mb-1" style={{ fontSize: "2rem" }}>Welcome back 👋</h1>
+              <p className="text-gray-400 text-sm mb-8">Sign in to continue to ChatterBox</p>
+
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-2">Phone Number</label>
+              <PhoneInput
+                country={"ug"}
+                value={phone}
+                onChange={(p) => setPhone(p)}
+                containerStyle={{ width: "100%", marginBottom: "20px" }}
+                inputStyle={{
+                  backgroundColor: "#f8fafc",
+                  color: "#1e293b",
+                  width: "100%",
+                  height: "58px",
+                  borderRadius: "14px",
+                  border: "2px solid #e2e8f0",
+                  fontSize: "16px",
+                }}
+                buttonStyle={{
+                  backgroundColor: "#f8fafc",
+                  border: "none",
+                  borderRadius: "14px 0 0 14px",
+                  paddingLeft: "10px",
+                }}
+                dropdownStyle={{
+                  backgroundColor: "#ffffff",
+                  color: "#1e293b",
+                }}
+              />
+
+              <button
+                onClick={handleRequestOtp}
+                className="w-full active:scale-95 text-white font-bold py-4 rounded-2xl transition-all duration-200 text-[15px] tracking-wide mb-5"
+                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                Continue &rarr;
+              </button>
+
+              <p className="text-center text-xs text-gray-400">
+                By continuing you agree to our{" "}
+                <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Terms</span>{" "}
+                &amp;{" "}
+                <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Privacy Policy</span>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── OTP SIMULATION POPUP — always at root level, overlays everything ── */}
+      {/* OTP SIMULATION POPUP */}
       {showSimulation && (
-        <div className="fixed inset-0 flex items-center justify-center z-[200] backdrop-blur-md" style={{ backgroundColor: "rgba(5,10,20,0.5)" }}>
-          <div className="max-w-sm w-full text-center mx-4 rounded-3xl p-10" style={{ backgroundColor: "#1e2a3a", border: "1px solid rgba(56,189,248,0.3)", boxShadow: "0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.08)" }}>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 mx-auto" style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 8px 24px rgba(59,130,246,0.4)" }}>
+        <div className="fixed inset-0 flex items-center justify-center z-[200] backdrop-blur-sm" style={{ backgroundColor: "rgba(15,23,42,0.45)" }}>
+          <div className="max-w-sm w-full text-center mx-4 rounded-3xl p-10 bg-white" style={{ boxShadow: "0 30px 80px rgba(0,0,0,0.2)", border: "1px solid #f1f5f9" }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 mx-auto" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.35)" }}>
               <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
-                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
               </svg>
             </div>
 
-            <h3 className="text-2xl font-black tracking-tight mb-1" style={{ color: "#e2e8f0" }}>Your Access Code</h3>
-            <p className="text-sm mb-6" style={{ color: "#64748b" }}>Use this code to verify your identity</p>
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-1">Your Access Code</h3>
+            <p className="text-gray-400 text-sm mb-6">Use this code to verify your identity</p>
 
-            <div className="py-7 rounded-2xl mb-6" style={{ backgroundColor: "#111d2b", border: "2px solid #2d4a6b" }}>
-              <span className="text-5xl font-mono font-black tracking-[0.15em] block" style={{ color: "#38bdf8" }}>{generatedOTP}</span>
+            <div className="py-7 rounded-2xl mb-6" style={{ backgroundColor: "#f5f3ff", border: "2px solid #ede9fe" }}>
+              <span className="text-5xl font-mono font-black tracking-[0.15em] block" style={{ color: "#7c3aed" }}>{generatedOTP}</span>
             </div>
 
             <button
@@ -3245,16 +3163,16 @@ function App() {
                 setIsVerifying(true);
               }}
               className="w-full py-4 text-white font-bold rounded-2xl transition-all active:scale-95 tracking-wide"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", boxShadow: "0 4px 20px rgba(59,130,246,0.35)" }}
+              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.35)" }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              Copy Code &amp; Continue →
+              Copy Code &amp; Continue &rarr;
             </button>
 
             <div className="mt-5 flex items-center justify-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#38bdf8" }}></div>
-              <span className="text-[11px] uppercase tracking-[0.2em] font-semibold" style={{ color: "#475569" }}>Simulation Mode</span>
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#8b5cf6" }}></div>
+              <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-gray-400">Simulation Mode</span>
             </div>
           </div>
         </div>
