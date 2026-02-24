@@ -21,7 +21,8 @@ function App() {
   const [activeContactId, setActiveContactId] = useState("tech-lead"); // Track which contact is currently selected
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
-    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM" },
+    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read" /*Options: "sent", "delivered", "read" */ },
+    { id: 3, text: "Hello chat", sender: "me", time: "3:29 PM", status: "delivered" },
   ]);
   const [newMessage, setNewMessage] = useState(""); // This will be used to store the text of the new message being typed in the input field.
   const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
@@ -44,7 +45,8 @@ function App() {
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
   const audioPlayerRef = useRef(new Audio()); // Global audio player instance
-  const analyzerRef = useRef(null);
+  const analyzerRef = useRef(null); // This creates the hook we will use to grab the hidden input file
+  const emojiPickerRef = useRef(null); // To track the picker and a useEffect to listen for clicks on the rest of the document
 
   // 6. HELPER DATA (Emojis)
   const EMOJI_CATEGORIES = [
@@ -112,6 +114,23 @@ function App() {
     }
   }, [messages, activeContactId, contacts]);
 
+  // This handles the global click event to close the emoji picker
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // If the picker is open AND the click was NOT inside the picker ref
+      if (showEmojiPicker && emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+
+    // Bind the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Unbind the listener on clean up
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
   // Helper to get theme-based classes
   const themeClasses = {
     bg: theme === "dark" ? "bg-[#111b21]" : "bg-[#f0f2f5]",
@@ -177,22 +196,28 @@ function App() {
 
     // For now, we create a local URL to preview the image
     const fileUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith("image/");
 
     const msg = {
       id: Date.now(),
       text: file.name,
       fileUrl: fileUrl,
-      type: file.type.startsWith("image/") ? "image" : "file",
+      type: isImage ? "image" : "file",
       sender: "me",
       contactId: activeContactId,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "sent",
     };
 
-    setMessages([...messages, msg]);
+    setMessages((prevMessages) => [...prevMessages, msg]);
+    e.target.value = "";
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
+
+  // 1. Add this state variable at the top of your component logic
+  const [currentAudioTime, setCurrentAudioTime] = React.useState(0);
+
   // Actual Recording Logic
   const startRecording = async () => {
     try {
@@ -280,6 +305,7 @@ function App() {
   };
 
   // Playback Logic
+  // 2. Update your togglePlayVoiceNote function to track time
   const togglePlayVoiceNote = (id, url) => {
     if (playingAudioId === id) {
       audioPlayerRef.current.pause();
@@ -288,13 +314,23 @@ function App() {
       audioPlayerRef.current.src = url;
       audioPlayerRef.current.play();
       setPlayingAudioId(id);
-      audioPlayerRef.current.onended = () => setPlayingAudioId(null);
+
+      // This updates the timer as the audio plays
+      audioPlayerRef.current.ontimeupdate = () => {
+        setCurrentAudioTime(audioPlayerRef.current.currentTime);
+      };
+
+      audioPlayerRef.current.onended = () => {
+        setPlayingAudioId(null);
+        setCurrentAudioTime(0); // Reset when finished
+      };
     }
   };
 
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const s = seconds || 0;
+    const mins = Math.floor(s / 60);
+    const secs = Math.floor(s % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
   // --- NEW VOICE NOTE FUNCTIONS END ---
@@ -521,7 +557,7 @@ function App() {
             <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white border-gray-200"}`}>
               {/* Emoji Picker Pop-up */}
               {showEmojiPicker && (
-                <div className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div ref={emojiPickerRef} className="absolute bottom-20 left-0 w-72 h-80 bg-[#2a3942] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-3 border-b border-white/5 bg-[#202c33] text-xs font-bold text-gray-400 uppercase tracking-widest">Emoji Picker</div>
 
                   <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
@@ -590,6 +626,9 @@ function App() {
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
                   </button>
+
+                  {/* HIDDEN INPUT BRIDGE */}
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} accept="image/,application/pdf" />
 
                   {/* Contacts (Profile) */}
                   {!newMessage && (
