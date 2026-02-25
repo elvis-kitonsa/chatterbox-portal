@@ -2394,58 +2394,85 @@ function App() {
   // 1. Dashboard Screen (Dark Mode - To match the color aesthetic of Whatsapp)
   if (isUnlocked) {
     return (
-      <div className={`flex h-screen overflow-hidden transition-all duration-700 font-sans relative ${theme === "dark" ? "bg-[#080c0e] text-white" : "bg-gray-50 text-gray-900"}`}>
-        {/* 🌌 DYNAMIC BACKGROUND BLUR NODES */}
-        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-[#00a884]/10 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
-        <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className={`flex h-screen overflow-hidden transition-colors duration-500 font-sans relative ${theme === "dark" ? "bg-[#0f1117] text-white" : "bg-[#f8fafc] text-gray-900"}`}>
+        {/* DYNAMIC BACKGROUND BLUR NODES */}
+        <div className={`absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[120px] animate-pulse pointer-events-none ${theme === "dark" ? "bg-violet-900/20" : "bg-violet-400/10"}`}></div>
+        <div className={`absolute bottom-[10%] right-[5%] w-[500px] h-[500px] rounded-full blur-[150px] pointer-events-none ${theme === "dark" ? "bg-indigo-900/15" : "bg-indigo-300/10"}`}></div>
 
-        {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
-        <aside className={`w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white/60 border-white/5 backdrop-blur-3xl"}`}>
+        {/* SIDEBAR */}
+        <aside
+          className="w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden relative"
+          style={{ background: theme === "dark" ? "linear-gradient(145deg, #1e1b4b 0%, #2e1065 55%, #1a1040 100%)" : "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}
+        >
+          {/* Decorative blobs */}
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full pointer-events-none" style={{ background: "rgba(255,255,255,0.06)", transform: "translate(30%, -30%)" }} />
+          <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full pointer-events-none" style={{ background: "rgba(255,255,255,0.04)", transform: "translate(-30%, 30%)" }} />
+
           {/* Top Branding/Profile Area */}
-          <div className="p-6 flex items-center justify-between">
+          <div className="p-6 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center shadow-lg shadow-[#00a884]/20 transform hover:rotate-6 transition-transform cursor-pointer">
-                <span className="text-xl text-[#111b21]">💬</span>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
+                  <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+                </svg>
               </div>
               <div>
-                <h1 className="text-lg font-black tracking-tighter">
-                  Chatter<span className="text-[#00a884]">Box</span>
+                <h1 className="text-lg font-black tracking-tighter text-white">
+                  Chatter<span style={{ color: "rgba(255,255,255,0.7)" }}>Box</span>
                 </h1>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">Workspace</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>Workspace</p>
               </div>
             </div>
-            <button onClick={() => setIsUnlocked(false)} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all">
-              🔒
+            <button onClick={() => setIsUnlocked(false)} title="Log out" className="w-10 h-10 rounded-xl flex items-center justify-center transition-all text-white hover:bg-red-500/20" style={{ background: "rgba(255,255,255,0.15)" }}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
             </button>
           </div>
 
-          {/* Search Capsule: For searching conversations and contacts within the sidebar */}
-          <div className="px-6 pb-4">
-            <div className="bg-[#0d1c24] border border-white/[0.12] rounded-2xl flex items-center px-4 py-3 shadow-inner">
-              <span className="text-gray-400 mr-3">🔍</span>
-              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-400 font-medium" />
+          {/* Search Bar */}
+          <div className="px-6 pb-4 relative z-10">
+            <div className="rounded-2xl flex items-center px-4 py-3 gap-3" style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)" }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-transparent w-full outline-none text-sm font-medium border-none"
+                style={{ color: "white" }}
+              />
             </div>
           </div>
 
-          {/* Modern List */}
-          <div className="flex-1 overflow-y-auto px-3 custom-scrollbar">
+          {/* Contact List */}
+          <div className="flex-1 overflow-y-auto px-3 custom-scrollbar relative z-10">
             {contacts
               .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((contact) => (
                 <div
                   key={contact.id}
                   onClick={() => setActiveContactId(contact.id)}
-                  className={`group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer border ${activeContactId === contact.id ? "bg-[#00a884]/15 border-[#00a884]/40 shadow-lg translate-x-1" : "border-transparent hover:bg-white/[0.07] hover:translate-x-1"}`}
+                  className="flex items-center gap-4 p-4 mb-1 rounded-[1.8rem] transition-all duration-200 cursor-pointer"
+                  style={{
+                    background: activeContactId === contact.id ? "rgba(255,255,255,0.2)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => { if (activeContactId !== contact.id) e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                  onMouseLeave={(e) => { if (activeContactId !== contact.id) e.currentTarget.style.background = "transparent"; }}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#00a884] rounded-full border-2 border-[#111b21]"></div>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full" style={{ border: "2px solid #7c3aed" }}></div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
-                      {/* This makes the active name bright white and the others readable gray */}
-                      <h3 className={`font-bold text-sm truncate ${activeContactId === contact.id ? "text-white" : "text-gray-200"}`}>{contact.name}</h3> <span className="text-[9px] font-bold text-gray-500 italic">12:45</span>
+                      <h3 className="font-bold text-sm truncate text-white">{contact.name}</h3>
+                      <span className="text-[9px] font-bold italic" style={{ color: "rgba(255,255,255,0.5)" }}>12:45</span>
                     </div>
-                    <p className="text-[11px] text-gray-500 font-medium truncate">Online • Secure</p>
+                    <p className="text-[11px] font-medium truncate" style={{ color: "rgba(255,255,255,0.55)" }}>Online • Secure</p>
                   </div>
                 </div>
               ))}
@@ -2454,37 +2481,49 @@ function App() {
 
         {/* 💬 2. FLOATING MESSAGING HUB */}
         <main className="flex-1 m-4 flex flex-col relative z-10">
-          {/* Floating Header */}
-          <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-xl border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white/60 border-white/5 backdrop-blur-xl"}`}>
+          {/* Chat Header */}
+          <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-md border ${theme === "dark" ? "bg-[#1a1f2e] border-gray-800" : "bg-white border-gray-200"}`}>
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
               return (
                 <div className="flex items-center gap-4 ml-2">
                   <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner`}></div>
                   <div>
-                    <h2 className="text-sm font-black tracking-tight">{activeContact?.name}</h2>
-                    <p className="text-[10px] text-[#00a884] font-bold uppercase tracking-widest animate-pulse">● Active Now</p>
+                    <h2 className={`text-sm font-black tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{activeContact?.name}</h2>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest animate-pulse ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>● Active Now</p>
                   </div>
                 </div>
               );
             })()}
 
-            <div className="flex items-center gap-3 bg-black/30 p-2 rounded-2xl border border-white/5 mr-2">
-              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform">
-                {theme === "dark" ? "☀️" : "🌙"}
+            <div className={`flex items-center gap-2 p-1.5 rounded-2xl border mr-2 ${theme === "dark" ? "bg-gray-900/60 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 ${theme === "dark" ? "hover:bg-violet-500/20" : "hover:bg-violet-500/10"}`}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? (
+                  /* Sun icon */
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fbbf24" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  /* Moon icon */
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7c3aed" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
               </button>
-              <div className="w-[1px] h-4 bg-white/10"></div>
-              <div className="flex gap-1.5 px-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
-              </div>
             </div>
           </header>
 
-          {/* Message Viewport - Floating Cards Style */}
-          <div className={`flex-1 rounded-[2.5rem] overflow-hidden relative shadow-2xl border ${theme === "dark" ? "bg-[#0d1c24] border-white/[0.08]" : "bg-white/40 border-white/5"}`}>
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none grayscale" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
+          {/* Message Viewport */}
+          <div className={`flex-1 rounded-[2.5rem] overflow-hidden relative shadow-md border ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-white border-gray-100"}`}>
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none grayscale" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
               {messages
@@ -2492,11 +2531,14 @@ function App() {
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
+                      className={`p-4 shadow-lg transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
                         msg.sender === "me"
-                          ? "bg-[#054740] text-white shadow-[#054740]/20"
-                          : "bg-[#273b48] text-white border border-white/[0.1]"
+                          ? "text-white"
+                          : theme === "dark"
+                            ? "bg-[#1f2937] text-gray-100 border border-gray-700"
+                            : "bg-[#f1f5f9] text-gray-900 border border-gray-200"
                       }`}
+                      style={msg.sender === "me" ? { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" } : undefined}
                     >
                       {msg.type === "voice" ? (
                         <div className="flex items-center gap-3 min-w-[280px] sm:min-w-[320px] py-1 px-1">
@@ -2572,7 +2614,7 @@ function App() {
 
                           {/* --- THE FIX: UNIFORM TICK CATALOGUE --- */}
                           <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-bold">
-                            <span className={msg.sender === "me" ? "opacity-70" : "text-gray-400"}>{msg.time}</span>
+                            <span className={msg.sender === "me" ? "text-white/70" : theme === "dark" ? "text-gray-400" : "text-gray-500"}>{msg.time}</span>
 
                             {msg.sender === "me" && (
                               <span className="flex items-center ml-1">
@@ -2603,25 +2645,25 @@ function App() {
 
           {/* Floating Input Pod */}
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
-            {/* 1. THE MAIN CAPSULE (White/Gray background) */}
-            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${theme === "dark" ? "bg-[#1a2630] border-white/[0.1]" : "bg-white border-gray-200"}`}>
+            {/* 1. THE MAIN CAPSULE */}
+            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${theme === "dark" ? "bg-[#1a1f2e] border-gray-700" : "bg-white border-gray-200"}`}>
               {/* ── Emoji Picker ── */}
               {showEmojiPicker && (
                 <div
                   ref={emojiPickerRef}
-                  className="absolute bottom-[4.5rem] left-0 w-[22rem] bg-[#202c33] border border-white/[0.07] rounded-2xl flex flex-col overflow-hidden z-50"
-                  style={{ animation: "emojiPickerIn 0.22s cubic-bezier(0.34,1.4,0.64,1)", boxShadow: "0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)" }}
+                  className={`absolute bottom-[4.5rem] left-0 w-[22rem] rounded-2xl flex flex-col overflow-hidden z-50 border ${theme === "dark" ? "bg-[#1a1f2e] border-gray-700" : "bg-white border-gray-200"}`}
+                  style={{ animation: "emojiPickerIn 0.22s cubic-bezier(0.34,1.4,0.64,1)", boxShadow: theme === "dark" ? "0 20px 60px rgba(0,0,0,0.6)" : "0 20px 60px rgba(99,102,241,0.15), 0 4px 20px rgba(0,0,0,0.1)" }}
                 >
                   {/* Search */}
-                  <div className="px-3 pt-3 pb-2 bg-[#111b21]">
-                    <div className="flex items-center gap-2 bg-[#1f2c33] rounded-xl px-3 py-2 border border-white/[0.06] focus-within:border-[#00a884]/40 transition-colors">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 shrink-0">
+                  <div className={`px-3 pt-3 pb-2 border-b ${theme === "dark" ? "bg-[#111827] border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                    <div className={`flex items-center gap-2 rounded-xl px-3 py-2 border transition-colors focus-within:border-violet-400 ${theme === "dark" ? "bg-[#1f2937] border-gray-600" : "bg-white border-gray-200"}`}>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" className={`shrink-0 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
                       </svg>
-                      <input type="text" placeholder="Search emoji…" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} className="flex-1 bg-transparent text-[13px] text-gray-200 placeholder:text-gray-600 outline-none border-none" />
+                      <input type="text" placeholder="Search emoji…" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} className={`flex-1 bg-transparent text-[13px] outline-none border-none ${theme === "dark" ? "text-gray-200 placeholder:text-gray-500" : "text-gray-700 placeholder:text-gray-400"}`} />
                       {emojiSearch && (
-                        <button onClick={() => setEmojiSearch("")} className="w-4 h-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-[9px] text-gray-400 hover:text-white transition-all">
+                        <button onClick={() => setEmojiSearch("")} className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] transition-all ${theme === "dark" ? "bg-gray-600 hover:bg-gray-500 text-gray-400" : "bg-gray-200 hover:bg-gray-300 text-gray-500"}`}>
                           ✕
                         </button>
                       )}
@@ -2630,18 +2672,18 @@ function App() {
 
                   {/* Category label */}
                   <div className="flex items-center gap-2.5 px-3.5 py-1.5">
-                    <span className="text-[9.5px] font-black tracking-[0.15em] uppercase text-[#00a884]">{emojiSearch ? "Results" : EMOJI_CATEGORIES[activeEmojiTab].name}</span>
-                    <div className="flex-1 h-px bg-white/[0.06]" />
+                    <span className={`text-[9.5px] font-black tracking-[0.15em] uppercase ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>{emojiSearch ? "Results" : EMOJI_CATEGORIES[activeEmojiTab].name}</span>
+                    <div className={`flex-1 h-px ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"}`} />
                   </div>
 
                   {/* Emoji grid */}
-                  <div className="overflow-y-auto px-2 pb-2" style={{ height: "14rem", scrollbarWidth: "thin", scrollbarColor: "#2a3942 transparent" }}>
+                  <div className="overflow-y-auto px-2 pb-2" style={{ height: "14rem", scrollbarWidth: "thin", scrollbarColor: theme === "dark" ? "#374151 transparent" : "#d1d5db transparent" }}>
                     {(() => {
                       const list = emojiSearch ? EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => (EMOJI_KEYWORDS[e] || "").toLowerCase().includes(emojiSearch.toLowerCase())) : EMOJI_CATEGORIES[activeEmojiTab].emojis;
                       return list.length > 0 ? (
                         <div className="grid grid-cols-8 gap-0.5">
                           {list.map((emoji, i) => (
-                            <button key={`${emoji}-${i}`} onClick={() => setNewMessage((prev) => prev + emoji)} className="w-9 h-9 text-2xl rounded-xl flex items-center justify-center hover:bg-[#00a884]/15 hover:scale-[1.2] active:scale-95 transition-all duration-100">
+                            <button key={`${emoji}-${i}`} onClick={() => setNewMessage((prev) => prev + emoji)} className={`w-9 h-9 text-2xl rounded-xl flex items-center justify-center hover:scale-[1.2] active:scale-95 transition-all duration-100 ${theme === "dark" ? "hover:bg-violet-500/20" : "hover:bg-violet-100"}`}>
                               {emoji}
                             </button>
                           ))}
@@ -2649,14 +2691,14 @@ function App() {
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full gap-2">
                           <span className="text-4xl opacity-20">🔍</span>
-                          <p className="text-[11px] text-gray-600">No results for "{emojiSearch}"</p>
+                          <p className={`text-[11px] ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>No results for "{emojiSearch}"</p>
                         </div>
                       );
                     })()}
                   </div>
 
                   {/* Category tab bar */}
-                  <div className="flex items-center justify-around border-t border-white/[0.06] bg-[#111b21] px-2 py-1.5">
+                  <div className={`flex items-center justify-around border-t px-2 py-1.5 ${theme === "dark" ? "border-gray-700 bg-[#111827]" : "border-gray-100 bg-gray-50"}`}>
                     {EMOJI_CATEGORIES.map((cat, i) => {
                       const isActive = activeEmojiTab === i && !emojiSearch;
                       return (
@@ -2667,10 +2709,10 @@ function App() {
                             setEmojiSearch("");
                           }}
                           title={cat.name}
-                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-[1.1rem] transition-all duration-200 ${isActive ? "bg-[#00a884]/20 scale-110" : "hover:bg-white/[0.06] opacity-30 hover:opacity-70"}`}
+                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-[1.1rem] transition-all duration-200 ${isActive ? (theme === "dark" ? "bg-violet-500/25 scale-110" : "bg-violet-100 scale-110") : (theme === "dark" ? "hover:bg-gray-700 opacity-40 hover:opacity-80" : "hover:bg-gray-200 opacity-40 hover:opacity-80")}`}
                         >
                           {cat.icon}
-                          {isActive && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#00a884] rounded-full" />}
+                          {isActive && <span className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${theme === "dark" ? "bg-violet-400" : "bg-violet-500"}`} />}
                         </button>
                       );
                     })}
@@ -2684,7 +2726,7 @@ function App() {
                   e.stopPropagation();
                   setShowEmojiPicker((prev) => !prev);
                 }}
-                className={`p-1 transition-colors ${showEmojiPicker ? "text-[#00a884]" : "text-gray-400 hover:text-gray-200"}`}
+                className={`p-1 transition-colors ${showEmojiPicker ? "text-violet-600" : theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`}
               >
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                   <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
@@ -2710,7 +2752,7 @@ function App() {
                   <input
                     type="text"
                     placeholder="Message"
-                    className="flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] text-white placeholder:text-gray-400 outline-none"
+                    className={`flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] outline-none ${theme === "dark" ? "text-white placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
@@ -2718,7 +2760,7 @@ function App() {
                   />
 
                   {/* Attachment (Clip) */}
-                  <button onClick={() => fileInputRef.current?.click()} className="p-1 text-gray-400 hover:text-gray-200 -rotate-45">
+                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`}>
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
@@ -2731,7 +2773,7 @@ function App() {
                   {!newMessage && (
                     <button
                       type="button"
-                      className="p-1 text-gray-400 hover:text-gray-200"
+                      className={`p-1 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`}
                       onClick={() => {
                         /* This should open profile or contact info, NOT recording */
                       }}
@@ -2755,7 +2797,8 @@ function App() {
                   isRecording ? stopAndSendVoiceNote() : startRecording();
                 }
               }}
-              className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition-all flex-shrink-0 z-50 ${isRecording ? "bg-red-500 animate-pulse" : "bg-[#00a884]"}`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition-all flex-shrink-0 z-50 ${isRecording ? "bg-red-500 animate-pulse" : ""}`}
+              style={isRecording ? undefined : { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
             >
               {newMessage.trim() ? (
                 /* Send Arrow SVG */
@@ -2776,142 +2819,220 @@ function App() {
     );
   }
 
-  // OPTION 2: THE OTP VERIFICATION (Show this if they just clicked 'Send Code')
-  if (isVerifying) {
-    return (
-      <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
-        <div className="bg-[#202c33] p-12 rounded-[2.5rem] border border-[#00a884]/30 max-w-sm w-full text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden">
-          {/* Subtle Background Glow */}
-          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#00a884]/5 rounded-full blur-3xl"></div>
-
-          {/* Updated Chat Logo (Matches Login) */}
-          <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20">
-            <span className="text-3xl text-[#111b21]">💬</span>
-          </div>
-
-          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Verify it's you</h2>
-          <p className="text-gray-400 text-sm mb-10 leading-relaxed">
-            We sent a code to <br />
-            <span className="text-[#00a884] font-bold">+{phone}</span>
-          </p>
-
-          <div className="group mb-8">
-            <input
-              type="text"
-              maxLength="6"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="w-full bg-[#2a3942] text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl border-2 border-transparent group-hover:border-gray-600 focus:border-[#00a884] outline-none transition-all duration-300 shadow-inner"
-              placeholder="000000"
-            />
-          </div>
-
-          <button onClick={handleVerifyOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_10px_20px_rgba(0,168,132,0.3)] py-4 rounded-2xl font-black text-[#111b21] uppercase tracking-widest transition-all duration-300 active:scale-95 mb-4">
-            Confirm Code
-          </button>
-
-          {/* Expiry Warning UI */}
-          {/* Add a visual cue to indicate the code is about to expire */}
-          <div className="mt-4">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-300 text-[10px] uppercase tracking-tighter">Valid for 3 minutes only</p>}</div>
-
-          <button onClick={() => setIsVerifying(false)} className="text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors duration-200">
-            ← Use different number
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen w-full bg-[#0b141a] flex items-center justify-center p-6 text-white font-sans">
-      <div className="bg-[#202c33] p-10 rounded-[2.5rem] shadow-2xl border border-[#00a884]/20 max-w-sm w-full relative overflow-hidden group">
-        {/* Dynamic Glow Effect */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#00a884]/10 rounded-full blur-3xl group-hover:bg-[#00a884]/20 transition-all duration-700"></div>
+    <>
+      {/* SPLIT SCREEN AUTH */}
+      <div className="min-h-screen w-full flex font-sans">
 
-        {/* New Chat Logo */}
-        <div className="w-20 h-20 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-lg shadow-[#00a884]/20 transform transition-transform hover:rotate-6">
-          <span className="text-4xl text-[#111b21]">💬</span>
+        {/* LEFT PANEL */}
+        <div
+          className="hidden lg:flex lg:w-[45%] flex-col p-12 relative overflow-hidden"
+          style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}
+        >
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 440, height: 440, background: "rgba(255,255,255,0.07)", top: "-130px", right: "-110px" }} />
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 340, height: 340, background: "rgba(255,255,255,0.05)", bottom: "-90px", left: "-90px" }} />
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 200, height: 200, background: "rgba(255,255,255,0.04)", bottom: "30%", right: "8%" }} />
+
+          <div className="relative z-10 flex items-center gap-3 mb-16">
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+              </svg>
+            </div>
+            <span className="text-white text-xl font-black tracking-tight">ChatterBox</span>
+          </div>
+
+          <div className="relative z-10 flex-1 flex flex-col justify-center">
+            <h2 className="font-black text-white leading-[1.15] mb-5" style={{ fontSize: "2.5rem" }}>
+              Connect with<br />the people that<br />matter most
+            </h2>
+            <p className="text-base mb-12 leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+              Fast, secure messaging for teams and friends. Stay in sync wherever you are.
+            </p>
+            <div className="space-y-5">
+              {[
+                { icon: "💬", label: "Real-time messaging and emoji reactions" },
+                { icon: "🔒", label: "End-to-end encrypted conversations" },
+                { icon: "🎙️", label: "Voice messages and file sharing" },
+              ].map((f) => (
+                <div key={f.label} className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)" }}>
+                    <span className="text-lg">{f.icon}</span>
+                  </div>
+                  <span className="text-white text-sm font-semibold">{f.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative z-10 pt-8" style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+            <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>Trusted by thousands of users worldwide</p>
+            <div className="flex gap-8">
+              {[["50K+", "Active Users"], ["99.9%", "Uptime"], ["256-bit", "Encryption"]].map(([val, lbl]) => (
+                <div key={lbl}>
+                  <p className="text-white font-black text-xl">{val}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{lbl}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <h1 className="text-4xl font-black text-white mb-2 text-center tracking-tight">
-          Chatter<span className="text-[#00a884]">Box</span>
-        </h1>
-        <p className="text-gray-400 mb-10 text-center text-sm font-medium tracking-wide">Engage. Talk. Interact.</p>
-
-        <div className="mb-8">
-          <label className="text-[10px] font-bold text-[#00a884] uppercase tracking-[0.2em] ml-1 mb-2 block">Phone Number</label>
-          <PhoneInput
-            country={"ug"}
-            value={phone}
-            onChange={(p) => setPhone(p)}
-            containerStyle={{ width: "100%" }}
-            inputStyle={{
-              backgroundColor: "#2a3942",
-              color: "white",
-              width: "100%",
-              height: "60px",
-              borderRadius: "18px",
-              border: "2px solid transparent",
-              fontSize: "16px",
-            }}
-            buttonStyle={{
-              backgroundColor: "#2a3942",
-              border: "none",
-              borderRadius: "18px 0 0 18px",
-              paddingLeft: "10px",
-            }}
-          />
-        </div>
-
-        <button onClick={handleRequestOtp} className="w-full bg-[#00a884] hover:bg-[#05cd99] hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,168,132,0.4)] active:scale-95 text-[#111b21] font-bold py-4 rounded-2xl transition-all duration-300 mb-4">
-          Send Verification Code
-        </button>
-      </div>
-
-      {showSimulation && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] bg-[#0b141a]/95 backdrop-blur-md animate-in fade-in duration-300">
-          {/* Main Card */}
-          <div className="bg-[#111b21] border border-white/5 p-10 rounded-[2.5rem] max-w-sm w-full text-center shadow-[0_40px_80px_rgba(0,0,0,0.7)] relative overflow-hidden ring-1 ring-white/10">
-            {/* Subtle brand glow in the background */}
-            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00a884]/10 rounded-full blur-[80px]"></div>
-
-            <div className="relative z-10">
-              {/* REPLACED: Shield is gone. Using your branded chat logo with a glow */}
-              <div className="w-16 h-16 bg-gradient-to-br from-[#00a884] to-[#05cd99] rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-[0_0_20px_rgba(0,168,132,0.4)]">
-                <span className="text-3xl filter drop-shadow-sm">💬</span>
+        {/* RIGHT PANEL */}
+        <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-white">
+          {isVerifying ? (
+            <div className="w-full max-w-sm">
+              <div className="lg:hidden flex items-center gap-2 mb-8">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                </div>
+                <span className="font-black text-gray-900">ChatterBox</span>
               </div>
 
-              <h3 className="text-white text-2xl font-black tracking-tight mb-2">Secure Access</h3>
-              <p className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">
-                Confirm the code below to enter your <br />
-                <span className="text-[#00a884] opacity-80 uppercase text-[10px] font-bold tracking-[0.2em]">verified workspace</span>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.3)" }}>
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+              </div>
+
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-1">Check your phone</h2>
+              <p className="text-gray-400 text-sm mb-8">
+                Enter the 6-digit code sent to{" "}
+                <span className="font-bold text-violet-600">+{phone}</span>
               </p>
 
-              {/* Improved Code Box: Deeper contrast and neon text */}
-              <div className="bg-[#202c33] py-8 rounded-[2rem] border border-white/5 mb-10 shadow-inner group">
-                <span className="text-5xl font-mono font-black text-[#00a884] tracking-[0.15em] drop-shadow-[0_0_12px_rgba(0,168,132,0.3)] group-hover:scale-110 transition-transform duration-500 block">{generatedOTP}</span>
-              </div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-2">Verification Code</label>
+              <input
+                type="text"
+                maxLength="6"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="w-full text-center text-4xl tracking-[0.4em] font-mono py-5 rounded-2xl outline-none transition-all duration-200 mb-5"
+                style={{ backgroundColor: "#f8fafc", color: "#1e293b", border: "2px solid #e2e8f0" }}
+                onFocus={(e) => (e.target.style.borderColor = "#8b5cf6")}
+                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+                placeholder="000000"
+              />
 
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedOTP);
-                  setShowSimulation(false);
-                  setIsVerifying(true);
-                }}
-                className="w-full py-5 bg-[#00a884] hover:bg-[#05cd99] text-[#111b21] font-bold rounded-2xl transition-all shadow-lg shadow-[#00a884]/20 uppercase text-xs tracking-[0.2em] active:scale-95"
+                onClick={handleVerifyOtp}
+                className="w-full py-4 rounded-2xl font-bold text-white text-[15px] tracking-wide transition-all duration-200 active:scale-95 mb-4"
+                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                Copy & Continue
+                Verify &amp; Sign In &rarr;
               </button>
 
-              <div className="mt-8 flex items-center justify-center gap-2">
-                <div className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-pulse"></div>
-                <span className="text-[10px] text-gray-300 uppercase tracking-[0.3em] font-bold">Secure Simulation</span>
+              <div className="mb-5 text-center">
+                {isExpired
+                  ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p>
+                  : <p className="text-gray-400 text-xs">Valid for 3 minutes only</p>
+                }
               </div>
+
+              <button onClick={() => setIsVerifying(false)} className="text-gray-400 text-xs font-semibold transition-colors hover:text-violet-600">
+                &larr; Use a different number
+              </button>
+            </div>
+          ) : (
+            <div className="w-full max-w-sm">
+              <div className="lg:hidden flex items-center gap-2 mb-8">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                </div>
+                <span className="font-black text-gray-900">ChatterBox</span>
+              </div>
+
+              <h1 className="font-black text-gray-900 tracking-tight mb-1" style={{ fontSize: "2rem" }}>Welcome back 👋</h1>
+              <p className="text-gray-400 text-sm mb-8">Sign in to continue to ChatterBox</p>
+
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-2">Phone Number</label>
+              <PhoneInput
+                country={"ug"}
+                value={phone}
+                onChange={(p) => setPhone(p)}
+                containerStyle={{ width: "100%", marginBottom: "20px" }}
+                inputStyle={{
+                  backgroundColor: "#f8fafc",
+                  color: "#1e293b",
+                  width: "100%",
+                  height: "58px",
+                  borderRadius: "14px",
+                  border: "2px solid #e2e8f0",
+                  fontSize: "16px",
+                }}
+                buttonStyle={{
+                  backgroundColor: "#f8fafc",
+                  border: "none",
+                  borderRadius: "14px 0 0 14px",
+                  paddingLeft: "10px",
+                }}
+                dropdownStyle={{
+                  backgroundColor: "#ffffff",
+                  color: "#1e293b",
+                }}
+              />
+
+              <button
+                onClick={handleRequestOtp}
+                className="w-full active:scale-95 text-white font-bold py-4 rounded-2xl transition-all duration-200 text-[15px] tracking-wide mb-5"
+                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                Continue &rarr;
+              </button>
+
+              <p className="text-center text-xs text-gray-400">
+                By continuing you agree to our{" "}
+                <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Terms</span>{" "}
+                &amp;{" "}
+                <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Privacy Policy</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* OTP SIMULATION POPUP */}
+      {showSimulation && (
+        <div className="fixed inset-0 flex items-center justify-center z-[200] backdrop-blur-sm" style={{ backgroundColor: "rgba(15,23,42,0.45)" }}>
+          <div className="max-w-sm w-full text-center mx-4 rounded-3xl p-10 bg-white" style={{ boxShadow: "0 30px 80px rgba(0,0,0,0.2)", border: "1px solid #f1f5f9" }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 mx-auto" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.35)" }}>
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+              </svg>
+            </div>
+
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-1">Your Access Code</h3>
+            <p className="text-gray-400 text-sm mb-6">Use this code to verify your identity</p>
+
+            <div className="py-7 rounded-2xl mb-6" style={{ backgroundColor: "#f5f3ff", border: "2px solid #ede9fe" }}>
+              <span className="text-5xl font-mono font-black tracking-[0.15em] block" style={{ color: "#7c3aed" }}>{generatedOTP}</span>
+            </div>
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(generatedOTP);
+                setShowSimulation(false);
+                setIsVerifying(true);
+              }}
+              className="w-full py-4 text-white font-bold rounded-2xl transition-all active:scale-95 tracking-wide"
+              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 20px rgba(99,102,241,0.35)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Copy Code &amp; Continue &rarr;
+            </button>
+
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#8b5cf6" }}></div>
+              <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-gray-400">Simulation Mode</span>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
