@@ -2581,31 +2581,70 @@ function App() {
         <main className="flex-1 m-4 flex flex-col relative z-10">
           {/* Floating Header */}
           {isSharingContact && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-in fade-in duration-200">
-              <div className="bg-[#202c33] w-full max-w-sm rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden">
-                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#111b21]">
-                  <h3 className="text-white font-black tracking-tight">Select Contact</h3>
-                  <button onClick={() => setIsSharingContact(false)} className="text-gray-400 hover:text-white text-xl">
-                    ✕
+            <div
+              className="fixed inset-0 flex items-center justify-center z-[200] p-4"
+              style={{ backgroundColor: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
+              onClick={() => setIsSharingContact(false)}
+            >
+              <div
+                className="w-full max-w-sm rounded-3xl overflow-hidden"
+                style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.25), 0 8px 32px rgba(0,0,0,0.15)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Violet gradient header */}
+                <div
+                  className="p-6 flex justify-between items-center relative overflow-hidden"
+                  style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                >
+                  <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, background: "rgba(255,255,255,0.07)", top: "-60px", right: "-40px" }} />
+                  <div className="relative z-10">
+                    <h3 className="text-white font-black text-lg tracking-tight">Share a Contact</h3>
+                    <p className="text-white/60 text-xs mt-0.5">Choose who to share</p>
+                  </div>
+                  <button
+                    onClick={() => setIsSharingContact(false)}
+                    className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20"
+                    style={{ background: "rgba(255,255,255,0.15)" }}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </button>
                 </div>
-                <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
-                  {contacts.map((contact) => (
+
+                {/* Contact list */}
+                <div className={`max-h-[360px] overflow-y-auto p-3 custom-scrollbar ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                  {contacts.map((contact, idx) => (
                     <div
                       key={contact.id}
                       onClick={() => {
                         handleShareContact(contact);
-                        setIsSharingContact(false); // Auto-close after selection
+                        setIsSharingContact(false);
                       }}
-                      className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl cursor-pointer transition-all active:scale-95"
+                      className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98] ${theme === "dark" ? "hover:bg-violet-500/10" : "hover:bg-violet-50"}`}
                     >
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15))", border: "2px solid rgba(255,255,255,0.25)" }}>{contact.name.charAt(0)}</div>
-                      <div>
-                        <p className="text-white font-bold text-sm">{contact.name}</p>
-                        <p className="text-gray-500 text-xs">{contact.phone}</p>
+                      {/* Avatar with violet gradient */}
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-md"
+                        style={{ background: `linear-gradient(135deg, ${["#6366f1,#8b5cf6", "#7c3aed,#a855f7", "#4f46e5,#6366f1"][idx % 3]})` }}
+                      >
+                        {contact.name.charAt(0)}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-bold text-sm truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{contact.name}</p>
+                        <p className={`text-xs truncate mt-0.5 ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>{contact.phone || "Online • Secure"}</p>
+                      </div>
+                      {/* Arrow indicator */}
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-violet-400 flex-shrink-0">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
                     </div>
                   ))}
+                </div>
+
+                {/* Footer */}
+                <div className={`px-5 py-3 border-t ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-gray-50 border-gray-100"}`}>
+                  <p className={`text-[11px] text-center ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Contact info will be shared in the chat</p>
                 </div>
               </div>
             </div>
