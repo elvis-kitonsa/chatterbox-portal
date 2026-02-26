@@ -923,6 +923,7 @@ function App() {
   const [archivedContactIds, setArchivedContactIds] = useState(new Set());
   const [showArchivedSection, setShowArchivedSection] = useState(false);
   const [contactMenuId, setContactMenuId] = useState(null); // ID of contact whose context menu is open
+  const [pendingDeleteId, setPendingDeleteId] = useState(null); // ID of contact awaiting delete confirmation
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
@@ -2800,7 +2801,7 @@ function App() {
                         <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 12px" }} />
                         <button
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
-                          onClick={() => handleDeleteContact(contact.id)}
+                          onClick={() => { setContactMenuId(null); setPendingDeleteId(contact.id); }}
                         >
                           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -2862,7 +2863,7 @@ function App() {
                         <button onClick={() => handleToggleArchive(contact.id)} title="Unarchive" className="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-white/20 text-amber-400 transition-all">
                           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                         </button>
-                        <button onClick={() => handleDeleteContact(contact.id)} title="Delete" className="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-red-500/20 text-red-400 transition-all">
+                        <button onClick={() => setPendingDeleteId(contact.id)} title="Delete" className="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-red-500/20 text-red-400 transition-all">
                           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
                         </button>
                       </div>
@@ -3066,6 +3067,63 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* ─── Delete Confirmation Modal ─────────────────────────────── */}
+          {pendingDeleteId && (() => {
+            const target = contacts.find((c) => c.id === pendingDeleteId);
+            return (
+              <div
+                className="fixed inset-0 flex items-center justify-center z-[300] p-4"
+                style={{ backgroundColor: "rgba(15,23,42,0.65)", backdropFilter: "blur(8px)", animation: "emojiPickerIn 0.15s cubic-bezier(0.34,1.4,0.64,1)" }}
+                onClick={() => setPendingDeleteId(null)}
+              >
+                <div
+                  className="w-full max-w-[340px] rounded-3xl overflow-hidden"
+                  style={{ boxShadow: "0 30px 80px rgba(239,68,68,0.2), 0 8px 32px rgba(0,0,0,0.3)" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Icon + title */}
+                  <div className={`px-7 pt-8 pb-6 flex flex-col items-center text-center ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                    {/* Red trash icon circle */}
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "linear-gradient(135deg,#fee2e2,#fecaca)" }}>
+                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14H6L5 6"/>
+                        <path d="M10 11v6"/><path d="M14 11v6"/>
+                        <path d="M9 6V4h6v2"/>
+                      </svg>
+                    </div>
+
+                    <h3 className={`text-[17px] font-black tracking-tight mb-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      Delete "{target?.name}"?
+                    </h3>
+                    <p className={`text-sm leading-relaxed ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                      This will permanently delete this chat and all its messages. This action <span className="font-bold text-red-500">cannot be undone</span>.
+                    </p>
+                  </div>
+
+                  {/* Divider */}
+                  <div className={theme === "dark" ? "bg-gray-800 h-px" : "bg-gray-100 h-px"} />
+
+                  {/* Actions */}
+                  <div className={`flex ${theme === "dark" ? "bg-[#111827]" : "bg-gray-50"}`}>
+                    <button
+                      className={`flex-1 py-4 text-sm font-bold transition-colors border-r ${theme === "dark" ? "text-gray-300 hover:bg-white/5 border-gray-800" : "text-gray-600 hover:bg-gray-100 border-gray-100"}`}
+                      onClick={() => setPendingDeleteId(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                      onClick={() => { handleDeleteContact(pendingDeleteId); setPendingDeleteId(null); }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ─── Add New Contact Modal ─────────────────────────────────── */}
           {showAddContactModal && (
