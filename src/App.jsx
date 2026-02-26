@@ -919,7 +919,14 @@ function App() {
     { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500", avatar: null },
     { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500", avatar: null },
   ]);
-  const [activeContactId, setActiveContactId] = useState("tech-lead"); // Track which contact is currently selected
+  const [activeContactId, setActiveContactId] = useState("tech-lead");
+  const [archivedContactIds, setArchivedContactIds] = useState(new Set());
+  const [showArchivedSection, setShowArchivedSection] = useState(false);
+  const [contactMenuId, setContactMenuId] = useState(null); // ID of contact whose context menu is open
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
+  const [newContactColor, setNewContactColor] = useState("bg-violet-500");
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
     { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read" /*Options: "sent", "delivered", "read" */ },
@@ -2185,6 +2192,54 @@ function App() {
     reader.readAsDataURL(file);
   };
 
+  // ─── Contact management ───────────────────────────────────────────────────
+  const CONTACT_COLORS = ["bg-blue-500", "bg-violet-500", "bg-pink-500", "bg-emerald-500", "bg-orange-500", "bg-teal-500", "bg-rose-500", "bg-indigo-500"];
+
+  const handleAddContact = () => {
+    if (!newContactName.trim()) return;
+    const id = `contact-${Date.now()}`;
+    setContacts((prev) => [
+      ...prev,
+      { id, name: newContactName.trim(), status: newContactPhone.trim() || "Online • Secure", color: newContactColor, avatar: null },
+    ]);
+    setNewContactName("");
+    setNewContactPhone("");
+    setNewContactColor("bg-violet-500");
+    setShowAddContactModal(false);
+    setActiveContactId(id);
+  };
+
+  const handleDeleteContact = (contactId) => {
+    setMessages((prev) => prev.filter((m) => m.contactId !== contactId));
+    setContacts((prev) => {
+      const next = prev.filter((c) => c.id !== contactId);
+      if (activeContactId === contactId) {
+        const nextActive = next.find((c) => !archivedContactIds.has(c.id));
+        setActiveContactId(nextActive?.id ?? null);
+      }
+      return next;
+    });
+    setArchivedContactIds((prev) => { const n = new Set(prev); n.delete(contactId); return n; });
+    setContactMenuId(null);
+  };
+
+  const handleToggleArchive = (contactId) => {
+    setArchivedContactIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(contactId)) {
+        next.delete(contactId); // Unarchive
+      } else {
+        next.add(contactId); // Archive
+        if (activeContactId === contactId) {
+          const remaining = contacts.filter((c) => c.id !== contactId && !next.has(c.id));
+          setActiveContactId(remaining[0]?.id ?? null);
+        }
+      }
+      return next;
+    });
+    setContactMenuId(null);
+  };
+
   // ─── Bluetooth / BLE handlers ────────────────────────────────────────────
   const handleStartBLEScan = async () => {
     setDiscoveredBLEDevices([]);
@@ -2295,6 +2350,14 @@ function App() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showEmojiPicker]);
+
+  // Close contact context menu on outside click
+  useEffect(() => {
+    if (!contactMenuId) return;
+    const handler = () => setContactMenuId(null);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [contactMenuId]);
 
   // This function handles sending a new message in the chat.
   // It checks if the input is not empty, creates a new message object, updates the messages state, and clears the input field.
@@ -2634,66 +2697,180 @@ function App() {
           </div>
 
           {/* Search Capsule */}
-          <div className="px-6 pb-4 relative z-10">
+          <div className="px-6 pb-3 relative z-10">
             <div className="rounded-2xl flex items-center px-4 py-3" style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
-              <span className="mr-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-                🔍
-              </span>
+              <span className="mr-3" style={{ color: "rgba(255,255,255,0.6)" }}>🔍</span>
               <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm font-medium text-white placeholder:text-white/50" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
 
-          {/* Contact List */}
+          {/* New Chat Button */}
+          <div className="px-5 pb-4 relative z-10">
+            <button
+              onClick={() => setShowAddContactModal(true)}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-2xl transition-all hover:bg-white/20 active:scale-[0.98]"
+              style={{ backgroundColor: "rgba(255,255,255,0.1)", border: "1.5px dashed rgba(255,255,255,0.3)" }}
+            >
+              <div className="w-6 h-6 rounded-full flex items-center justify-center bg-white/25 flex-shrink-0">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              </div>
+              <span className="text-white/80 text-sm font-semibold">New Chat</span>
+            </button>
+          </div>
+
+          {/* Contact List — active (non-archived) */}
           <div className="flex-1 overflow-y-auto px-3 custom-scrollbar relative z-10">
             {contacts
-              .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .filter((c) => !archivedContactIds.has(c.id) && c.name.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((contact) => (
                 <div
                   key={contact.id}
                   onClick={() => setActiveContactId(contact.id)}
-                  className="group flex items-center gap-4 p-4 mb-2 rounded-[1.8rem] transition-all duration-300 cursor-pointer"
+                  className="group flex items-center gap-3 p-3 mb-1.5 rounded-[1.6rem] transition-all duration-200 cursor-pointer relative"
                   style={{
-                    backgroundColor: activeContactId === contact.id ? "rgba(255,255,255,0.2)" : "transparent",
+                    backgroundColor: activeContactId === contact.id ? "rgba(255,255,255,0.2)" : contactMenuId === contact.id ? "rgba(255,255,255,0.12)" : "transparent",
                     border: activeContactId === contact.id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
                     transform: activeContactId === contact.id ? "translateX(4px)" : "",
                   }}
                   onMouseEnter={(e) => {
-                    if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)";
+                    if (activeContactId !== contact.id && contactMenuId !== contact.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)";
                   }}
                   onMouseLeave={(e) => {
-                    if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "transparent";
+                    if (activeContactId !== contact.id && contactMenuId !== contact.id) e.currentTarget.style.backgroundColor = "transparent";
                   }}
                 >
-                  <label className="relative w-12 h-12 flex-shrink-0 cursor-pointer group/avatar" onClick={(e) => e.stopPropagation()} title="Change profile picture">
+                  {/* Avatar */}
+                  <label className="relative w-11 h-11 flex-shrink-0 cursor-pointer group/avatar" onClick={(e) => e.stopPropagation()} title="Change photo">
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(contact.id, e.target.files[0])} />
                     {contact.avatar ? (
-                      <img src={contact.avatar} alt={contact.name} className="w-12 h-12 rounded-2xl object-cover shadow-lg" />
+                      <img src={contact.avatar} alt={contact.name} className="w-11 h-11 rounded-2xl object-cover shadow-lg" />
                     ) : (
-                      <div className={`w-12 h-12 rounded-2xl ${contact.color} flex items-center justify-center shadow-lg`}>
-                        <span className="text-white font-black text-lg">{contact.name.charAt(0)}</span>
+                      <div className={`w-11 h-11 rounded-2xl ${contact.color} flex items-center justify-center shadow-lg`}>
+                        <span className="text-white font-black text-base">{contact.name.charAt(0)}</span>
                       </div>
                     )}
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-violet-600 z-10"></div>
-                    <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 z-10">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-violet-600 z-10" />
+                    <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity z-10">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                         <circle cx="12" cy="13" r="4" />
                       </svg>
                     </div>
                   </label>
+
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       <h3 className="font-bold text-sm truncate text-white">{contact.name}</h3>
-                      <span className="text-[9px] font-bold italic" style={{ color: "rgba(255,255,255,0.5)" }}>
-                        12:45
-                      </span>
+                      <span className="text-[9px] font-bold italic flex-shrink-0 ml-1" style={{ color: "rgba(255,255,255,0.5)" }}>12:45</span>
                     </div>
                     <p className="text-[11px] font-medium truncate" style={{ color: "rgba(255,255,255,0.55)" }}>
-                      Online • Secure
+                      {contact.status || "Online • Secure"}
                     </p>
+                  </div>
+
+                  {/* Three-dot context menu trigger */}
+                  <div className="flex-shrink-0 relative" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="w-7 h-7 rounded-xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
+                      onClick={(e) => { e.stopPropagation(); setContactMenuId(contactMenuId === contact.id ? null : contact.id); }}
+                      title="Options"
+                    >
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                        <circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/>
+                      </svg>
+                    </button>
+
+                    {/* Dropdown */}
+                    {contactMenuId === contact.id && (
+                      <div
+                        className="absolute right-0 top-9 w-44 rounded-2xl overflow-hidden shadow-2xl z-50"
+                        style={{ background: "linear-gradient(145deg,#1e1b4b,#2e1065)", border: "1px solid rgba(255,255,255,0.12)" }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
+                          onClick={() => handleToggleArchive(contact.id)}
+                        >
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                            <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+                          </svg>
+                          <span>Archive Chat</span>
+                        </button>
+                        <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 12px" }} />
+                        <button
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                          onClick={() => handleDeleteContact(contact.id)}
+                        >
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                          </svg>
+                          <span>Delete Chat</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
+
+            {/* Archived section */}
+            {(() => {
+              const archived = contacts.filter((c) => archivedContactIds.has(c.id) && c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+              if (archived.length === 0) return null;
+              return (
+                <div className="mt-2">
+                  <button
+                    onClick={() => setShowArchivedSection((v) => !v)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl transition-all hover:bg-white/10 mb-1"
+                  >
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+                      </svg>
+                    </div>
+                    <span className="text-white/70 text-xs font-bold uppercase tracking-wider flex-1 text-left">Archived ({archived.length})</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" className="text-white/40 transition-transform" style={{ transform: showArchivedSection ? "rotate(180deg)" : "rotate(0deg)" }}>
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+
+                  {showArchivedSection && archived.map((contact) => (
+                    <div
+                      key={contact.id}
+                      onClick={() => setActiveContactId(contact.id)}
+                      className="group flex items-center gap-3 p-3 mb-1 rounded-[1.6rem] transition-all duration-200 cursor-pointer relative"
+                      style={{
+                        backgroundColor: activeContactId === contact.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                      }}
+                      onMouseEnter={(e) => { if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
+                      onMouseLeave={(e) => { if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; }}
+                    >
+                      {contact.avatar ? (
+                        <img src={contact.avatar} alt={contact.name} className="w-10 h-10 rounded-2xl object-cover shadow-md flex-shrink-0 opacity-70" />
+                      ) : (
+                        <div className={`w-10 h-10 rounded-2xl ${contact.color} flex items-center justify-center shadow-md flex-shrink-0 opacity-70`}>
+                          <span className="text-white font-black text-sm">{contact.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate text-white/60">{contact.name}</h3>
+                        <p className="text-[10px] text-white/35 font-medium">Archived</p>
+                      </div>
+                      {/* Unarchive + Delete */}
+                      <div className="flex-shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => handleToggleArchive(contact.id)} title="Unarchive" className="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-white/20 text-amber-400 transition-all">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                        </button>
+                        <button onClick={() => handleDeleteContact(contact.id)} title="Delete" className="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-red-500/20 text-red-400 transition-all">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </aside>
 
@@ -2885,6 +3062,99 @@ function App() {
                 {/* Footer */}
                 <div className={`px-5 py-3 border-t ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-gray-50 border-gray-100"}`}>
                   <p className={`text-[11px] text-center ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Both devices must have ChatterBox open</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Add New Contact Modal ─────────────────────────────────── */}
+          {showAddContactModal && (
+            <div
+              className="fixed inset-0 flex items-center justify-center z-[200] p-4"
+              style={{ backgroundColor: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
+              onClick={() => setShowAddContactModal(false)}
+            >
+              <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.3), 0 8px 32px rgba(0,0,0,0.2)" }} onClick={(e) => e.stopPropagation()}>
+
+                {/* Header */}
+                <div className="p-6 flex justify-between items-center relative overflow-hidden" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                  <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, background: "rgba(255,255,255,0.07)", top: "-60px", right: "-40px" }} />
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-black text-lg tracking-tight">New Chat</h3>
+                      <p className="text-white/60 text-xs mt-0.5">Add a new conversation</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAddContactModal(false)} className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20" style={{ background: "rgba(255,255,255,0.15)" }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+
+                {/* Form body */}
+                <div className={`p-6 flex flex-col gap-4 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                  {/* Name */}
+                  <div>
+                    <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Alice Johnson"
+                      autoFocus
+                      value={newContactName}
+                      onChange={(e) => setNewContactName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
+                      className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                    />
+                  </div>
+
+                  {/* Status / subtitle */}
+                  <div>
+                    <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Status (optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Online • Secure"
+                      value={newContactPhone}
+                      onChange={(e) => setNewContactPhone(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
+                      className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                    />
+                  </div>
+
+                  {/* Color picker */}
+                  <div>
+                    <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Avatar Color</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {CONTACT_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setNewContactColor(color)}
+                          className={`w-8 h-8 rounded-xl ${color} transition-all hover:scale-110 active:scale-95 flex items-center justify-center`}
+                          style={{ boxShadow: newContactColor === color ? "0 0 0 3px white, 0 0 0 5px #8b5cf6" : "none" }}
+                        >
+                          {newContactColor === color && (
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer / CTA */}
+                <div className={`px-6 py-4 flex gap-3 border-t ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-gray-50 border-gray-100"}`}>
+                  <button onClick={() => setShowAddContactModal(false)} className={`flex-1 py-2.5 rounded-2xl text-sm font-bold transition-all active:scale-95 ${theme === "dark" ? "bg-gray-800 text-gray-300 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddContact}
+                    disabled={!newContactName.trim()}
+                    className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                  >
+                    Add Chat
+                  </button>
                 </div>
               </div>
             </div>
