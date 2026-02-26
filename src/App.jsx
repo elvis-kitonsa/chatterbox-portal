@@ -2,6 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import PhoneInput from "react-phone-input-2"; //
 import "react-phone-input-2/lib/style.css";
 import { Sun, Moon } from "lucide-react";
+import {
+  initBLE,
+  startAdvertising,
+  startScanning,
+  stopScanning,
+  connectAndGetIdentity,
+  sendBLEMessage,
+  subscribeToMessages,
+  isNativePlatform,
+} from "./bluetoothService";
 
 // Emoji keywords mapping for search functionality
 // Allows users to search for emojis using descriptive keywords
@@ -920,6 +930,10 @@ function App() {
 
   // 3. UI & THEME STATES
   const [theme, setTheme] = useState("light"); // Default to light
+  // 3b. BLUETOOTH STATES
+  const [showBluetoothModal, setShowBluetoothModal] = useState(false);
+  const [isBluetoothScanning, setIsBluetoothScanning] = useState(false);
+  const [discoveredBLEDevices, setDiscoveredBLEDevices] = useState([]); // [{deviceId, name, rssi}]
   const [isTyping, setIsTyping] = useState(false); // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEmojiTab, setActiveEmojiTab] = useState(0);
@@ -2169,6 +2183,49 @@ function App() {
     reader.readAsDataURL(file);
   };
 
+  // ─── Bluetooth / BLE handlers ────────────────────────────────────────────
+  const handleStartBLEScan = async () => {
+    setDiscoveredBLEDevices([]);
+    setIsBluetoothScanning(true);
+    const init = await initBLE();
+    if (!init.ok) { setIsBluetoothScanning(false); return; }
+    await startAdvertising("ChatterBox User");
+    await startScanning((device) => {
+      setDiscoveredBLEDevices((prev) => {
+        const exists = prev.some((d) => d.deviceId === device.deviceId);
+        return exists ? prev : [...prev, device];
+      });
+    });
+  };
+
+  const handleStopBLEScan = async () => {
+    await stopScanning();
+    setIsBluetoothScanning(false);
+  };
+
+  const handleAddBLEContact = async (device) => {
+    const result = await connectAndGetIdentity(device.deviceId);
+    const name = result.ok ? result.name : device.name;
+    const avatar = result.ok ? result.avatar : null;
+    const newContact = {
+      id: device.deviceId,
+      name,
+      avatar,
+      color: "bg-indigo-500",
+      status: "BLE • Nearby",
+      bleDeviceId: device.deviceId,
+    };
+    setContacts((prev) => [...prev, newContact]);
+    // Listen for incoming BLE messages from this contact
+    subscribeToMessages(device.deviceId, (deviceId, msg) => {
+      setMessages((prev) => [
+        ...prev,
+        { ...msg, sender: "them", contactId: deviceId },
+      ]);
+    });
+    setShowBluetoothModal(false);
+  };
+
   // --- CHAT EFFECTS ---
   // This effect simulates receiving a reply from the other person after you send a message. It checks the last message sent by "me" and if it hasn't already triggered a reply, it sets timers to show a typing indicator and then add a reply message from "them". It also ensures that we don't trigger multiple replies for the same message by marking it as processed.
   useEffect(() => {
@@ -2254,6 +2311,12 @@ function App() {
     // Update the messages state by adding the new message to the existing array of messages.
     setMessages([...messages, msg]);
     setNewMessage("");
+
+    // If the active contact was added via BLE, also send over Bluetooth
+    const activeContact = contacts.find((c) => c.id === activeContactId);
+    if (activeContact?.bleDeviceId) {
+      sendBLEMessage(activeContact.bleDeviceId, msg);
+    }
   };
 
   // This simulates the other person reading your message after 3 seconds
@@ -2534,13 +2597,27 @@ function App() {
                 </p>
               </div>
             </div>
-            <button onClick={() => setIsUnlocked(false)} title="Log out" className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Bluetooth Discovery Button */}
+              <button
+                onClick={() => setShowBluetoothModal(true)}
+                title="Find nearby ChatterBox users via Bluetooth"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-blue-400/20"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+                </svg>
+              </button>
+              {/* Logout Button */}
+              <button onClick={() => setIsUnlocked(false)} title="Log out" className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Search Capsule */}
@@ -2574,17 +2651,8 @@ function App() {
                     if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "transparent";
                   }}
                 >
-                  <label
-                    className="relative w-12 h-12 flex-shrink-0 cursor-pointer group/avatar"
-                    onClick={(e) => e.stopPropagation()}
-                    title="Change profile picture"
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleAvatarUpload(contact.id, e.target.files[0])}
-                    />
+                  <label className="relative w-12 h-12 flex-shrink-0 cursor-pointer group/avatar" onClick={(e) => e.stopPropagation()} title="Change profile picture">
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(contact.id, e.target.files[0])} />
                     {contact.avatar ? (
                       <img src={contact.avatar} alt={contact.name} className="w-12 h-12 rounded-2xl object-cover shadow-lg" />
                     ) : (
@@ -2675,6 +2743,140 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* ─── Bluetooth Discovery Modal ─────────────────────────────── */}
+          {showBluetoothModal && (
+            <div
+              className="fixed inset-0 flex items-center justify-center z-[200] p-4"
+              style={{ backgroundColor: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
+              onClick={() => { handleStopBLEScan(); setShowBluetoothModal(false); }}
+            >
+              <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ boxShadow: "0 30px 80px rgba(59,130,246,0.25), 0 8px 32px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
+
+                {/* Header */}
+                <div className="p-6 flex justify-between items-center relative overflow-hidden" style={{ background: "linear-gradient(135deg, #3b82f6, #6366f1)" }}>
+                  <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, background: "rgba(255,255,255,0.07)", top: "-60px", right: "-40px" }} />
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-black text-lg tracking-tight">Bluetooth Nearby</h3>
+                      <p className="text-white/60 text-xs mt-0.5">Find ChatterBox users around you</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { handleStopBLEScan(); setShowBluetoothModal(false); }}
+                    className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20"
+                    style={{ background: "rgba(255,255,255,0.15)" }}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className={`p-5 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+
+                  {/* Native platform guard */}
+                  {!isNativePlatform() ? (
+                    <div className="flex flex-col items-center gap-3 py-6 text-center">
+                      <div className="w-16 h-16 rounded-3xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #dbeafe, #ede9fe)" }}>
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+                        </svg>
+                      </div>
+                      <p className={`font-bold text-sm ${theme === "dark" ? "text-white" : "text-gray-800"}`}>Device Bluetooth Required</p>
+                      <p className={`text-xs leading-relaxed ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                        Install ChatterBox on Android or iOS to discover nearby users over Bluetooth without internet.
+                      </p>
+                      <div className="mt-1 px-4 py-2 rounded-2xl text-xs font-bold text-blue-600 border border-blue-200 bg-blue-50">
+                        Build with: npx cap add android
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Scanning animation */}
+                      <div className="flex flex-col items-center gap-4 py-4">
+                        <div className="relative w-20 h-20 flex items-center justify-center">
+                          {isBluetoothScanning && (
+                            <>
+                              <div className="absolute w-20 h-20 rounded-full border-2 border-blue-400/40 animate-ping" style={{ animationDuration: "1.5s" }} />
+                              <div className="absolute w-14 h-14 rounded-full border-2 border-blue-400/60 animate-ping" style={{ animationDuration: "1.5s", animationDelay: "0.3s" }} />
+                            </>
+                          )}
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center z-10" style={{ background: "linear-gradient(135deg, #3b82f6, #6366f1)" }}>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+                            </svg>
+                          </div>
+                        </div>
+                        <p className={`text-xs font-semibold ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                          {isBluetoothScanning ? "Scanning for nearby users..." : "Tap scan to start"}
+                        </p>
+                        <button
+                          onClick={isBluetoothScanning ? handleStopBLEScan : handleStartBLEScan}
+                          className="px-6 py-2.5 rounded-2xl text-sm font-bold text-white transition-all active:scale-95"
+                          style={{ background: isBluetoothScanning ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #3b82f6, #6366f1)" }}
+                        >
+                          {isBluetoothScanning ? "Stop Scanning" : "Start Scanning"}
+                        </button>
+                      </div>
+
+                      {/* Discovered devices list */}
+                      <div className={`max-h-[220px] overflow-y-auto mt-2 custom-scrollbar rounded-2xl ${theme === "dark" ? "bg-gray-900/40" : "bg-gray-50"} ${discoveredBLEDevices.length > 0 ? "p-2" : ""}`}>
+                        {discoveredBLEDevices.length === 0 ? (
+                          isBluetoothScanning && (
+                            <p className={`text-center text-xs py-4 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+                              Listening for nearby ChatterBox users...
+                            </p>
+                          )
+                        ) : (
+                          discoveredBLEDevices.map((device) => {
+                            const bars = device.rssi > -60 ? 4 : device.rssi > -75 ? 3 : device.rssi > -85 ? 2 : 1;
+                            const alreadyAdded = contacts.some((c) => c.id === device.deviceId);
+                            return (
+                              <div key={device.deviceId} className={`flex items-center gap-3 p-3 rounded-2xl mb-1 ${theme === "dark" ? "hover:bg-white/5" : "hover:bg-white"} transition-colors`}>
+                                <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #3b82f6, #6366f1)" }}>
+                                  <span className="text-white font-black text-base">{device.name.charAt(0)}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`font-bold text-sm truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{device.name}</p>
+                                  {/* Signal bars */}
+                                  <div className="flex items-end gap-0.5 mt-0.5">
+                                    {[1, 2, 3, 4].map((b) => (
+                                      <div key={b} className="rounded-sm" style={{ width: 3, height: 4 + b * 2, backgroundColor: b <= bars ? "#3b82f6" : (theme === "dark" ? "#374151" : "#d1d5db") }} />
+                                    ))}
+                                    <span className={`text-[10px] ml-1 font-medium ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{device.rssi} dBm</span>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => !alreadyAdded && handleAddBLEContact(device)}
+                                  disabled={alreadyAdded}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${alreadyAdded ? "opacity-50 cursor-default bg-gray-200 text-gray-500" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+                                >
+                                  {alreadyAdded ? "Added" : "Add"}
+                                </button>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className={`px-5 py-3 border-t ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-gray-50 border-gray-100"}`}>
+                  <p className={`text-[11px] text-center ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Both devices must have ChatterBox open</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-md border transition-colors duration-500 ${theme === "dark" ? "bg-[#1a1f2e] border-gray-800" : "bg-white border-gray-200"}`}>
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
@@ -2705,10 +2907,14 @@ function App() {
                 {theme === "dark" ? (
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fbbf24" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                   </svg>
                 ) : (
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7c3aed" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -2906,7 +3112,13 @@ function App() {
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
                       </svg>
-                      <input type="text" placeholder="Search emoji…" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} className={`flex-1 bg-transparent text-[13px] outline-none border-none ${theme === "dark" ? "text-gray-200 placeholder:text-gray-500" : "text-gray-700 placeholder:text-gray-400"}`} />
+                      <input
+                        type="text"
+                        placeholder="Search emoji…"
+                        value={emojiSearch}
+                        onChange={(e) => setEmojiSearch(e.target.value)}
+                        className={`flex-1 bg-transparent text-[13px] outline-none border-none ${theme === "dark" ? "text-gray-200 placeholder:text-gray-500" : "text-gray-700 placeholder:text-gray-400"}`}
+                      />
                       {emojiSearch && (
                         <button onClick={() => setEmojiSearch("")} className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] transition-all ${theme === "dark" ? "bg-gray-600 hover:bg-gray-500 text-gray-300" : "bg-gray-200 hover:bg-gray-300 text-gray-500 hover:text-gray-700"}`}>
                           ✕
@@ -2928,7 +3140,11 @@ function App() {
                       return list.length > 0 ? (
                         <div className="grid grid-cols-8 gap-0.5">
                           {list.map((emoji, i) => (
-                            <button key={`${emoji}-${i}`} onClick={() => setNewMessage((prev) => prev + emoji)} className={`w-9 h-9 text-2xl rounded-xl flex items-center justify-center hover:scale-[1.2] active:scale-95 transition-all duration-100 ${theme === "dark" ? "hover:bg-white/10" : "hover:bg-violet-100"}`}>
+                            <button
+                              key={`${emoji}-${i}`}
+                              onClick={() => setNewMessage((prev) => prev + emoji)}
+                              className={`w-9 h-9 text-2xl rounded-xl flex items-center justify-center hover:scale-[1.2] active:scale-95 transition-all duration-100 ${theme === "dark" ? "hover:bg-white/10" : "hover:bg-violet-100"}`}
+                            >
                               {emoji}
                             </button>
                           ))}
@@ -2954,7 +3170,7 @@ function App() {
                             setEmojiSearch("");
                           }}
                           title={cat.name}
-                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-[1.1rem] transition-all duration-200 ${isActive ? (theme === "dark" ? "bg-violet-500/20 scale-110" : "bg-violet-100 scale-110") : (theme === "dark" ? "hover:bg-white/10 opacity-40 hover:opacity-80" : "hover:bg-gray-200 opacity-40 hover:opacity-80")}`}
+                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-[1.1rem] transition-all duration-200 ${isActive ? (theme === "dark" ? "bg-violet-500/20 scale-110" : "bg-violet-100 scale-110") : theme === "dark" ? "hover:bg-white/10 opacity-40 hover:opacity-80" : "hover:bg-gray-200 opacity-40 hover:opacity-80"}`}
                         >
                           {cat.icon}
                           {isActive && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-500 rounded-full" />}
