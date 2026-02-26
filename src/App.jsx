@@ -955,8 +955,10 @@ function App() {
   const timerRef = useRef(null);
   const mediaRecorder = useRef(null);
   const audioChunks = useRef([]);
-  const audioPlayerRef = useRef(new Audio()); // Global audio player instance
-  const analyzerRef = useRef(null); // This creates the hook we will use to grab the hidden input file
+  const audioPlayerRef = useRef(new Audio()); // Global audio player instance — NOT tied to a DOM element
+  const analyzerRef = useRef(null);
+  const analyzerRafRef = useRef(null); // Tracks the RAF ID for the recording visualizer so we can cancel it
+  const streamRef = useRef(null); // Tracks the mic stream so we can release it after recording
   const emojiPickerRef = useRef(null); // To track the picker and a useEffect to listen for clicks on the rest of the document
 
   // --- EMOJI DATA ---
@@ -2371,12 +2373,13 @@ function App() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream; // Store so we can release the mic later
 
-      // --- WAVEFORM LOGIC START ---
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(stream);
       const analyzer = audioContext.createAnalyser();
-      analyzer.fftSize = 32; // Small size for a simple waveform
+      analyzer.fftSize = 64; // 32 bins — enough for 10 visual bars
+      analyzer.smoothingTimeConstant = 0.6;
       source.connect(analyzer);
       analyzerRef.current = analyzer;
 
@@ -2384,28 +2387,19 @@ function App() {
       const dataArray = new Uint8Array(bufferLength);
 
       const updateVisualizer = () => {
-        if (!analyzerRef.current) return;
+        if (!analyzerRef.current) return; // Exit when nulled by stop/cancel
         analyzerRef.current.getByteFrequencyData(dataArray);
-
-        // We take a slice of the data and convert it to a small array for our bars
-        const normalizedData = Array.from(dataArray.slice(0, 10)).map((v) => v / 255);
-        setVisualizerData(normalizedData);
-        requestAnimationFrame(updateVisualizer);
+        const bars = Array.from(dataArray.slice(0, 20)).map((v) => v / 255);
+        setVisualizerData(bars);
+        analyzerRafRef.current = requestAnimationFrame(updateVisualizer);
       };
-      updateVisualizer();
-      // --- WAVEFORM LOGIC END ---
+      analyzerRafRef.current = requestAnimationFrame(updateVisualizer);
 
       mediaRecorder.current = new MediaRecorder(stream);
-
-      // ADD THIS: This actually collects the audio data as it's recorded
       mediaRecorder.current.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunks.current.push(e.data);
-        }
+        if (e.data.size > 0) audioChunks.current.push(e.data);
       };
-
-      // ... (rest of your existing mediaRecorder logic)
-      mediaRecorder.current.start();
+      mediaRecorder.current.start(100); // Collect data every 100ms for smooth chunks
       setIsRecording(true);
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
@@ -2414,131 +2408,150 @@ function App() {
     }
   };
 
+  const stopRecordingCleanup = () => {
+    // Stop the visualizer RAF
+    if (analyzerRafRef.current) cancelAnimationFrame(analyzerRafRef.current);
+    analyzerRef.current = null;
+    analyzerRafRef.current = null;
+    // Release the microphone
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    clearInterval(timerRef.current);
+  };
+
   const stopAndSendVoiceNote = () => {
     if (!mediaRecorder.current) return;
+    const capturedDuration = recordingTime; // Capture before state reset
+    const capturedContactId = activeContactId;
 
-    mediaRecorder.current.onstop = () => {
+    mediaRecorder.current.onstop = async () => {
       const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
       const audioUrl = URL.createObjectURL(audioBlob);
+      const msgId = Date.now();
+
+      // Generate REAL waveform from actual audio amplitude data
+      let waveformData;
+      try {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        audioContext.close();
+        waveformData = extractWaveformFromAudio(audioBuffer, 50);
+      } catch {
+        waveformData = generateWaveformData(capturedDuration);
+      }
 
       const voiceMsg = {
-        id: Date.now(),
+        id: msgId,
         type: "voice",
-        fileUrl: audioUrl, // THE ACTUAL SOUND DATA
-        duration: recordingTime,
+        fileUrl: audioUrl,
+        duration: capturedDuration,
         sender: "me",
-        contactId: activeContactId,
+        contactId: capturedContactId,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         status: "sent",
       };
 
-      // Generate waveform data for the new voice message
-      setVoiceWaveforms((prev) => ({
-        ...prev,
-        [voiceMsg.id]: generateWaveformData(recordingTime),
-      }));
-
+      setVoiceWaveforms((prev) => ({ ...prev, [msgId]: waveformData }));
       setMessages((prev) => [...prev, voiceMsg]);
       audioChunks.current = [];
     };
 
+    stopRecordingCleanup();
     mediaRecorder.current.stop();
-    clearInterval(timerRef.current);
     setIsRecording(false);
     setRecordingTime(0);
   };
 
-  // NEW: Cancellation Feature
   const cancelRecording = () => {
     if (mediaRecorder.current && isRecording) {
-      mediaRecorder.current.stop(); // Stop recording
-      audioChunks.current = []; // Wipe the data
+      mediaRecorder.current.onstop = null; // Prevent onstop from doing anything
+      mediaRecorder.current.stop();
     }
-    clearInterval(timerRef.current);
+    audioChunks.current = [];
+    stopRecordingCleanup();
     setIsRecording(false);
     setRecordingTime(0);
   };
 
-  // Generate realistic waveform data for a voice message
+  // Fallback waveform (used if audio decoding fails)
   const generateWaveformData = (duration) => {
-    const bars = 50; // WhatsApp uses around 50 bars
-    const data = [];
-    for (let i = 0; i < bars; i++) {
-      // Create realistic voice waveform pattern
-      const baseHeight = 20 + Math.random() * 60;
-      const variation = Math.sin(i * 0.3) * 15 + Math.cos(i * 0.7) * 10;
-      data.push(Math.max(15, Math.min(95, baseHeight + variation)));
-    }
-    return data;
+    const bars = 50;
+    return Array.from({ length: bars }, (_, i) => {
+      const base = 20 + Math.random() * 60;
+      const wave = Math.sin(i * 0.3) * 15 + Math.cos(i * 0.7) * 10;
+      return Math.max(8, Math.min(95, base + wave));
+    });
   };
 
-  // Playback Logic with speed control and seeking
+  // Real waveform: downsample peak amplitude from decoded AudioBuffer
+  const extractWaveformFromAudio = (audioBuffer, numBars) => {
+    const channelData = audioBuffer.getChannelData(0); // Use channel 0 (mono/left)
+    const samplesPerBar = Math.floor(channelData.length / numBars);
+    return Array.from({ length: numBars }, (_, i) => {
+      let peak = 0;
+      for (let j = 0; j < samplesPerBar; j++) {
+        const sample = Math.abs(channelData[i * samplesPerBar + j]);
+        if (sample > peak) peak = sample;
+      }
+      // Scale 0.0–1.0 amplitude to 8–95% height
+      return Math.max(8, Math.min(95, 8 + peak * 87));
+    });
+  };
+
+  // Playback Logic — no rAF loop, only ontimeupdate (fires ~4×/sec, zero extra render cost)
   const togglePlayVoiceNote = (id, url, duration) => {
+    const player = audioPlayerRef.current;
+
     if (playingAudioId === id) {
-      audioPlayerRef.current.pause();
+      // Pause current
+      player.pause();
       setPlayingAudioId(null);
-    } else {
-      // Stop any currently playing audio
-      if (playingAudioId) {
-        audioPlayerRef.current.pause();
-      }
-
-      // Generate waveform if not exists
-      if (!voiceWaveforms[id]) {
-        setVoiceWaveforms((prev) => ({
-          ...prev,
-          [id]: generateWaveformData(duration),
-        }));
-      }
-
-      setCurrentAudioTime(0);
-      audioPlayerRef.current.src = url;
-      const speed = playbackSpeed[id] || 1;
-      audioPlayerRef.current.playbackRate = speed;
-      audioPlayerRef.current.play();
-      setPlayingAudioId(id);
-
-      // Update timer and progress as audio plays
-      const updateProgress = () => {
-        if (audioPlayerRef.current) {
-          setCurrentAudioTime(audioPlayerRef.current.currentTime);
-          requestAnimationFrame(updateProgress);
-        }
-      };
-      updateProgress();
-
-      audioPlayerRef.current.ontimeupdate = () => {
-        setCurrentAudioTime(audioPlayerRef.current.currentTime);
-      };
-
-      audioPlayerRef.current.onended = () => {
-        setPlayingAudioId(null);
-        setCurrentAudioTime(0);
-        // Reset playback speed for this message
-        setPlaybackSpeed((prev) => ({ ...prev, [id]: 1 }));
-      };
-
-      audioPlayerRef.current.onpause = () => {
-        if (playingAudioId !== id) {
-          setCurrentAudioTime(0);
-        }
-      };
+      return;
     }
+
+    // Stop whatever was playing before
+    player.pause();
+
+    // Ensure waveform exists
+    if (!voiceWaveforms[id]) {
+      setVoiceWaveforms((prev) => ({ ...prev, [id]: generateWaveformData(duration) }));
+    }
+
+    // Wire up handlers BEFORE play() to avoid missing early events
+    player.ontimeupdate = () => setCurrentAudioTime(player.currentTime);
+    player.onended = () => {
+      setPlayingAudioId(null);
+      setCurrentAudioTime(0);
+      setPlaybackSpeed((prev) => ({ ...prev, [id]: 1 }));
+    };
+    player.onpause = null; // Remove — was causing stale-closure bugs
+
+    player.src = url;
+    player.playbackRate = playbackSpeed[id] || 1;
+    setCurrentAudioTime(0);
+    setPlayingAudioId(id);
+    player.play();
   };
 
-  // Handle waveform click for seeking
-  const handleWaveformClick = (e, msgId, duration) => {
-    if (!playingAudioId || playingAudioId !== msgId) return;
+  // Click-to-seek: works while playing OR paused
+  const handleWaveformClick = (e, msgId, url, duration) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const seekTime = pct * (duration || 0);
 
-    const container = e.currentTarget;
-    const rect = container.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-    const seekTime = percentage * duration;
-
-    if (audioPlayerRef.current) {
+    if (playingAudioId === msgId) {
+      // Already playing — just seek
       audioPlayerRef.current.currentTime = seekTime;
       setCurrentAudioTime(seekTime);
+    } else {
+      // Start playing from seek position
+      togglePlayVoiceNote(msgId, url, duration);
+      // Give the player a tick to load, then seek
+      setTimeout(() => {
+        audioPlayerRef.current.currentTime = seekTime;
+        setCurrentAudioTime(seekTime);
+      }, 0);
     }
   };
 
@@ -2963,24 +2976,33 @@ function App() {
                           </button>
 
                           <div className="flex-1 flex flex-col pt-1 min-w-0">
-                            {/* WhatsApp-style Interactive Waveform */}
-                            <div ref={(el) => (waveformContainerRef.current[msg.id] = el)} onClick={(e) => handleWaveformClick(e, msg.id, msg.duration)} className="flex items-end gap-[2px] h-8 mb-1 cursor-pointer px-1 hover:opacity-80">
-                              {(voiceWaveforms[msg.id] || Array.from({ length: 50 }, () => 20 + Math.random() * 60)).map((height, i) => {
-                                const time = playingAudioId === msg.id ? currentAudioTime : 0;
-                                const duration = msg.duration || 5;
+                            {/* Waveform — no transitions to avoid re-render cost */}
+                            <div
+                              ref={(el) => (waveformContainerRef.current[msg.id] = el)}
+                              onClick={(e) => handleWaveformClick(e, msg.id, msg.fileUrl, msg.duration)}
+                              className="flex items-end gap-[2px] h-8 mb-1 cursor-pointer px-1"
+                            >
+                              {(voiceWaveforms[msg.id] || Array.from({ length: 50 }, (_, i) => 20 + Math.sin(i) * 15 + Math.random() * 20)).map((height, i) => {
                                 const totalBars = voiceWaveforms[msg.id]?.length || 50;
-                                const progress = (time / duration) * totalBars;
+                                const progress = (currentAudioTime / (msg.duration || 1)) * totalBars;
                                 const isPlayed = playingAudioId === msg.id && i < progress;
-                                const isActive = playingAudioId === msg.id && Math.abs(i - progress) < 2;
-
+                                // Scrubber head: the 1 bar at the current position
+                                const isHead = playingAudioId === msg.id && Math.floor(progress) === i;
                                 return (
                                   <div
                                     key={i}
-                                    className={`w-[2.5px] rounded-full transition-all duration-75 ${isPlayed ? (msg.sender === "me" ? "bg-white" : "bg-violet-600") : msg.sender === "me" ? "bg-white/40" : "bg-gray-400/50"} ${isActive ? "opacity-100" : ""}`}
                                     style={{
+                                      width: "2.5px",
                                       height: `${height}%`,
                                       minHeight: "4px",
-                                      transition: isActive ? "height 0.1s ease-out" : "none",
+                                      borderRadius: "9999px",
+                                      flexShrink: 0,
+                                      backgroundColor: isHead
+                                        ? msg.sender === "me" ? "rgba(255,255,255,1)" : "#7c3aed"
+                                        : isPlayed
+                                        ? msg.sender === "me" ? "rgba(255,255,255,0.95)" : "#8b5cf6"
+                                        : msg.sender === "me" ? "rgba(255,255,255,0.35)" : "rgba(156,163,175,0.6)",
+                                      transform: isHead ? "scaleY(1.15)" : "none",
                                     }}
                                   />
                                 );
@@ -3195,16 +3217,34 @@ function App() {
               </button>
 
               {isRecording ? (
-                /* RECORDING STATE: Show Timer & Visualizer inside capsule */
-                <div className="flex-1 flex items-center justify-between px-2">
-                  <span className="text-red-500 animate-pulse font-medium">{formatTime(recordingTime)}</span>
-                  <div className="flex gap-0.5 items-center h-4">
+                /* RECORDING STATE — WhatsApp style */
+                <div className="flex-1 flex items-center gap-3 px-1">
+                  {/* Red dot + timer */}
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-red-500 font-semibold text-sm tabular-nums w-[38px]">{formatTime(recordingTime)}</span>
+                  </div>
+                  {/* Live waveform — 20 bars from analyser */}
+                  <div className="flex items-center gap-[2px] flex-1 h-8">
                     {visualizerData.map((v, i) => (
-                      <div key={i} className="w-0.5 bg-gray-400 rounded-full" style={{ height: `${Math.max(20, v * 100)}%` }} />
+                      <div
+                        key={i}
+                        style={{
+                          width: "2.5px",
+                          height: `${Math.max(15, v * 100)}%`,
+                          minHeight: "4px",
+                          borderRadius: "9999px",
+                          backgroundColor: "#ef4444",
+                          opacity: 0.5 + v * 0.5,
+                          flexShrink: 0,
+                        }}
+                      />
                     ))}
                   </div>
-                  <button onClick={cancelRecording} className="text-[11px] font-bold text-gray-400 uppercase tracking-wider hover:text-red-500">
-                    Slide to cancel
+                  {/* Cancel */}
+                  <button onClick={cancelRecording} className="flex items-center gap-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider hover:text-red-500 flex-shrink-0 transition-colors">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    Cancel
                   </button>
                 </div>
               ) : (
@@ -3271,8 +3311,7 @@ function App() {
             </button>
           </footer>
         </main>
-        {/* Hidden Audio Engine */}
-        <audio ref={audioPlayerRef} className="hidden" />
+        {/* Audio playback is handled by the audioPlayerRef Audio() instance — no DOM element needed */}
       </div>
     );
   }
