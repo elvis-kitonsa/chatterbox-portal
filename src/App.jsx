@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import PhoneInput from "react-phone-input-2";
+import PhoneInput from "react-phone-input-2"; //
 import "react-phone-input-2/lib/style.css";
 import { Sun, Moon } from "lucide-react";
 
@@ -905,9 +905,9 @@ function App() {
 
   // 2. CHAT & CONTACT STATES
   const [contacts, setContacts] = useState([
-    { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500" },
-    { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500" },
-    { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500" },
+    { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500", avatar: null },
+    { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500", avatar: null },
+    { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500", avatar: null },
   ]);
   const [activeContactId, setActiveContactId] = useState("tech-lead"); // Track which contact is currently selected
   const [messages, setMessages] = useState([
@@ -919,7 +919,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
 
   // 3. UI & THEME STATES
-  const [theme, setTheme] = useState("dark"); // Default to dark
+  const [theme, setTheme] = useState("light"); // Default to light
   const [isTyping, setIsTyping] = useState(false); // State to track if the user is currently typing a message. This can be used to show "typing..." indicators in the UI.
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEmojiTab, setActiveEmojiTab] = useState(0);
@@ -2151,12 +2151,22 @@ function App() {
       type: "contact", // This triggers your contact card UI
       text: contact.name,
       phone: contact.phone,
+      avatar: contact.avatar,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: "sent",
       contactId: activeContactId,
     };
     setMessages([...messages, contactMsg]);
     setIsSharingContact(false);
+  };
+
+  const handleAvatarUpload = (contactId, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setContacts((prev) => prev.map((c) => (c.id === contactId ? { ...c, avatar: e.target.result } : c)));
+    };
+    reader.readAsDataURL(file);
   };
 
   // --- CHAT EFFECTS ---
@@ -2498,10 +2508,10 @@ function App() {
   // 1. Dashboard Screen (Dark Mode - To match the color aesthetic of Whatsapp)
   if (isUnlocked) {
     return (
-      <div className="flex h-screen overflow-hidden font-sans relative bg-[#f8fafc] text-gray-900">
+      <div className={`flex h-screen overflow-hidden font-sans relative transition-colors duration-500 ${theme === "dark" ? "bg-[#0f1117] text-white" : "bg-[#f8fafc] text-gray-900"}`}>
         {/* DYNAMIC BACKGROUND BLUR NODES */}
-        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
-        <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none"></div>
+        <div className={`absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[120px] animate-pulse pointer-events-none ${theme === "dark" ? "bg-violet-900/20" : "bg-violet-500/5"}`}></div>
+        <div className={`absolute bottom-[10%] right-[5%] w-[500px] h-[500px] rounded-full blur-[150px] pointer-events-none ${theme === "dark" ? "bg-indigo-900/15" : "bg-indigo-500/5"}`}></div>
 
         {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
         <aside className="w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
@@ -2519,7 +2529,9 @@ function App() {
               </div>
               <div>
                 <h1 className="text-lg font-black tracking-tighter text-white">ChatterBox</h1>
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>Workspace</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  Workspace
+                </p>
               </div>
             </div>
             <button onClick={() => setIsUnlocked(false)} title="Log out" className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
@@ -2534,14 +2546,10 @@ function App() {
           {/* Search Capsule */}
           <div className="px-6 pb-4 relative z-10">
             <div className="rounded-2xl flex items-center px-4 py-3" style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)" }}>
-              <span className="mr-3" style={{ color: "rgba(255,255,255,0.6)" }}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                className="bg-transparent w-full outline-none text-sm font-medium text-white placeholder:text-white/50"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <span className="mr-3" style={{ color: "rgba(255,255,255,0.6)" }}>
+                🔍
+              </span>
+              <input type="text" placeholder="Search conversations..." className="bg-transparent w-full outline-none text-sm font-medium text-white placeholder:text-white/50" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
 
@@ -2559,18 +2567,49 @@ function App() {
                     border: activeContactId === contact.id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
                     transform: activeContactId === contact.id ? "translateX(4px)" : "",
                   }}
-                  onMouseEnter={(e) => { if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; }}
-                  onMouseLeave={(e) => { if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "transparent"; }}
+                  onMouseEnter={(e) => {
+                    if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeContactId !== contact.id) e.currentTarget.style.backgroundColor = "transparent";
+                  }}
                 >
-                  <div className={`w-12 h-12 rounded-2xl ${contact.color} flex-shrink-0 shadow-lg relative`}>
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-violet-600"></div>
-                  </div>
+                  <label
+                    className="relative w-12 h-12 flex-shrink-0 cursor-pointer group/avatar"
+                    onClick={(e) => e.stopPropagation()}
+                    title="Change profile picture"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleAvatarUpload(contact.id, e.target.files[0])}
+                    />
+                    {contact.avatar ? (
+                      <img src={contact.avatar} alt={contact.name} className="w-12 h-12 rounded-2xl object-cover shadow-lg" />
+                    ) : (
+                      <div className={`w-12 h-12 rounded-2xl ${contact.color} flex items-center justify-center shadow-lg`}>
+                        <span className="text-white font-black text-lg">{contact.name.charAt(0)}</span>
+                      </div>
+                    )}
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-violet-600 z-10"></div>
+                    <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-200 z-10">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </div>
+                  </label>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       <h3 className="font-bold text-sm truncate text-white">{contact.name}</h3>
-                      <span className="text-[9px] font-bold italic" style={{ color: "rgba(255,255,255,0.5)" }}>12:45</span>
+                      <span className="text-[9px] font-bold italic" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        12:45
+                      </span>
                     </div>
-                    <p className="text-[11px] font-medium truncate" style={{ color: "rgba(255,255,255,0.55)" }}>Online • Secure</p>
+                    <p className="text-[11px] font-medium truncate" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      Online • Secure
+                    </p>
                   </div>
                 </div>
               ))}
@@ -2581,33 +2620,19 @@ function App() {
         <main className="flex-1 m-4 flex flex-col relative z-10">
           {/* Floating Header */}
           {isSharingContact && (
-            <div
-              className="fixed inset-0 flex items-center justify-center z-[200] p-4"
-              style={{ backgroundColor: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
-              onClick={() => setIsSharingContact(false)}
-            >
-              <div
-                className="w-full max-w-sm rounded-3xl overflow-hidden"
-                style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.25), 0 8px 32px rgba(0,0,0,0.15)" }}
-                onClick={(e) => e.stopPropagation()}
-              >
+            <div className="fixed inset-0 flex items-center justify-center z-[200] p-4" style={{ backgroundColor: "rgba(15,23,42,0.5)", backdropFilter: "blur(6px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }} onClick={() => setIsSharingContact(false)}>
+              <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.25), 0 8px 32px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
                 {/* Violet gradient header */}
-                <div
-                  className="p-6 flex justify-between items-center relative overflow-hidden"
-                  style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
-                >
+                <div className="p-6 flex justify-between items-center relative overflow-hidden" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
                   <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, background: "rgba(255,255,255,0.07)", top: "-60px", right: "-40px" }} />
                   <div className="relative z-10">
                     <h3 className="text-white font-black text-lg tracking-tight">Share a Contact</h3>
                     <p className="text-white/60 text-xs mt-0.5">Choose who to share</p>
                   </div>
-                  <button
-                    onClick={() => setIsSharingContact(false)}
-                    className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20"
-                    style={{ background: "rgba(255,255,255,0.15)" }}
-                  >
+                  <button onClick={() => setIsSharingContact(false)} className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20" style={{ background: "rgba(255,255,255,0.15)" }}>
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 </div>
@@ -2623,13 +2648,14 @@ function App() {
                       }}
                       className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-150 active:scale-[0.98] ${theme === "dark" ? "hover:bg-violet-500/10" : "hover:bg-violet-50"}`}
                     >
-                      {/* Avatar with violet gradient */}
-                      <div
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-md"
-                        style={{ background: `linear-gradient(135deg, ${["#6366f1,#8b5cf6", "#7c3aed,#a855f7", "#4f46e5,#6366f1"][idx % 3]})` }}
-                      >
-                        {contact.name.charAt(0)}
-                      </div>
+                      {/* Avatar */}
+                      {contact.avatar ? (
+                        <img src={contact.avatar} alt={contact.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0 shadow-md" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-md" style={{ background: `linear-gradient(135deg, ${["#6366f1,#8b5cf6", "#7c3aed,#a855f7", "#4f46e5,#6366f1"][idx % 3]})` }}>
+                          {contact.name.charAt(0)}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className={`font-bold text-sm truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{contact.name}</p>
                         <p className={`text-xs truncate mt-0.5 ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>{contact.phone || "Online • Secure"}</p>
@@ -2649,30 +2675,52 @@ function App() {
               </div>
             </div>
           )}
-          <header className="p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-md bg-white border border-gray-100">
+          <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-md border transition-colors duration-500 ${theme === "dark" ? "bg-[#1a1f2e] border-gray-800" : "bg-white border-gray-200"}`}>
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
               return (
                 <div className="flex items-center gap-4 ml-2">
-                  <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner`}></div>
+                  {activeContact?.avatar ? (
+                    <img src={activeContact.avatar} alt={activeContact?.name} className="w-10 h-10 rounded-xl object-cover shadow-inner" />
+                  ) : (
+                    <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner flex items-center justify-center`}>
+                      <span className="text-white font-black text-sm">{activeContact?.name?.charAt(0)}</span>
+                    </div>
+                  )}
                   <div>
-                    <h2 className="text-sm font-black tracking-tight text-gray-900">{activeContact?.name}</h2>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 animate-pulse">● Active Now</p>
+                    <h2 className={`text-sm font-black tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{activeContact?.name}</h2>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest animate-pulse ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>● Active Now</p>
                   </div>
                 </div>
               );
             })()}
 
             {/* Theme Toggle */}
-            <div className="flex items-center gap-3 p-1.5 rounded-2xl border bg-gray-50 border-gray-200 mr-2">
-              <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 hover:bg-violet-500/10">
-                {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-500" strokeWidth={2.5} /> : <Moon className="w-5 h-5 text-violet-600" strokeWidth={2.5} />}
+            <div className={`flex items-center p-1.5 rounded-2xl border mr-2 ${theme === "dark" ? "bg-gray-900/60 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 hover:scale-110 ${theme === "dark" ? "hover:bg-violet-500/20" : "hover:bg-violet-500/10"}`}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? (
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fbbf24" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7c3aed" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
               </button>
             </div>
           </header>
 
           {/* Message Viewport */}
-          <div className="flex-1 rounded-[2.5rem] border border-gray-100 overflow-hidden relative shadow-md bg-white">
+          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-md transition-colors duration-500 ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-white border-gray-100"}`}>
             <div className="absolute inset-0 pointer-events-none grayscale opacity-[0.02]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
@@ -2681,11 +2729,7 @@ function App() {
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${
-                        msg.sender === "me"
-                          ? "text-white"
-                          : "bg-[#f1f5f9] text-gray-900 border border-gray-200"
-                      }`}
+                      className={`p-4 shadow-xl transition-all duration-300 w-fit max-w-[80%] rounded-[2rem] ${msg.sender === "me" ? "text-white" : theme === "dark" ? "bg-[#1f2937] text-gray-100 border border-gray-700" : "bg-[#f1f5f9] text-gray-900 border border-gray-200"}`}
                       style={msg.sender === "me" ? { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" } : undefined}
                     >
                       {msg.type === "voice" ? (
@@ -2694,17 +2738,14 @@ function App() {
                           <button
                             onClick={(e) => togglePlaybackSpeed(e, msg.id)}
                             className={`flex-shrink-0 rounded-full w-9 h-9 flex items-center justify-center text-[11px] font-bold border transition-all hover:scale-110 active:scale-95 ${
-                              msg.sender === "me" ? "bg-white/25 text-white border-white/30 hover:bg-white/35" : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-gray-300"
+                              msg.sender === "me" ? "bg-white/25 text-white border-white/30 hover:bg-white/35" : theme === "dark" ? "bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600" : "bg-gray-200 text-gray-700 border-gray-300 hover:bg-gray-300"
                             }`}
                           >
                             {(playbackSpeed[msg.id] || 1) === 1 ? "1x" : (playbackSpeed[msg.id] || 1) === 1.5 ? "1.5x" : "2x"}
                           </button>
 
                           {/* WhatsApp-style Play/Pause Button */}
-                          <button
-                            onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl, msg.duration)}
-                            className={`flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 rounded-full ${msg.sender === "me" ? "hover:bg-white/20" : "hover:bg-black/5"}`}
-                          >
+                          <button onClick={() => togglePlayVoiceNote(msg.id, msg.fileUrl, msg.duration)} className={`flex-shrink-0 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 rounded-full ${msg.sender === "me" ? "hover:bg-white/20" : "hover:bg-black/5"}`}>
                             {playingAudioId === msg.id ? (
                               <div className="flex gap-1">
                                 <div className={`w-[3px] h-5 rounded-full ${msg.sender === "me" ? "bg-white" : "bg-gray-700"}`}></div>
@@ -2729,9 +2770,7 @@ function App() {
                                 return (
                                   <div
                                     key={i}
-                                    className={`w-[2.5px] rounded-full transition-all duration-75 ${
-                                      isPlayed ? (msg.sender === "me" ? "bg-white" : "bg-violet-600") : msg.sender === "me" ? "bg-white/40" : "bg-gray-400/50"
-                                    } ${isActive ? "opacity-100" : ""}`}
+                                    className={`w-[2.5px] rounded-full transition-all duration-75 ${isPlayed ? (msg.sender === "me" ? "bg-white" : "bg-violet-600") : msg.sender === "me" ? "bg-white/40" : "bg-gray-400/50"} ${isActive ? "opacity-100" : ""}`}
                                     style={{
                                       height: `${height}%`,
                                       minHeight: "4px",
@@ -2780,8 +2819,14 @@ function App() {
                           {msg.type === "contact" ? (
                             <div className="flex flex-col gap-3 min-w-[220px] p-1">
                               <div className={`flex items-center gap-3 pb-3 ${msg.sender === "me" ? "border-b border-white/20" : "border-b border-gray-200"}`}>
-                                {/* Avatar with dynamic initial based on contact name */}
-                                <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-inner" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>{msg.text?.charAt(0)}</div>
+                                {/* Avatar */}
+                                {msg.avatar ? (
+                                  <img src={msg.avatar} alt={msg.text} className="w-11 h-11 rounded-full object-cover shadow-inner flex-shrink-0" />
+                                ) : (
+                                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-inner flex-shrink-0" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                                    {msg.text?.charAt(0)}
+                                  </div>
+                                )}
                                 <div className="flex-1">
                                   <p className={`text-[14px] font-bold ${msg.sender === "me" ? "text-white" : "text-gray-900"}`}>{msg.text}</p>
                                   <p className={`text-[10px] uppercase tracking-wider font-black ${msg.sender === "me" ? "text-white/60" : "text-gray-400"}`}>Contact</p>
@@ -2789,7 +2834,10 @@ function App() {
                               </div>
 
                               {/* Action Button to start a chat with the shared contact */}
-                              <button className={`w-full py-2 rounded-xl text-[12px] font-bold transition-all active:scale-95 ${msg.sender === "me" ? "bg-white/10 hover:bg-white/20 border border-white/20 text-white" : "bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700"}`} onClick={() => console.log("Messaging:", msg.phone)}>
+                              <button
+                                className={`w-full py-2 rounded-xl text-[12px] font-bold transition-all active:scale-95 ${msg.sender === "me" ? "bg-white/10 hover:bg-white/20 border border-white/20 text-white" : "bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700"}`}
+                                onClick={() => console.log("Messaging:", msg.phone)}
+                              >
                                 Message
                               </button>
                             </div>
@@ -2843,24 +2891,24 @@ function App() {
           {/* Floating Input Pod */}
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
             {/* 1. THE MAIN CAPSULE (White/Gray background) */}
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm bg-white border border-gray-200">
+            <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${theme === "dark" ? "bg-[#1a1f2e] border-gray-700" : "bg-white border-gray-200"}`}>
               {/* ── Emoji Picker ── */}
               {showEmojiPicker && (
                 <div
                   ref={emojiPickerRef}
-                  className="absolute bottom-[4.5rem] left-0 w-[22rem] bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden z-50"
+                  className={`absolute bottom-[4.5rem] left-0 w-[22rem] border rounded-2xl flex flex-col overflow-hidden z-50 ${theme === "dark" ? "bg-[#1a1f2e] border-gray-700" : "bg-white border-gray-200"}`}
                   style={{ animation: "emojiPickerIn 0.22s cubic-bezier(0.34,1.4,0.64,1)", boxShadow: "0 20px 60px rgba(99,102,241,0.15), 0 4px 20px rgba(0,0,0,0.1)" }}
                 >
                   {/* Search */}
-                  <div className="px-3 pt-3 pb-2 bg-gray-50 border-b border-gray-100">
-                    <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-gray-200 focus-within:border-violet-400 transition-colors">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400 shrink-0">
+                  <div className={`px-3 pt-3 pb-2 border-b ${theme === "dark" ? "bg-[#111827] border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                    <div className={`flex items-center gap-2 rounded-xl px-3 py-2 border focus-within:border-violet-400 transition-colors ${theme === "dark" ? "bg-[#1a1f2e] border-gray-600" : "bg-white border-gray-200"}`}>
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" className={theme === "dark" ? "text-gray-500 shrink-0" : "text-gray-400 shrink-0"}>
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
                       </svg>
-                      <input type="text" placeholder="Search emoji…" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} className="flex-1 bg-transparent text-[13px] text-gray-700 placeholder:text-gray-400 outline-none border-none" />
+                      <input type="text" placeholder="Search emoji…" value={emojiSearch} onChange={(e) => setEmojiSearch(e.target.value)} className={`flex-1 bg-transparent text-[13px] outline-none border-none ${theme === "dark" ? "text-gray-200 placeholder:text-gray-500" : "text-gray-700 placeholder:text-gray-400"}`} />
                       {emojiSearch && (
-                        <button onClick={() => setEmojiSearch("")} className="w-4 h-4 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-[9px] text-gray-500 hover:text-gray-700 transition-all">
+                        <button onClick={() => setEmojiSearch("")} className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] transition-all ${theme === "dark" ? "bg-gray-600 hover:bg-gray-500 text-gray-300" : "bg-gray-200 hover:bg-gray-300 text-gray-500 hover:text-gray-700"}`}>
                           ✕
                         </button>
                       )}
@@ -2869,8 +2917,8 @@ function App() {
 
                   {/* Category label */}
                   <div className="flex items-center gap-2.5 px-3.5 py-1.5">
-                    <span className="text-[9.5px] font-black tracking-[0.15em] uppercase text-violet-600">{emojiSearch ? "Results" : EMOJI_CATEGORIES[activeEmojiTab].name}</span>
-                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-[9.5px] font-black tracking-[0.15em] uppercase text-violet-500">{emojiSearch ? "Results" : EMOJI_CATEGORIES[activeEmojiTab].name}</span>
+                    <div className={`flex-1 h-px ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"}`} />
                   </div>
 
                   {/* Emoji grid */}
@@ -2880,7 +2928,7 @@ function App() {
                       return list.length > 0 ? (
                         <div className="grid grid-cols-8 gap-0.5">
                           {list.map((emoji, i) => (
-                            <button key={`${emoji}-${i}`} onClick={() => setNewMessage((prev) => prev + emoji)} className="w-9 h-9 text-2xl rounded-xl flex items-center justify-center hover:bg-violet-100 hover:scale-[1.2] active:scale-95 transition-all duration-100">
+                            <button key={`${emoji}-${i}`} onClick={() => setNewMessage((prev) => prev + emoji)} className={`w-9 h-9 text-2xl rounded-xl flex items-center justify-center hover:scale-[1.2] active:scale-95 transition-all duration-100 ${theme === "dark" ? "hover:bg-white/10" : "hover:bg-violet-100"}`}>
                               {emoji}
                             </button>
                           ))}
@@ -2888,14 +2936,14 @@ function App() {
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full gap-2">
                           <span className="text-4xl opacity-20">🔍</span>
-                          <p className="text-[11px] text-gray-400">No results for "{emojiSearch}"</p>
+                          <p className={`text-[11px] ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>No results for "{emojiSearch}"</p>
                         </div>
                       );
                     })()}
                   </div>
 
                   {/* Category tab bar */}
-                  <div className="flex items-center justify-around border-t border-gray-100 bg-gray-50 px-2 py-1.5">
+                  <div className={`flex items-center justify-around border-t px-2 py-1.5 ${theme === "dark" ? "bg-[#111827] border-gray-700" : "bg-gray-50 border-gray-100"}`}>
                     {EMOJI_CATEGORIES.map((cat, i) => {
                       const isActive = activeEmojiTab === i && !emojiSearch;
                       return (
@@ -2906,7 +2954,7 @@ function App() {
                             setEmojiSearch("");
                           }}
                           title={cat.name}
-                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-[1.1rem] transition-all duration-200 ${isActive ? "bg-violet-100 scale-110" : "hover:bg-gray-200 opacity-40 hover:opacity-80"}`}
+                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center text-[1.1rem] transition-all duration-200 ${isActive ? (theme === "dark" ? "bg-violet-500/20 scale-110" : "bg-violet-100 scale-110") : (theme === "dark" ? "hover:bg-white/10 opacity-40 hover:opacity-80" : "hover:bg-gray-200 opacity-40 hover:opacity-80")}`}
                         >
                           {cat.icon}
                           {isActive && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-500 rounded-full" />}
@@ -2949,7 +2997,7 @@ function App() {
                   <input
                     type="text"
                     placeholder="Message"
-                    className="flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] outline-none text-gray-900 placeholder:text-gray-400"
+                    className={`flex-1 bg-transparent border-none focus:ring-0 py-1 text-[16px] outline-none ${theme === "dark" ? "text-white placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
@@ -3017,12 +3065,8 @@ function App() {
     <>
       {/* SPLIT SCREEN AUTH */}
       <div className="min-h-screen w-full flex font-sans">
-
         {/* LEFT PANEL */}
-        <div
-          className="hidden lg:flex lg:w-[45%] flex-col p-12 relative overflow-hidden"
-          style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}
-        >
+        <div className="hidden lg:flex lg:w-[45%] flex-col p-12 relative overflow-hidden" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
           <div className="absolute rounded-full pointer-events-none" style={{ width: 440, height: 440, background: "rgba(255,255,255,0.07)", top: "-130px", right: "-110px" }} />
           <div className="absolute rounded-full pointer-events-none" style={{ width: 340, height: 340, background: "rgba(255,255,255,0.05)", bottom: "-90px", left: "-90px" }} />
           <div className="absolute rounded-full pointer-events-none" style={{ width: 200, height: 200, background: "rgba(255,255,255,0.04)", bottom: "30%", right: "8%" }} />
@@ -3038,7 +3082,11 @@ function App() {
 
           <div className="relative z-10 flex-1 flex flex-col justify-center">
             <h2 className="font-black text-white leading-[1.15] mb-5" style={{ fontSize: "2.5rem" }}>
-              Connect with<br />the people that<br />matter most
+              Connect with
+              <br />
+              the people that
+              <br />
+              matter most
             </h2>
             <p className="text-base mb-12 leading-relaxed max-w-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
               Fast, secure messaging for teams and friends. Stay in sync wherever you are.
@@ -3060,12 +3108,20 @@ function App() {
           </div>
 
           <div className="relative z-10 pt-8" style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-            <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>Trusted by thousands of users worldwide</p>
+            <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>
+              Trusted by thousands of users worldwide
+            </p>
             <div className="flex gap-8">
-              {[["50K+", "Active Users"], ["99.9%", "Uptime"], ["256-bit", "Encryption"]].map(([val, lbl]) => (
+              {[
+                ["50K+", "Active Users"],
+                ["99.9%", "Uptime"],
+                ["256-bit", "Encryption"],
+              ].map(([val, lbl]) => (
                 <div key={lbl}>
                   <p className="text-white font-black text-xl">{val}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{lbl}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    {lbl}
+                  </p>
                 </div>
               ))}
             </div>
@@ -3078,19 +3134,22 @@ function App() {
             <div className="w-full max-w-sm">
               <div className="lg:hidden flex items-center gap-2 mb-8">
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+                  </svg>
                 </div>
                 <span className="font-black text-gray-900">ChatterBox</span>
               </div>
 
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 8px 24px rgba(99,102,241,0.3)" }}>
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                  <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+                </svg>
               </div>
 
               <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-1">Check your phone</h2>
               <p className="text-gray-400 text-sm mb-8">
-                Enter the 6-digit code sent to{" "}
-                <span className="font-bold text-violet-600">+{phone}</span>
+                Enter the 6-digit code sent to <span className="font-bold text-violet-600">+{phone}</span>
               </p>
 
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-2">Verification Code</label>
@@ -3116,12 +3175,7 @@ function App() {
                 Verify &amp; Sign In &rarr;
               </button>
 
-              <div className="mb-5 text-center">
-                {isExpired
-                  ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p>
-                  : <p className="text-gray-400 text-xs">Valid for 3 minutes only</p>
-                }
-              </div>
+              <div className="mb-5 text-center">{isExpired ? <p className="text-red-500 text-xs font-bold animate-pulse">CODE EXPIRED</p> : <p className="text-gray-400 text-xs">Valid for 3 minutes only</p>}</div>
 
               <button onClick={() => setIsVerifying(false)} className="text-gray-400 text-xs font-semibold transition-colors hover:text-violet-600">
                 &larr; Use a different number
@@ -3131,12 +3185,16 @@ function App() {
             <div className="w-full max-w-sm">
               <div className="lg:hidden flex items-center gap-2 mb-8">
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+                  </svg>
                 </div>
                 <span className="font-black text-gray-900">ChatterBox</span>
               </div>
 
-              <h1 className="font-black text-gray-900 tracking-tight mb-1" style={{ fontSize: "2rem" }}>Welcome back 👋</h1>
+              <h1 className="font-black text-gray-900 tracking-tight mb-1" style={{ fontSize: "2rem" }}>
+                Welcome back 👋
+              </h1>
               <p className="text-gray-400 text-sm mb-8">Sign in to continue to ChatterBox</p>
 
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-[0.15em] mb-2">Phone Number</label>
@@ -3177,10 +3235,7 @@ function App() {
               </button>
 
               <p className="text-center text-xs text-gray-400">
-                By continuing you agree to our{" "}
-                <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Terms</span>{" "}
-                &amp;{" "}
-                <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Privacy Policy</span>
+                By continuing you agree to our <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Terms</span> &amp; <span className="text-violet-600 font-semibold cursor-pointer hover:underline">Privacy Policy</span>
               </p>
             </div>
           )}
@@ -3201,7 +3256,9 @@ function App() {
             <p className="text-gray-400 text-sm mb-6">Use this code to verify your identity</p>
 
             <div className="py-7 rounded-2xl mb-6" style={{ backgroundColor: "#f5f3ff", border: "2px solid #ede9fe" }}>
-              <span className="text-5xl font-mono font-black tracking-[0.15em] block" style={{ color: "#7c3aed" }}>{generatedOTP}</span>
+              <span className="text-5xl font-mono font-black tracking-[0.15em] block" style={{ color: "#7c3aed" }}>
+                {generatedOTP}
+              </span>
             </div>
 
             <button
