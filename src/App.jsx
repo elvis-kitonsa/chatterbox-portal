@@ -924,6 +924,7 @@ function App() {
   const [showArchivedSection, setShowArchivedSection] = useState(false);
   const [contactMenuId, setContactMenuId] = useState(null); // ID of contact whose context menu is open
   const [pendingDeleteId, setPendingDeleteId] = useState(null); // ID of contact awaiting delete confirmation
+  const [profileContactId, setProfileContactId] = useState(null); // ID of contact whose profile popup is open
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
@@ -2726,7 +2727,7 @@ function App() {
               .map((contact) => (
                 <div
                   key={contact.id}
-                  onClick={() => setActiveContactId(contact.id)}
+                  onClick={() => setProfileContactId(contact.id)}
                   className="group flex items-center gap-3 p-3 mb-1.5 rounded-[1.6rem] transition-all duration-200 cursor-pointer relative"
                   style={{
                     backgroundColor: activeContactId === contact.id ? "rgba(255,255,255,0.2)" : contactMenuId === contact.id ? "rgba(255,255,255,0.12)" : "transparent",
@@ -2791,6 +2792,16 @@ function App() {
                       >
                         <button
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
+                          onClick={() => { setContactMenuId(null); setProfileContactId(contact.id); }}
+                        >
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-300">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                          </svg>
+                          <span>View Profile</span>
+                        </button>
+                        <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 12px" }} />
+                        <button
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/10 transition-colors text-left"
                           onClick={() => handleToggleArchive(contact.id)}
                         >
                           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
@@ -2838,7 +2849,7 @@ function App() {
                   {showArchivedSection && archived.map((contact) => (
                     <div
                       key={contact.id}
-                      onClick={() => setActiveContactId(contact.id)}
+                      onClick={() => setProfileContactId(contact.id)}
                       className="group flex items-center gap-3 p-3 mb-1 rounded-[1.6rem] transition-all duration-200 cursor-pointer relative"
                       style={{
                         backgroundColor: activeContactId === contact.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
@@ -3067,6 +3078,160 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* ─── Contact Profile Modal ──────────────────────────────────── */}
+          {profileContactId && (() => {
+            const p = contacts.find((c) => c.id === profileContactId);
+            if (!p) return null;
+            const isArchived = archivedContactIds.has(p.id);
+            const msgCount = messages.filter((m) => m.contactId === p.id).length;
+            return (
+              <div
+                className="fixed inset-0 flex items-center justify-center z-[200] p-4"
+                style={{ backgroundColor: "rgba(15,23,42,0.6)", backdropFilter: "blur(8px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
+                onClick={() => setProfileContactId(null)}
+              >
+                <div
+                  className="w-full max-w-sm rounded-3xl overflow-hidden"
+                  style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.3), 0 8px 40px rgba(0,0,0,0.25)" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* ── Gradient header with large avatar ── */}
+                  <div className="relative flex flex-col items-center pt-10 pb-7" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
+                    {/* Decorative blobs */}
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: 180, height: 180, background: "rgba(255,255,255,0.06)", top: "-60px", right: "-50px" }} />
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: 100, height: 100, background: "rgba(255,255,255,0.05)", bottom: "-20px", left: "-20px" }} />
+
+                    {/* Close button */}
+                    <button
+                      onClick={() => setProfileContactId(null)}
+                      className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20 z-10"
+                      style={{ background: "rgba(255,255,255,0.15)" }}
+                    >
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+
+                    {/* Large avatar — click to change photo */}
+                    <label className="relative cursor-pointer group/profile-avatar mb-4 z-10" title="Change profile photo">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(p.id, e.target.files[0])} />
+                      {p.avatar ? (
+                        <img src={p.avatar} alt={p.name} className="w-24 h-24 rounded-3xl object-cover shadow-2xl" style={{ border: "3px solid rgba(255,255,255,0.3)" }} />
+                      ) : (
+                        <div className={`w-24 h-24 rounded-3xl ${p.color} flex items-center justify-center shadow-2xl`} style={{ border: "3px solid rgba(255,255,255,0.3)" }}>
+                          <span className="text-white font-black text-4xl">{p.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      {/* Camera overlay */}
+                      <div className="absolute inset-0 rounded-3xl bg-black/45 flex flex-col items-center justify-center opacity-0 group-hover/profile-avatar:opacity-100 transition-opacity">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span className="text-white text-[10px] font-bold mt-1">Change</span>
+                      </div>
+                    </label>
+
+                    {/* Name + status */}
+                    <h2 className="text-white font-black text-xl tracking-tight z-10">{p.name}</h2>
+                    <p className="text-white/60 text-sm mt-1 z-10">{p.status || "Online • Secure"}</p>
+
+                    {/* Archived badge */}
+                    {isArchived && (
+                      <div className="mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider z-10" style={{ background: "rgba(251,191,36,0.25)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }}>
+                        Archived
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Info rows ── */}
+                  <div className={`px-6 py-4 flex flex-col gap-0 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                    {/* Messages count */}
+                    <div className={`flex items-center gap-4 py-3.5 border-b ${theme === "dark" ? "border-white/5" : "border-gray-100"}`}>
+                      <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#ede9fe,#ddd6fe)" }}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#7c3aed"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-[11px] font-bold uppercase tracking-wider ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Messages</p>
+                        <p className={`text-sm font-semibold mt-0.5 ${theme === "dark" ? "text-white" : "text-gray-800"}`}>{msgCount} message{msgCount !== 1 ? "s" : ""} exchanged</p>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className={`flex items-center gap-4 py-3.5 ${p.bleDeviceId ? `border-b ${theme === "dark" ? "border-white/5" : "border-gray-100"}` : ""}`}>
+                      <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#dcfce7,#bbf7d0)" }}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-[11px] font-bold uppercase tracking-wider ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Status</p>
+                        <p className={`text-sm font-semibold mt-0.5 ${theme === "dark" ? "text-white" : "text-gray-800"}`}>{p.status || "Hey there! I am using ChatterBox."}</p>
+                      </div>
+                    </div>
+
+                    {/* BLE badge (only if added via Bluetooth) */}
+                    {p.bleDeviceId && (
+                      <div className="flex items-center gap-4 py-3.5">
+                        <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#dbeafe,#bfdbfe)" }}>
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563eb" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className={`text-[11px] font-bold uppercase tracking-wider ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Bluetooth</p>
+                          <p className={`text-sm font-semibold mt-0.5 ${theme === "dark" ? "text-white" : "text-gray-800"}`}>Connected via BLE</p>
+                        </div>
+                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Action buttons ── */}
+                  <div className={`px-6 pb-6 pt-3 flex gap-3 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                    {/* Message — primary CTA */}
+                    <button
+                      onClick={() => { setActiveContactId(p.id); setProfileContactId(null); }}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 hover:opacity-90"
+                      style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                    >
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                      Message
+                    </button>
+
+                    {/* Archive toggle */}
+                    <button
+                      onClick={() => { handleToggleArchive(p.id); setProfileContactId(null); }}
+                      title={isArchived ? "Unarchive" : "Archive"}
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all active:scale-95 hover:opacity-90 ${theme === "dark" ? "bg-amber-500/15 text-amber-400" : "bg-amber-50 text-amber-500"}`}
+                    >
+                      {isArchived ? (
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => { setProfileContactId(null); setPendingDeleteId(p.id); }}
+                      title="Delete chat"
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all active:scale-95 hover:opacity-90 ${theme === "dark" ? "bg-red-500/15 text-red-400" : "bg-red-50 text-red-500"}`}
+                    >
+                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ─── Delete Confirmation Modal ─────────────────────────────── */}
           {pendingDeleteId && (() => {
