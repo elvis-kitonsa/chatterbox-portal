@@ -930,9 +930,9 @@ function App() {
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactColor, setNewContactColor] = useState("bg-violet-500");
   const [messages, setMessages] = useState([
-    { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM" },
-    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read" /*Options: "sent", "delivered", "read" */ },
-    { id: 3, text: "Hello chat", sender: "me", time: "3:29 PM", status: "delivered" },
+    { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM", contactId: "tech-lead" },
+    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read", contactId: "tech-lead" },
+    { id: 3, text: "Hello chat", sender: "me", time: "3:29 PM", status: "delivered", contactId: "tech-lead" },
   ]);
   const [newMessage, setNewMessage] = useState(""); // This will be used to store the text of the new message being typed in the input field.
   const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
@@ -3437,7 +3437,7 @@ function App() {
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
               {messages
-                .filter((m) => m.contactId === activeContactId || !m.contactId)
+                .filter((m) => m.contactId === activeContactId)
                 .map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
                     <div
