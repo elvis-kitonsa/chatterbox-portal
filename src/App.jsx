@@ -3873,13 +3873,14 @@ function App() {
             <div className="absolute inset-0 pointer-events-none grayscale opacity-[0.02]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
-              {/* ── Empty-chat intro banner (WhatsApp-style) ── */}
-              {messages.filter((m) => m.contactId === activeContactId).length === 0 && (() => {
+              {/* ── Chat intro header — always visible at top (WhatsApp-style) ── */}
+              {(() => {
                 const activeContact = contacts.find((c) => c.id === activeContactId);
+                const hasMessages = messages.filter((m) => m.contactId === activeContactId).length > 0;
                 return (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-5 py-12 text-center select-none">
+                  <div className="flex flex-col items-center gap-4 pb-4 text-center select-none">
                     {/* Large avatar */}
-                    <div className="relative">
+                    <div className="relative mt-4">
                       {activeContact?.avatar ? (
                         <img src={activeContact.avatar} alt={activeContact.name} className="w-20 h-20 rounded-3xl object-cover shadow-2xl" />
                       ) : (
@@ -3890,13 +3891,13 @@ function App() {
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white shadow" />
                     </div>
 
-                    {/* Contact name */}
+                    {/* Contact name + status */}
                     <div>
                       <h3 className={`font-black text-lg tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{activeContact?.name}</h3>
                       <p className={`text-sm mt-0.5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{activeContact?.status}</p>
                     </div>
 
-                    {/* E2E encryption notice — WhatsApp style */}
+                    {/* E2E encryption notice */}
                     <div
                       className="flex items-center gap-2 px-5 py-3 rounded-2xl max-w-xs"
                       style={{
@@ -3913,10 +3914,12 @@ function App() {
                       </p>
                     </div>
 
-                    {/* "Say hello" nudge */}
-                    <p className={`text-[11px] font-medium ${theme === "dark" ? "text-gray-600" : "text-gray-300"}`}>
-                      👋 Say hello to start the conversation
-                    </p>
+                    {/* "Say hello" nudge — only when no messages yet */}
+                    {!hasMessages && (
+                      <p className={`text-[11px] font-medium ${theme === "dark" ? "text-gray-600" : "text-gray-300"}`}>
+                        👋 Say hello to start the conversation
+                      </p>
+                    )}
                   </div>
                 );
               })()}
