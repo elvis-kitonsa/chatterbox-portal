@@ -937,7 +937,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
 
   // 3. UI & THEME STATES
-  const [theme, setTheme] = useState("light"); // Default to light
+  const [theme, setTheme] = useState(() => localStorage.getItem("chatterbox_theme") || "light");
   // 3b. BLUETOOTH STATES
   const [showBluetoothModal, setShowBluetoothModal] = useState(false);
   const [isBluetoothScanning, setIsBluetoothScanning] = useState(false);
@@ -946,7 +946,25 @@ function App() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEmojiTab, setActiveEmojiTab] = useState(0);
   const [emojiSearch, setEmojiSearch] = useState("");
-  const [wallpaper, setWallpaper] = useState("classic"); // State to manage the current wallpaper selection for the chat background. This allows users to switch between different wallpapers, enhancing personalization.
+  // Settings panel states
+  const [myProfile, setMyProfile] = useState(() => {
+    const saved = localStorage.getItem("chatterbox_profile");
+    return saved ? JSON.parse(saved) : { name: "You", about: "Hey there! I am using ChatterBox.", avatar: null };
+  });
+  const [userSettings, setUserSettings] = useState(() => {
+    const saved = localStorage.getItem("chatterbox_settings");
+    return saved ? JSON.parse(saved) : {
+      notificationsEnabled: true,
+      notificationSound: true,
+      messagePreview: true,
+      readReceipts: true,
+      lastSeen: "everyone",
+      wallpaper: "default",
+      fontSize: "medium",
+    };
+  });
+  const [showSettings, setShowSettings] = useState(false);
+  const [activeSettingsSection, setActiveSettingsSection] = useState(null);
 
   // 4. VOICE & MEDIA STATES (Keep these for later)
   const [isRecording, setIsRecording] = useState(false);
@@ -2347,6 +2365,11 @@ function App() {
     return () => document.removeEventListener("mousedown", handler);
   }, [contactMenuId]);
 
+  // Persist settings to localStorage
+  useEffect(() => { localStorage.setItem("chatterbox_theme", theme); }, [theme]);
+  useEffect(() => { localStorage.setItem("chatterbox_profile", JSON.stringify(myProfile)); }, [myProfile]);
+  useEffect(() => { localStorage.setItem("chatterbox_settings", JSON.stringify(userSettings)); }, [userSettings]);
+
   // This function handles sending a new message in the chat.
   // It checks if the input is not empty, creates a new message object, updates the messages state, and clears the input field.
   const handleSendMessage = () => {
@@ -2671,6 +2694,18 @@ function App() {
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+                </svg>
+              </button>
+              {/* Settings Button */}
+              <button
+                onClick={() => { setShowSettings(true); setActiveSettingsSection(null); }}
+                title="Settings"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/20"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
               </button>
               {/* Logout Button */}
@@ -3369,6 +3404,411 @@ function App() {
             </div>
           )}
 
+          {/* ─── Settings Modal ──────────────────────────────────────── */}
+          {showSettings && (
+            <div
+              className="fixed inset-0 flex items-center justify-center z-[300] p-4"
+              style={{ backgroundColor: "rgba(15,23,42,0.6)", backdropFilter: "blur(8px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
+              onClick={() => setShowSettings(false)}
+            >
+              <div
+                className="w-full max-w-sm rounded-3xl overflow-hidden flex flex-col"
+                style={{ maxHeight: "85vh", boxShadow: "0 30px 80px rgba(99,102,241,0.3), 0 8px 40px rgba(0,0,0,0.25)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* ── HEADER ── */}
+                <div style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)", flexShrink: 0 }}>
+                  {/* Decorative blobs */}
+                  <div className="absolute rounded-full pointer-events-none" style={{ width: 200, height: 200, background: "rgba(255,255,255,0.05)", top: "-60px", right: "-40px" }} />
+
+                  {activeSettingsSection === null ? (
+                    /* Main screen header — profile card */
+                    <div className="relative px-6 pt-6 pb-5">
+                      {/* Close button */}
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all z-10"
+                        style={{ background: "rgba(255,255,255,0.15)" }}
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                      <p className="text-white/60 text-[11px] font-bold uppercase tracking-[0.2em] mb-3">Settings</p>
+                      {/* Profile preview — click to open profile section */}
+                      <button
+                        onClick={() => setActiveSettingsSection("profile")}
+                        className="w-full flex items-center gap-4 p-3 rounded-2xl transition-all hover:bg-white/10 text-left"
+                      >
+                        {myProfile.avatar ? (
+                          <img src={myProfile.avatar} alt="You" className="w-14 h-14 rounded-2xl object-cover flex-shrink-0" style={{ border: "2px solid rgba(255,255,255,0.3)" }} />
+                        ) : (
+                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-white font-black text-2xl" style={{ background: "rgba(255,255,255,0.2)", border: "2px solid rgba(255,255,255,0.3)" }}>
+                            {myProfile.name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-black text-base truncate">{myProfile.name}</p>
+                          <p className="text-white/60 text-sm truncate">{myProfile.about}</p>
+                        </div>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    /* Section screen header — back arrow + title */
+                    <div className="relative flex items-center gap-3 px-5 py-5">
+                      <button
+                        onClick={() => setActiveSettingsSection(null)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all flex-shrink-0"
+                        style={{ background: "rgba(255,255,255,0.15)" }}
+                      >
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                      </button>
+                      <h3 className="text-white font-black text-base capitalize flex-1">
+                        {{ profile: "Profile", chats: "Chats", notifications: "Notifications", privacy: "Privacy" }[activeSettingsSection]}
+                      </h3>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all"
+                        style={{ background: "rgba(255,255,255,0.15)" }}
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── BODY ── */}
+                <div className={`overflow-y-auto flex-1 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+
+                  {/* ── MAIN LIST ── */}
+                  {activeSettingsSection === null && (
+                    <div className="p-4 flex flex-col gap-1">
+                      {[
+                        {
+                          key: "profile",
+                          icon: (
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                            </svg>
+                          ),
+                          label: "Profile",
+                          sub: `${myProfile.name} · ${myProfile.about}`,
+                          color: "text-violet-500",
+                          bg: theme === "dark" ? "bg-violet-500/15" : "bg-violet-50",
+                        },
+                        {
+                          key: "chats",
+                          icon: (
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                          ),
+                          label: "Chats",
+                          sub: `Wallpaper · Font size · Theme`,
+                          color: "text-indigo-500",
+                          bg: theme === "dark" ? "bg-indigo-500/15" : "bg-indigo-50",
+                        },
+                        {
+                          key: "notifications",
+                          icon: (
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
+                          ),
+                          label: "Notifications",
+                          sub: `Messages · Sound · Preview`,
+                          color: "text-pink-500",
+                          bg: theme === "dark" ? "bg-pink-500/15" : "bg-pink-50",
+                        },
+                        {
+                          key: "privacy",
+                          icon: (
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                          ),
+                          label: "Privacy",
+                          sub: `Read receipts · Last seen`,
+                          color: "text-emerald-500",
+                          bg: theme === "dark" ? "bg-emerald-500/15" : "bg-emerald-50",
+                        },
+                      ].map(({ key, icon, label, sub, color, bg }) => (
+                        <button
+                          key={key}
+                          onClick={() => setActiveSettingsSection(key)}
+                          className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98] text-left ${theme === "dark" ? "hover:bg-white/5" : "hover:bg-gray-50"}`}
+                        >
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${color} ${bg}`}>
+                            {icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-bold text-sm ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{label}</p>
+                            <p className={`text-xs truncate mt-0.5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{sub}</p>
+                          </div>
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke={theme === "dark" ? "#4b5563" : "#d1d5db"} strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── PROFILE SECTION ── */}
+                  {activeSettingsSection === "profile" && (() => {
+                    const [draftProfile, setDraftProfile] = React.useState({ ...myProfile });
+                    const handleAvatarChange = (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setDraftProfile((p) => ({ ...p, avatar: ev.target.result }));
+                      reader.readAsDataURL(file);
+                    };
+                    return (
+                      <>
+                        <div className="p-6 flex flex-col gap-5">
+                          {/* Avatar */}
+                          <div className="flex justify-center">
+                            <label className="relative cursor-pointer group">
+                              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                              {draftProfile.avatar ? (
+                                <img src={draftProfile.avatar} alt="You" className="w-24 h-24 rounded-3xl object-cover shadow-xl" />
+                              ) : (
+                                <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-white font-black text-4xl shadow-xl" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                                  {draftProfile.name.charAt(0)}
+                                </div>
+                              )}
+                              <div className="absolute inset-0 rounded-3xl bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+                                </svg>
+                                <span className="text-white text-[10px] font-bold mt-1">Change</span>
+                              </div>
+                            </label>
+                          </div>
+                          {/* Name */}
+                          <div>
+                            <label className={`block text-[11px] font-black uppercase tracking-wider mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Your Name</label>
+                            <input
+                              type="text"
+                              value={draftProfile.name}
+                              onChange={(e) => setDraftProfile((p) => ({ ...p, name: e.target.value }))}
+                              maxLength={25}
+                              className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                              placeholder="Enter your name"
+                            />
+                          </div>
+                          {/* About */}
+                          <div>
+                            <label className={`block text-[11px] font-black uppercase tracking-wider mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>About</label>
+                            <input
+                              type="text"
+                              value={draftProfile.about}
+                              onChange={(e) => setDraftProfile((p) => ({ ...p, about: e.target.value }))}
+                              maxLength={139}
+                              className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                              placeholder="Hey there! I am using ChatterBox."
+                            />
+                            <p className={`text-right text-[11px] mt-1 ${theme === "dark" ? "text-gray-600" : "text-gray-300"}`}>{draftProfile.about.length}/139</p>
+                          </div>
+                          {/* Phone (read-only) */}
+                          {phone && (
+                            <div>
+                              <label className={`block text-[11px] font-black uppercase tracking-wider mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Phone</label>
+                              <div className={`w-full px-4 py-3 rounded-2xl text-sm font-medium border ${theme === "dark" ? "bg-gray-800/30 border-gray-700 text-gray-400" : "bg-gray-50 border-gray-200 text-gray-500"}`}>
+                                +{phone}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {/* Save footer */}
+                        <div className={`px-6 pb-6 pt-2 border-t ${theme === "dark" ? "border-gray-700/50" : "border-gray-100"}`}>
+                          <button
+                            onClick={() => { setMyProfile(draftProfile); setActiveSettingsSection(null); }}
+                            disabled={!draftProfile.name.trim()}
+                            className="w-full py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-40"
+                            style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
+
+                  {/* ── CHATS SECTION ── */}
+                  {activeSettingsSection === "chats" && (
+                    <div className="p-5 flex flex-col gap-6">
+                      {/* Wallpaper */}
+                      <div>
+                        <p className={`text-[11px] font-black uppercase tracking-wider mb-3 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Chat Wallpaper</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { key: "default", label: "Default", light: "#ffffff", dark: "#111827" },
+                            { key: "violet", label: "Violet", light: "linear-gradient(135deg,#ede9fe,#ddd6fe)", dark: "linear-gradient(135deg,#1e1b4b,#2e1065)" },
+                            { key: "dusk", label: "Dusk", light: "linear-gradient(135deg,#fdf2f8,#fce7f3)", dark: "linear-gradient(135deg,#1a0a1a,#4c0519)" },
+                            { key: "mint", label: "Mint", light: "linear-gradient(135deg,#d1fae5,#e0f2fe)", dark: "linear-gradient(135deg,#0c4a6e,#064e3b)" },
+                          ].map(({ key, label, light, dark }) => {
+                            const isActive = userSettings.wallpaper === key;
+                            const bg = theme === "dark" ? dark : light;
+                            return (
+                              <button
+                                key={key}
+                                onClick={() => setUserSettings((s) => ({ ...s, wallpaper: key }))}
+                                className={`relative h-16 rounded-2xl overflow-hidden border-2 transition-all ${isActive ? "border-violet-500 scale-[1.03]" : theme === "dark" ? "border-gray-700 hover:border-gray-500" : "border-gray-200 hover:border-gray-300"}`}
+                                style={{ background: bg.startsWith("#") ? bg : undefined, backgroundImage: bg.startsWith("linear") ? bg : undefined }}
+                              >
+                                <span className={`absolute bottom-1.5 left-2 text-[10px] font-bold ${theme === "dark" ? "text-white/70" : "text-gray-500"}`}>{label}</span>
+                                {isActive && (
+                                  <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
+                                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Font Size */}
+                      <div>
+                        <p className={`text-[11px] font-black uppercase tracking-wider mb-3 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Message Font Size</p>
+                        <div className="flex gap-2">
+                          {[
+                            { key: "small", label: "Small", size: "text-xs" },
+                            { key: "medium", label: "Medium", size: "text-sm" },
+                            { key: "large", label: "Large", size: "text-base" },
+                          ].map(({ key, label, size }) => {
+                            const isActive = userSettings.fontSize === key;
+                            return (
+                              <button
+                                key={key}
+                                onClick={() => setUserSettings((s) => ({ ...s, fontSize: key }))}
+                                className={`flex-1 py-2.5 rounded-2xl font-bold transition-all ${size} ${isActive ? "text-white shadow-md" : theme === "dark" ? "bg-gray-800 text-gray-400 hover:bg-gray-700" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                                style={isActive ? { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" } : undefined}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Theme */}
+                      <div className={`flex items-center justify-between p-4 rounded-2xl ${theme === "dark" ? "bg-gray-800/50" : "bg-gray-50"}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${theme === "dark" ? "bg-yellow-500/15" : "bg-violet-50"}`}>
+                            {theme === "dark" ? (
+                              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fbbf24" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                                <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#7c3aed" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                              </svg>
+                            )}
+                          </div>
+                          <div>
+                            <p className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>Dark Mode</p>
+                            <p className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{theme === "dark" ? "On" : "Off"}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                          className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${theme === "dark" ? "bg-violet-600" : "bg-gray-300"}`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── NOTIFICATIONS SECTION ── */}
+                  {activeSettingsSection === "notifications" && (
+                    <div className="p-5 flex flex-col gap-2">
+                      {[
+                        { key: "notificationsEnabled", label: "Message Notifications", sub: "Get notified when you receive a message", icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>, color: "text-pink-500", bg: theme === "dark" ? "bg-pink-500/15" : "bg-pink-50" },
+                        { key: "notificationSound", label: "Notification Sound", sub: "Play a sound for incoming messages", icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>, color: "text-indigo-500", bg: theme === "dark" ? "bg-indigo-500/15" : "bg-indigo-50" },
+                        { key: "messagePreview", label: "Show Preview", sub: "Display message content in notifications", icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>, color: "text-violet-500", bg: theme === "dark" ? "bg-violet-500/15" : "bg-violet-50" },
+                      ].map(({ key, label, sub, icon, color, bg }) => (
+                        <div key={key} className={`flex items-center gap-4 p-4 rounded-2xl ${theme === "dark" ? "hover:bg-white/5" : "hover:bg-gray-50"} transition-colors`}>
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${color} ${bg}`}>{icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{label}</p>
+                            <p className={`text-xs mt-0.5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{sub}</p>
+                          </div>
+                          <button
+                            onClick={() => setUserSettings((s) => ({ ...s, [key]: !s[key] }))}
+                            className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${userSettings[key] ? "bg-violet-600" : theme === "dark" ? "bg-gray-600" : "bg-gray-300"}`}
+                          >
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${userSettings[key] ? "translate-x-5" : "translate-x-0"}`} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── PRIVACY SECTION ── */}
+                  {activeSettingsSection === "privacy" && (
+                    <div className="p-5 flex flex-col gap-4">
+                      {/* Read Receipts toggle */}
+                      <div className={`flex items-center gap-4 p-4 rounded-2xl ${theme === "dark" ? "hover:bg-white/5" : "hover:bg-gray-50"} transition-colors`}>
+                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-emerald-500 ${theme === "dark" ? "bg-emerald-500/15" : "bg-emerald-50"}`}>
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>Read Receipts</p>
+                          <p className={`text-xs mt-0.5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Show blue ticks when messages are read</p>
+                        </div>
+                        <button
+                          onClick={() => setUserSettings((s) => ({ ...s, readReceipts: !s.readReceipts }))}
+                          className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${userSettings.readReceipts ? "bg-violet-600" : theme === "dark" ? "bg-gray-600" : "bg-gray-300"}`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${userSettings.readReceipts ? "translate-x-5" : "translate-x-0"}`} />
+                        </button>
+                      </div>
+
+                      {/* Last Seen */}
+                      <div className={`p-4 rounded-2xl ${theme === "dark" ? "bg-gray-800/50" : "bg-gray-50"}`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-emerald-500 ${theme === "dark" ? "bg-emerald-500/15" : "bg-emerald-50"}`}>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <p className={`text-sm font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>Last Seen</p>
+                            <p className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Who can see your last seen</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5 ml-1">
+                          {["everyone", "contacts", "nobody"].map((opt) => (
+                            <button
+                              key={opt}
+                              onClick={() => setUserSettings((s) => ({ ...s, lastSeen: opt }))}
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${userSettings.lastSeen === opt ? "text-violet-600 bg-violet-50" : theme === "dark" ? "text-gray-400 hover:bg-white/5" : "text-gray-600 hover:bg-gray-100"} ${theme === "dark" && userSettings.lastSeen === opt ? "!text-violet-400 !bg-violet-500/15" : ""}`}
+                            >
+                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${userSettings.lastSeen === opt ? "border-violet-500" : theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>
+                                {userSettings.lastSeen === opt && <div className="w-2 h-2 rounded-full bg-violet-500" />}
+                              </div>
+                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </div>
+          )}
+
           <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-md border transition-colors duration-500 ${theme === "dark" ? "bg-[#1a1f2e] border-gray-800" : "bg-white border-gray-200"}`}>
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
@@ -3418,7 +3858,16 @@ function App() {
           </header>
 
           {/* Message Viewport */}
-          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-md transition-colors duration-500 ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-white border-gray-100"}`}>
+          {(() => {
+            const wallpaperStyles = {
+              default: theme === "dark" ? { backgroundColor: "#111827" } : { backgroundColor: "#ffffff" },
+              violet: theme === "dark" ? { background: "linear-gradient(135deg, #1e1b4b, #2e1065)" } : { background: "linear-gradient(135deg, #ede9fe, #ddd6fe)" },
+              dusk: theme === "dark" ? { background: "linear-gradient(135deg, #1a0a1a, #4c0519)" } : { background: "linear-gradient(135deg, #fdf2f8, #fce7f3)" },
+              mint: theme === "dark" ? { background: "linear-gradient(135deg, #0c4a6e, #064e3b)" } : { background: "linear-gradient(135deg, #d1fae5, #e0f2fe)" },
+            };
+            const fontSizeClass = { small: "text-sm", medium: "text-base", large: "text-lg" }[userSettings.fontSize] || "text-base";
+            return (
+          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-md transition-all duration-500 ${theme === "dark" ? "border-gray-800" : "border-gray-100"}`} style={wallpaperStyles[userSettings.wallpaper] || wallpaperStyles.default}>
             <div className="absolute inset-0 pointer-events-none grayscale opacity-[0.02]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
@@ -3556,7 +4005,7 @@ function App() {
                               <p className="text-[13px] font-bold truncate">{msg.text}</p>
                             </div>
                           ) : (
-                            <p className="text-[14px] leading-relaxed font-medium">{msg.text}</p>
+                            <p className={`leading-relaxed font-medium ${fontSizeClass}`}>{msg.text}</p>
                           )}
 
                           {/* --- THE FIX: UNIFORM TICK CATALOGUE --- */}
@@ -3565,13 +4014,13 @@ function App() {
 
                             {msg.sender === "me" && (
                               <span className="flex items-center ml-1">
-                                {msg.status === "read" ? (
-                                  /* WhatsApp-style blue double ticks */
+                                {msg.status === "read" && userSettings.readReceipts ? (
+                                  /* WhatsApp-style blue double ticks — only if read receipts enabled */
                                   <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M2 7L5 10L12 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                     <path d="M6 7L9 10L16 3" stroke="#53BDEB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
-                                ) : msg.status === "delivered" ? (
+                                ) : msg.status === "delivered" || (msg.status === "read" && !userSettings.readReceipts) ? (
                                   /* Double gray ticks */
                                   <svg viewBox="0 0 20 12" width="16" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M2 7L5 10L12 3" stroke="rgba(255,255,255,0.75)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -3594,6 +4043,8 @@ function App() {
               <div ref={messagesEndRef} />
             </div>
           </div>
+            );
+          })()}
 
           {/* Floating Input Pod */}
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
