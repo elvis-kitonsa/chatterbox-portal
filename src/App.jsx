@@ -3873,6 +3873,54 @@ function App() {
             <div className="absolute inset-0 pointer-events-none grayscale opacity-[0.02]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
+              {/* ── Empty-chat intro banner (WhatsApp-style) ── */}
+              {messages.filter((m) => m.contactId === activeContactId).length === 0 && (() => {
+                const activeContact = contacts.find((c) => c.id === activeContactId);
+                return (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-5 py-12 text-center select-none">
+                    {/* Large avatar */}
+                    <div className="relative">
+                      {activeContact?.avatar ? (
+                        <img src={activeContact.avatar} alt={activeContact.name} className="w-20 h-20 rounded-3xl object-cover shadow-2xl" />
+                      ) : (
+                        <div className={`w-20 h-20 rounded-3xl ${activeContact?.color || "bg-violet-500"} flex items-center justify-center shadow-2xl`}>
+                          <span className="text-white font-black text-3xl">{activeContact?.name?.charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white shadow" />
+                    </div>
+
+                    {/* Contact name */}
+                    <div>
+                      <h3 className={`font-black text-lg tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{activeContact?.name}</h3>
+                      <p className={`text-sm mt-0.5 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{activeContact?.status}</p>
+                    </div>
+
+                    {/* E2E encryption notice — WhatsApp style */}
+                    <div
+                      className="flex items-center gap-2 px-5 py-3 rounded-2xl max-w-xs"
+                      style={{
+                        background: theme === "dark" ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.7)",
+                        backdropFilter: "blur(8px)",
+                        border: theme === "dark" ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke={theme === "dark" ? "#a78bfa" : "#7c3aed"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                      <p className={`text-[12px] leading-snug ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                        Messages are <span className={`font-bold ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>end-to-end encrypted</span>. No one outside this chat can read them.
+                      </p>
+                    </div>
+
+                    {/* "Say hello" nudge */}
+                    <p className={`text-[11px] font-medium ${theme === "dark" ? "text-gray-600" : "text-gray-300"}`}>
+                      👋 Say hello to start the conversation
+                    </p>
+                  </div>
+                );
+              })()}
+
               {messages
                 .filter((m) => m.contactId === activeContactId)
                 .map((msg) => (
