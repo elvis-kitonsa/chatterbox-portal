@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PhoneInput from "react-phone-input-2"; //
 import "react-phone-input-2/lib/style.css";
-import { Sun, Moon } from "lucide-react";
 import {
   initBLE,
   startAdvertising,
@@ -2317,19 +2316,6 @@ function App() {
   }, [messages, activeContactId, contacts]);
 
   // Helper to get theme-based classes
-  const themeClasses = {
-    // Main background
-    bg: theme === "dark" ? "bg-[#0b141a]" : "bg-[#f0f2f5]",
-
-    // Sidebar items
-    sidebarItem: theme === "dark" ? "text-[#e9edef] hover:bg-[#202c33]" : "text-[#111b21] hover:bg-[#f5f6f6]",
-
-    // Message Bubbles
-    incomingMsg: theme === "dark" ? "bg-[#202c33] text-[#e9edef]" : "bg-white text-[#111b21] shadow-sm border border-gray-100",
-
-    // Subtext (Timestamps/Status)
-    subtext: theme === "dark" ? "text-[#8696a0]" : "text-[#667781]",
-  };
 
   // Function to scroll to the bottom
   const scrollToBottom = () => {
@@ -3754,7 +3740,7 @@ function App() {
                   />
 
                   {/* Attachment (Clip) */}
-                  <button onClick={() => fileInputRef.current?.click()} className="p-1 -rotate-45 transition-colors text-gray-500 hover:text-violet-600">
+                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`}>
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
@@ -3766,7 +3752,7 @@ function App() {
                   {/* Contacts (Profile) */}
                   {/* Contacts Sharing Button */}
                   {!newMessage && (
-                    <button type="button" className="p-1 transition-colors text-gray-500 hover:text-violet-600" onClick={() => setIsSharingContact(true)}>
+                    <button type="button" className={`p-1 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`} onClick={() => setIsSharingContact(true)}>
                       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
                       </svg>
