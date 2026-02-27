@@ -969,6 +969,10 @@ function App() {
   const [draftProfile, setDraftProfile] = useState({ ...myProfile });
   const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
   const [newGroupMemberName, setNewGroupMemberName] = useState("");
+  // New group creation form extras
+  const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [newGroupInitialMembers, setNewGroupInitialMembers] = useState([]); // [{id,name,color}]
+  const [newGroupMemberInput, setNewGroupMemberInput] = useState("");
 
   // Onboarding
   const [showWelcome, setShowWelcome] = useState(false);
@@ -2225,16 +2229,35 @@ function App() {
 
   const handleAddContact = () => {
     if (!newContactName.trim()) return;
+    if (newContactType === "group" && newGroupInitialMembers.length < 2) return;
     const id = `contact-${Date.now()}`;
-    const defaultStatus = newContactType === "group" ? "0 members" : "Online • Secure";
-    setContacts((prev) => [
-      ...prev,
-      { id, name: newContactName.trim(), status: newContactPhone.trim() || defaultStatus, color: newContactColor, avatar: null, type: newContactType, members: newContactType === "group" ? [] : undefined },
-    ]);
+    if (newContactType === "group") {
+      const groupStatus = `${newGroupInitialMembers.length} member${newGroupInitialMembers.length !== 1 ? "s" : ""}`;
+      // Create any members that don't already exist as contacts
+      const existingIds = new Set(contacts.map((c) => c.id));
+      const brandNewContacts = newGroupInitialMembers
+        .filter((m) => !existingIds.has(m.id))
+        .map((m) => ({ id: m.id, name: m.name, status: "Online • Secure", color: m.color, avatar: null, type: "direct" }));
+      setContacts((prev) => [
+        ...prev,
+        ...brandNewContacts,
+        { id, name: newContactName.trim(), status: groupStatus, color: newContactColor, avatar: null, type: "group",
+          members: newGroupInitialMembers.map((m) => m.id),
+          description: newGroupDescription.trim() || "" },
+      ]);
+    } else {
+      setContacts((prev) => [
+        ...prev,
+        { id, name: newContactName.trim(), status: newContactPhone.trim() || "Online • Secure", color: newContactColor, avatar: null, type: "direct" },
+      ]);
+    }
     setNewContactName("");
     setNewContactPhone("");
     setNewContactColor("bg-violet-500");
     setNewContactType("direct");
+    setNewGroupDescription("");
+    setNewGroupInitialMembers([]);
+    setNewGroupMemberInput("");
     setShowAddContactModal(false);
     setActiveContactId(id);
   };
@@ -3616,18 +3639,139 @@ function App() {
                     />
                   </div>
 
-                  {/* Status / subtitle */}
-                  <div>
-                    <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Status (optional)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Online • Secure"
-                      value={newContactPhone}
-                      onChange={(e) => setNewContactPhone(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
-                      className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
-                    />
-                  </div>
+                  {/* Status (direct) / Description (group) */}
+                  {newContactType === "direct" ? (
+                    <div>
+                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Status (optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Online • Secure"
+                        value={newContactPhone}
+                        onChange={(e) => setNewContactPhone(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
+                        className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Description (optional)</label>
+                      <input
+                        type="text"
+                        placeholder="What's this group about?"
+                        value={newGroupDescription}
+                        onChange={(e) => setNewGroupDescription(e.target.value)}
+                        className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                      />
+                    </div>
+                  )}
+
+                  {/* Members builder — group only */}
+                  {newContactType === "group" && (
+                    <div>
+                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                        Members *
+                        <span className={`text-[10px] font-semibold normal-case tracking-normal px-1.5 py-0.5 rounded-full ${
+                          newGroupInitialMembers.length < 2
+                            ? theme === "dark" ? "bg-red-500/20 text-red-400" : "bg-red-50 text-red-500"
+                            : theme === "dark" ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-50 text-emerald-600"
+                        }`}>
+                          {newGroupInitialMembers.length}/2 min
+                        </span>
+                      </label>
+
+                      {/* Chips */}
+                      {newGroupInitialMembers.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {newGroupInitialMembers.map((m) => (
+                            <span key={m.id} className={`flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full text-xs font-bold ${theme === "dark" ? "bg-gray-700 text-gray-200" : "bg-violet-50 text-violet-800"}`}>
+                              <span className={`w-5 h-5 rounded-full ${m.color} flex items-center justify-center text-white flex-shrink-0`} style={{ fontSize: "9px" }}>{m.name.charAt(0)}</span>
+                              {m.name}
+                              <button
+                                onClick={() => setNewGroupInitialMembers((prev) => prev.filter((x) => x.id !== m.id))}
+                                className={`ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${theme === "dark" ? "hover:bg-red-500/30 text-gray-400 hover:text-red-400" : "hover:bg-red-100 text-violet-400 hover:text-red-500"}`}
+                              >
+                                <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Input + Add */}
+                      <div className={`flex gap-2 p-1.5 rounded-2xl border ${theme === "dark" ? "bg-gray-800/60 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                        <input
+                          type="text"
+                          value={newGroupMemberInput}
+                          onChange={(e) => setNewGroupMemberInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && newGroupMemberInput.trim()) {
+                              const inputName = newGroupMemberInput.trim();
+                              const existing = contacts.find((c) => c.type === "direct" && c.name.toLowerCase() === inputName.toLowerCase());
+                              const alreadyAdded = newGroupInitialMembers.some((m) => m.name.toLowerCase() === inputName.toLowerCase());
+                              if (alreadyAdded) return;
+                              const colors = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-pink-500","bg-amber-500","bg-cyan-500","bg-rose-500","bg-indigo-500"];
+                              const entry = existing
+                                ? { id: existing.id, name: existing.name, color: existing.color }
+                                : { id: `new-${Date.now()}`, name: inputName, color: colors[Math.floor(Math.random() * colors.length)] };
+                              setNewGroupInitialMembers((prev) => [...prev, entry]);
+                              setNewGroupMemberInput("");
+                            }
+                          }}
+                          placeholder="Add by name — existing or new…"
+                          className={`flex-1 bg-transparent text-sm px-2 outline-none ${theme === "dark" ? "text-white placeholder-gray-600" : "text-gray-900 placeholder-gray-400"}`}
+                        />
+                        <button
+                          onClick={() => {
+                            const inputName = newGroupMemberInput.trim();
+                            if (!inputName) return;
+                            const existing = contacts.find((c) => c.type === "direct" && c.name.toLowerCase() === inputName.toLowerCase());
+                            const alreadyAdded = newGroupInitialMembers.some((m) => m.name.toLowerCase() === inputName.toLowerCase());
+                            if (alreadyAdded) return;
+                            const colors = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-pink-500","bg-amber-500","bg-cyan-500","bg-rose-500","bg-indigo-500"];
+                            const entry = existing
+                              ? { id: existing.id, name: existing.name, color: existing.color }
+                              : { id: `new-${Date.now()}`, name: inputName, color: colors[Math.floor(Math.random() * colors.length)] };
+                            setNewGroupInitialMembers((prev) => [...prev, entry]);
+                            setNewGroupMemberInput("");
+                          }}
+                          disabled={!newGroupMemberInput.trim()}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105 disabled:opacity-40"
+                          style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+                        >
+                          + Add
+                        </button>
+                      </div>
+
+                      {/* Existing contacts quick-pick */}
+                      {(() => {
+                        const suggestions = contacts.filter(
+                          (c) => c.type === "direct" &&
+                          !newGroupInitialMembers.some((m) => m.id === c.id) &&
+                          (newGroupMemberInput === "" || c.name.toLowerCase().includes(newGroupMemberInput.toLowerCase()))
+                        );
+                        if (suggestions.length === 0) return null;
+                        return (
+                          <div className={`mt-1.5 rounded-2xl border overflow-hidden ${theme === "dark" ? "border-gray-700 bg-gray-800/60" : "border-gray-200 bg-white"}`}>
+                            {suggestions.map((c) => (
+                              <button
+                                key={c.id}
+                                onClick={() => {
+                                  setNewGroupInitialMembers((prev) => [...prev, { id: c.id, name: c.name, color: c.color }]);
+                                  setNewGroupMemberInput("");
+                                }}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${theme === "dark" ? "hover:bg-gray-700/60" : "hover:bg-violet-50"}`}
+                              >
+                                <div className={`w-6 h-6 rounded-lg ${c.color} flex items-center justify-center flex-shrink-0`}>
+                                  <span className="text-white font-black" style={{ fontSize: "9px" }}>{c.name.charAt(0)}</span>
+                                </div>
+                                <span className={`text-xs font-semibold ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>{c.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   {/* Color picker */}
                   <div>
@@ -3656,11 +3800,11 @@ function App() {
                   </button>
                   <button
                     onClick={handleAddContact}
-                    disabled={!newContactName.trim()}
+                    disabled={!newContactName.trim() || (newContactType === "group" && newGroupInitialMembers.length < 2)}
                     className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
                   >
-                    Add Chat
+                    {newContactType === "group" ? "Create Group" : "Add Chat"}
                   </button>
                 </div>
               </div>
