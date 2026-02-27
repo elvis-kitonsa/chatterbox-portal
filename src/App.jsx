@@ -4066,7 +4066,16 @@ function App() {
             </div>
           )}
 
-          <header className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between shadow-md border transition-colors duration-500 ${theme === "dark" ? "bg-[#1a1f2e] border-gray-800" : "bg-white border-gray-200"}`}>
+          <header
+            className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between border transition-colors duration-500 ${
+              theme === "dark" ? "bg-[#1a1f2e] border-gray-700/70" : "bg-white border-violet-100"
+            }`}
+            style={{
+              boxShadow: theme === "dark"
+                ? "0 4px 28px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(99,102,241,0.08)"
+                : "0 4px 28px rgba(99,102,241,0.13), 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(139,92,246,0.10)",
+            }}
+          >
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
               return (
@@ -4124,7 +4133,17 @@ function App() {
             };
             const fontSizeClass = { small: "text-sm", medium: "text-base", large: "text-lg" }[userSettings.fontSize] || "text-base";
             return (
-          <div className={`flex-1 rounded-[2.5rem] border overflow-hidden relative shadow-md transition-all duration-500 ${theme === "dark" ? "border-gray-800" : "border-gray-100"}`} style={wallpaperStyles[userSettings.wallpaper] || wallpaperStyles.default}>
+          <div
+            className={`flex-1 rounded-[2.5rem] border-2 overflow-hidden relative transition-all duration-500 ${
+              theme === "dark" ? "border-gray-600/70" : "border-violet-200/80"
+            }`}
+            style={{
+              ...(wallpaperStyles[userSettings.wallpaper] || wallpaperStyles.default),
+              boxShadow: theme === "dark"
+                ? "0 0 0 4px rgba(99,102,241,0.08), 0 12px 60px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.4)"
+                : "0 0 0 4px rgba(139,92,246,0.10), 0 12px 60px rgba(99,102,241,0.18), 0 4px 16px rgba(99,102,241,0.10)",
+            }}
+          >
             <div className="absolute inset-0 pointer-events-none grayscale opacity-[0.02]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
 
             <div className="h-full overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar relative z-10">
