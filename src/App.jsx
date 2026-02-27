@@ -916,7 +916,7 @@ function App() {
   const [contacts, setContacts] = useState([
     { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500", avatar: null, type: "direct" },
     { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500", avatar: null, type: "direct" },
-    { id: "dev-team", name: "Dev Team Group", status: "5 members", color: "bg-orange-500", avatar: null, type: "group" },
+    { id: "dev-team", name: "Dev Team Group", status: "2 members", color: "bg-orange-500", avatar: null, type: "group", members: ["tech-lead", "project-manager"] },
   ]);
   const [activeContactId, setActiveContactId] = useState("tech-lead");
   const [archivedContactIds, setArchivedContactIds] = useState(new Set());
@@ -967,6 +967,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [activeSettingsSection, setActiveSettingsSection] = useState(null);
   const [draftProfile, setDraftProfile] = useState({ ...myProfile });
+  const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
 
   // Onboarding
   const [showWelcome, setShowWelcome] = useState(false);
@@ -2227,7 +2228,7 @@ function App() {
     const defaultStatus = newContactType === "group" ? "0 members" : "Online • Secure";
     setContacts((prev) => [
       ...prev,
-      { id, name: newContactName.trim(), status: newContactPhone.trim() || defaultStatus, color: newContactColor, avatar: null, type: newContactType },
+      { id, name: newContactName.trim(), status: newContactPhone.trim() || defaultStatus, color: newContactColor, avatar: null, type: newContactType, members: newContactType === "group" ? [] : undefined },
     ]);
     setNewContactName("");
     setNewContactPhone("");
@@ -4066,6 +4067,126 @@ function App() {
             </div>
           )}
 
+          {/* ── Group Members Modal ── */}
+          {showGroupMembersModal && (() => {
+            const activeContact = contacts.find((c) => c.id === activeContactId);
+            if (!activeContact || activeContact.type !== "group") return null;
+            const memberIds = activeContact.members || [];
+            const memberContacts = memberIds.map((mid) => contacts.find((c) => c.id === mid)).filter(Boolean);
+            const nonMemberDirects = contacts.filter((c) => c.type === "direct" && !memberIds.includes(c.id));
+
+            const addMember = (contactId) => {
+              setContacts((prev) => prev.map((c) => {
+                if (c.id !== activeContactId) return c;
+                const newMembers = [...(c.members || []), contactId];
+                return { ...c, members: newMembers, status: `${newMembers.length} member${newMembers.length !== 1 ? "s" : ""}` };
+              }));
+            };
+            const removeMember = (contactId) => {
+              setContacts((prev) => prev.map((c) => {
+                if (c.id !== activeContactId) return c;
+                const newMembers = (c.members || []).filter((id) => id !== contactId);
+                return { ...c, members: newMembers, status: `${newMembers.length} member${newMembers.length !== 1 ? "s" : ""}` };
+              }));
+            };
+
+            return (
+              <div className="fixed inset-0 z-[350] flex items-center justify-center" style={{ backgroundColor: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)" }}>
+                <div className={`w-full max-w-sm mx-4 rounded-3xl overflow-hidden flex flex-col`} style={{ maxHeight: "80vh", boxShadow: "0 32px 80px rgba(0,0,0,0.35)" }}>
+
+                  {/* Header */}
+                  <div className="p-5 flex items-center gap-3" style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)" }}>
+                    <div className={`w-10 h-10 rounded-xl ${activeContact.color} flex items-center justify-center shadow-lg flex-shrink-0`}>
+                      <span className="text-white font-black">{activeContact.name.charAt(0)}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-white font-black text-sm truncate">{activeContact.name}</h2>
+                      <p className="text-white/60 text-xs">{memberContacts.length} member{memberContacts.length !== 1 ? "s" : ""}</p>
+                    </div>
+                    <button onClick={() => setShowGroupMembersModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Body */}
+                  <div className={`flex-1 overflow-y-auto custom-scrollbar ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+
+                    {/* Current members */}
+                    <div className="px-4 pt-4 pb-2">
+                      <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+                        Members ({memberContacts.length})
+                      </p>
+                      {memberContacts.length === 0 ? (
+                        <p className={`text-xs py-3 text-center ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>No members yet. Add people below.</p>
+                      ) : (
+                        memberContacts.map((m) => (
+                          <div key={m.id} className={`flex items-center gap-3 p-3 rounded-2xl mb-1.5 ${theme === "dark" ? "bg-gray-800/60" : "bg-gray-50"}`}>
+                            {m.avatar ? (
+                              <img src={m.avatar} alt={m.name} className="w-9 h-9 rounded-xl object-cover" />
+                            ) : (
+                              <div className={`w-9 h-9 rounded-xl ${m.color} flex items-center justify-center flex-shrink-0`}>
+                                <span className="text-white font-black text-sm">{m.name.charAt(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-bold truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{m.name}</p>
+                              <p className={`text-xs truncate ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{m.status}</p>
+                            </div>
+                            <button
+                              onClick={() => removeMember(m.id)}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex-shrink-0"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Add people */}
+                    {nonMemberDirects.length > 0 && (
+                      <div className="px-4 pb-4 pt-1">
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+                          Add People
+                        </p>
+                        {nonMemberDirects.map((m) => (
+                          <div key={m.id} className={`flex items-center gap-3 p-3 rounded-2xl mb-1.5 ${theme === "dark" ? "bg-gray-800/40" : "bg-gray-50/60"}`}>
+                            {m.avatar ? (
+                              <img src={m.avatar} alt={m.name} className="w-9 h-9 rounded-xl object-cover" />
+                            ) : (
+                              <div className={`w-9 h-9 rounded-xl ${m.color} flex items-center justify-center flex-shrink-0`}>
+                                <span className="text-white font-black text-sm">{m.name.charAt(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-bold truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{m.name}</p>
+                              <p className={`text-xs truncate ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{m.status}</p>
+                            </div>
+                            <button
+                              onClick={() => addMember(m.id)}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105"
+                              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+                            >
+                              + Add
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {nonMemberDirects.length === 0 && memberContacts.length > 0 && (
+                      <p className={`text-xs text-center pb-4 px-4 ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>
+                        All your contacts are already in this group.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <header
             className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between border transition-colors duration-500 ${
               theme === "dark" ? "bg-[#1a1f2e] border-gray-700/70" : "bg-white border-violet-100"
@@ -4078,6 +4199,10 @@ function App() {
           >
             {(() => {
               const activeContact = contacts.find((c) => c.id === activeContactId);
+              const isGroup = activeContact?.type === "group";
+              const groupMemberContacts = isGroup
+                ? (activeContact.members || []).map((mid) => contacts.find((c) => c.id === mid)).filter(Boolean)
+                : [];
               return (
                 <div className="flex items-center gap-4 ml-2">
                   {activeContact?.avatar ? (
@@ -4089,10 +4214,52 @@ function App() {
                   )}
                   <div>
                     <h2 className={`text-sm font-black tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{activeContact?.name}</h2>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest animate-pulse ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>● Active Now</p>
+                    {isGroup ? (
+                      <button
+                        onClick={() => setShowGroupMembersModal(true)}
+                        className={`flex items-center gap-1.5 mt-0.5 group`}
+                      >
+                        {/* Stacked member avatars */}
+                        {groupMemberContacts.length > 0 && (
+                          <div className="flex -space-x-1.5">
+                            {groupMemberContacts.slice(0, 3).map((m) => (
+                              <div key={m.id} className={`w-4 h-4 rounded-full ${m.color} border border-white flex items-center justify-center`}>
+                                <span className="text-white font-black" style={{ fontSize: "7px" }}>{m.name.charAt(0)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <span className={`text-[10px] font-bold ${theme === "dark" ? "text-gray-400 group-hover:text-violet-400" : "text-gray-500 group-hover:text-violet-600"} transition-colors`}>
+                          {groupMemberContacts.length} member{groupMemberContacts.length !== 1 ? "s" : ""} · <span className="underline underline-offset-2">Manage</span>
+                        </span>
+                      </button>
+                    ) : (
+                      <p className={`text-[10px] font-bold uppercase tracking-widest animate-pulse ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>● Active Now</p>
+                    )}
                   </div>
                 </div>
               );
+            })()}
+
+            {/* Add member button — only for groups */}
+            {(() => {
+              const activeContact = contacts.find((c) => c.id === activeContactId);
+              return activeContact?.type === "group" ? (
+                <button
+                  onClick={() => setShowGroupMembersModal(true)}
+                  title="Manage members"
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 mr-1 ${
+                    theme === "dark" ? "bg-violet-500/20 hover:bg-violet-500/30 text-violet-400" : "bg-violet-50 hover:bg-violet-100 text-violet-600"
+                  }`}
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="19" y1="8" x2="19" y2="14"/>
+                    <line x1="22" y1="11" x2="16" y2="11"/>
+                  </svg>
+                </button>
+              ) : null;
             })()}
 
             {/* Theme Toggle */}
