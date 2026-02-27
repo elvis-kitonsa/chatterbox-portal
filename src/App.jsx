@@ -965,6 +965,7 @@ function App() {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [activeSettingsSection, setActiveSettingsSection] = useState(null);
+  const [draftProfile, setDraftProfile] = useState({ ...myProfile });
 
   // 4. VOICE & MEDIA STATES (Keep these for later)
   const [isRecording, setIsRecording] = useState(false);
@@ -2370,6 +2371,11 @@ function App() {
   useEffect(() => { localStorage.setItem("chatterbox_profile", JSON.stringify(myProfile)); }, [myProfile]);
   useEffect(() => { localStorage.setItem("chatterbox_settings", JSON.stringify(userSettings)); }, [userSettings]);
 
+  // Reset draft profile whenever the profile section is opened
+  useEffect(() => {
+    if (activeSettingsSection === "profile") setDraftProfile({ ...myProfile });
+  }, [activeSettingsSection]);
+
   // This function handles sending a new message in the chat.
   // It checks if the input is not empty, creates a new message object, updates the messages state, and clears the input field.
   const handleSendMessage = () => {
@@ -3555,22 +3561,19 @@ function App() {
                   )}
 
                   {/* ── PROFILE SECTION ── */}
-                  {activeSettingsSection === "profile" && (() => {
-                    const [draftProfile, setDraftProfile] = React.useState({ ...myProfile });
-                    const handleAvatarChange = (e) => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = (ev) => setDraftProfile((p) => ({ ...p, avatar: ev.target.result }));
-                      reader.readAsDataURL(file);
-                    };
-                    return (
+                  {activeSettingsSection === "profile" && (
                       <>
                         <div className="p-6 flex flex-col gap-5">
                           {/* Avatar */}
                           <div className="flex justify-center">
                             <label className="relative cursor-pointer group">
-                              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setDraftProfile((p) => ({ ...p, avatar: ev.target.result }));
+                                reader.readAsDataURL(file);
+                              }} />
                               {draftProfile.avatar ? (
                                 <img src={draftProfile.avatar} alt="You" className="w-24 h-24 rounded-3xl object-cover shadow-xl" />
                               ) : (
@@ -3633,8 +3636,7 @@ function App() {
                           </button>
                         </div>
                       </>
-                    );
-                  })()}
+                  )}
 
                   {/* ── CHATS SECTION ── */}
                   {activeSettingsSection === "chats" && (
