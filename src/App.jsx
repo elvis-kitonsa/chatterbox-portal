@@ -967,6 +967,11 @@ function App() {
   const [activeSettingsSection, setActiveSettingsSection] = useState(null);
   const [draftProfile, setDraftProfile] = useState({ ...myProfile });
 
+  // Onboarding
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [isOnboarding, setIsOnboarding] = useState(false);
+
   // 4. VOICE & MEDIA STATES (Keep these for later)
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -2371,6 +2376,13 @@ function App() {
   useEffect(() => { localStorage.setItem("chatterbox_profile", JSON.stringify(myProfile)); }, [myProfile]);
   useEffect(() => { localStorage.setItem("chatterbox_settings", JSON.stringify(userSettings)); }, [userSettings]);
 
+  // Show welcome screen on first login
+  useEffect(() => {
+    if (isUnlocked && !localStorage.getItem("chatterbox_onboarded")) {
+      setShowWelcome(true);
+    }
+  }, [isUnlocked]);
+
   // Reset draft profile whenever the profile section is opened
   useEffect(() => {
     if (activeSettingsSection === "profile") setDraftProfile({ ...myProfile });
@@ -2665,6 +2677,181 @@ function App() {
   if (isUnlocked) {
     return (
       <div className={`flex h-screen overflow-hidden font-sans relative transition-colors duration-500 ${theme === "dark" ? "bg-[#0f1117] text-white" : "bg-[#f8fafc] text-gray-900"}`}>
+
+        {/* ─── Welcome / Onboarding Modal ──────────────────────────────── */}
+        {showWelcome && (() => {
+          const finishOnboarding = () => {
+            localStorage.setItem("chatterbox_onboarded", "true");
+            setShowWelcome(false);
+            setIsOnboarding(false);
+            setOnboardingStep(0);
+          };
+
+          const TOUR_STEPS = [
+            {
+              icon: (
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              ),
+              color: "from-violet-500 to-indigo-600",
+              title: "Your Contacts",
+              desc: "All your conversations live in the sidebar on the left. Click any contact to open their chat. Use the search bar to quickly find someone.",
+            },
+            {
+              icon: (
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  <line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/>
+                </svg>
+              ),
+              color: "from-indigo-500 to-blue-600",
+              title: "Start a New Chat",
+              desc: "Tap the + New Chat button to add a contact and start messaging. You can set their name, status, and avatar colour.",
+            },
+            {
+              icon: (
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              ),
+              color: "from-pink-500 to-rose-500",
+              title: "Rich Messaging",
+              desc: "Send text, emojis, images, and files. All messages are end-to-end encrypted — only you and the recipient can read them.",
+            },
+            {
+              icon: (
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              ),
+              color: "from-emerald-500 to-teal-600",
+              title: "Voice Messages",
+              desc: "Tap the microphone button to record a voice note. You can play it back, change the speed, or scrub through the waveform.",
+            },
+            {
+              icon: (
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              ),
+              color: "from-orange-400 to-amber-500",
+              title: "Settings & Personalisation",
+              desc: "Click the gear icon in the sidebar to open Settings. Change your theme, wallpaper, font size, notifications, and privacy options.",
+            },
+          ];
+
+          // ── WELCOME SCREEN (not yet in tour) ──
+          if (!isOnboarding) {
+            return (
+              <div className="fixed inset-0 z-[400] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(15,23,42,0.7)", backdropFilter: "blur(10px)" }}>
+                <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ boxShadow: "0 40px 100px rgba(99,102,241,0.35), 0 10px 40px rgba(0,0,0,0.3)", animation: "emojiPickerIn 0.3s cubic-bezier(0.34,1.4,0.64,1)" }}>
+                  {/* Gradient header */}
+                  <div className="relative px-8 pt-10 pb-8 flex flex-col items-center text-center overflow-hidden" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: 240, height: 240, background: "rgba(255,255,255,0.06)", top: "-80px", right: "-60px" }} />
+                    <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, background: "rgba(255,255,255,0.05)", bottom: "-40px", left: "-30px" }} />
+                    {/* App icon */}
+                    <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 z-10 shadow-2xl" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)" }}>
+                      <svg viewBox="0 0 24 24" width="38" height="38" fill="white">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                      </svg>
+                    </div>
+                    <h2 className="text-white font-black text-2xl tracking-tight z-10">Welcome to ChatterBox!</h2>
+                    <p className="text-white/70 text-sm mt-2 leading-relaxed z-10">Secure, fast messaging — right in your browser.</p>
+                  </div>
+
+                  {/* Body */}
+                  <div className={`px-8 py-7 flex flex-col gap-4 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                    <p className={`text-sm font-semibold text-center ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                      Is this your first time using ChatterBox?
+                    </p>
+                    <button
+                      onClick={() => { setIsOnboarding(true); setOnboardingStep(0); }}
+                      className="w-full py-3.5 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 hover:opacity-90"
+                      style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                    >
+                      👋 Yes, show me around!
+                    </button>
+                    <button
+                      onClick={finishOnboarding}
+                      className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-95 border ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-gray-300 hover:bg-gray-700/60" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                    >
+                      No, I know my way
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // ── TOUR STEPS ──
+          const step = TOUR_STEPS[onboardingStep];
+          const isLast = onboardingStep === TOUR_STEPS.length - 1;
+
+          return (
+            <div className="fixed inset-0 z-[400] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(15,23,42,0.7)", backdropFilter: "blur(10px)" }}>
+              <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ boxShadow: "0 40px 100px rgba(99,102,241,0.35), 0 10px 40px rgba(0,0,0,0.3)", animation: "emojiPickerIn 0.25s cubic-bezier(0.34,1.4,0.64,1)" }}>
+                {/* Step illustration header */}
+                <div className={`relative flex flex-col items-center px-8 pt-10 pb-8 text-center overflow-hidden bg-gradient-to-br ${step.color}`}>
+                  <div className="absolute rounded-full pointer-events-none" style={{ width: 220, height: 220, background: "rgba(255,255,255,0.07)", top: "-70px", right: "-50px" }} />
+                  {/* Skip button */}
+                  <button
+                    onClick={finishOnboarding}
+                    className="absolute top-4 right-4 text-[11px] font-bold text-white/50 hover:text-white/90 transition-colors z-10 px-2 py-1"
+                  >
+                    Skip tour
+                  </button>
+                  {/* Step icon */}
+                  <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 z-10 shadow-2xl" style={{ background: "rgba(255,255,255,0.2)" }}>
+                    {step.icon}
+                  </div>
+                  {/* Step counter */}
+                  <p className="text-white/60 text-[11px] font-bold uppercase tracking-widest mb-2 z-10">Step {onboardingStep + 1} of {TOUR_STEPS.length}</p>
+                  <h3 className="text-white font-black text-xl tracking-tight z-10">{step.title}</h3>
+                </div>
+
+                {/* Body */}
+                <div className={`px-8 py-6 flex flex-col gap-5 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                  <p className={`text-sm leading-relaxed text-center ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>{step.desc}</p>
+
+                  {/* Progress dots */}
+                  <div className="flex justify-center gap-2">
+                    {TOUR_STEPS.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setOnboardingStep(i)}
+                        className={`rounded-full transition-all duration-200 ${i === onboardingStep ? "w-5 h-2 bg-violet-500" : "w-2 h-2 bg-gray-300"}`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Navigation */}
+                  <div className="flex gap-3">
+                    {onboardingStep > 0 && (
+                      <button
+                        onClick={() => setOnboardingStep((s) => s - 1)}
+                        className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all active:scale-95 border ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-gray-300 hover:bg-gray-700/60" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                      >
+                        ← Back
+                      </button>
+                    )}
+                    <button
+                      onClick={() => isLast ? finishOnboarding() : setOnboardingStep((s) => s + 1)}
+                      className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 hover:opacity-90"
+                      style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                    >
+                      {isLast ? "🚀 Start Chatting" : "Next →"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* DYNAMIC BACKGROUND BLUR NODES */}
         <div className={`absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[120px] animate-pulse pointer-events-none ${theme === "dark" ? "bg-violet-900/20" : "bg-violet-500/5"}`}></div>
         <div className={`absolute bottom-[10%] right-[5%] w-[500px] h-[500px] rounded-full blur-[150px] pointer-events-none ${theme === "dark" ? "bg-indigo-900/15" : "bg-indigo-500/5"}`}></div>
