@@ -968,6 +968,7 @@ function App() {
   const [activeSettingsSection, setActiveSettingsSection] = useState(null);
   const [draftProfile, setDraftProfile] = useState({ ...myProfile });
   const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
+  const [newGroupMemberName, setNewGroupMemberName] = useState("");
 
   // Onboarding
   const [showWelcome, setShowWelcome] = useState(false);
@@ -4146,41 +4147,92 @@ function App() {
                     </div>
 
                     {/* Add people */}
-                    {nonMemberDirects.length > 0 && (
-                      <div className="px-4 pb-4 pt-1">
-                        <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
-                          Add People
-                        </p>
-                        {nonMemberDirects.map((m) => (
-                          <div key={m.id} className={`flex items-center gap-3 p-3 rounded-2xl mb-1.5 ${theme === "dark" ? "bg-gray-800/40" : "bg-gray-50/60"}`}>
-                            {m.avatar ? (
-                              <img src={m.avatar} alt={m.name} className="w-9 h-9 rounded-xl object-cover" />
-                            ) : (
-                              <div className={`w-9 h-9 rounded-xl ${m.color} flex items-center justify-center flex-shrink-0`}>
-                                <span className="text-white font-black text-sm">{m.name.charAt(0)}</span>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-bold truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{m.name}</p>
-                              <p className={`text-xs truncate ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{m.status}</p>
-                            </div>
-                            <button
-                              onClick={() => addMember(m.id)}
-                              className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105"
-                              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-                            >
-                              + Add
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {nonMemberDirects.length === 0 && memberContacts.length > 0 && (
-                      <p className={`text-xs text-center pb-4 px-4 ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>
-                        All your contacts are already in this group.
+                    <div className="px-4 pb-4 pt-1">
+                      <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+                        Add People
                       </p>
-                    )}
+
+                      {/* Inline new-person input — works for anyone, not just existing contacts */}
+                      <div className={`flex gap-2 mb-3 p-1.5 rounded-2xl border ${theme === "dark" ? "bg-gray-800/60 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                        <input
+                          type="text"
+                          value={newGroupMemberName}
+                          onChange={(e) => setNewGroupMemberName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && newGroupMemberName.trim()) {
+                              const colors = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-pink-500","bg-amber-500","bg-cyan-500","bg-rose-500","bg-indigo-500"];
+                              const newId = `contact-${Date.now()}`;
+                              const newColor = colors[Math.floor(Math.random() * colors.length)];
+                              const newContact = { id: newId, name: newGroupMemberName.trim(), status: "Online • Secure", color: newColor, avatar: null, type: "direct", members: undefined };
+                              setContacts((prev) => {
+                                const updated = [...prev, newContact];
+                                return updated.map((c) => {
+                                  if (c.id !== activeContactId) return c;
+                                  const newMembers = [...(c.members || []), newId];
+                                  return { ...c, members: newMembers, status: `${newMembers.length} member${newMembers.length !== 1 ? "s" : ""}` };
+                                });
+                              });
+                              setNewGroupMemberName("");
+                            }
+                          }}
+                          placeholder="Type a name and press Enter…"
+                          className={`flex-1 bg-transparent text-sm px-2 outline-none ${theme === "dark" ? "text-white placeholder-gray-600" : "text-gray-900 placeholder-gray-400"}`}
+                        />
+                        <button
+                          onClick={() => {
+                            if (!newGroupMemberName.trim()) return;
+                            const colors = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-pink-500","bg-amber-500","bg-cyan-500","bg-rose-500","bg-indigo-500"];
+                            const newId = `contact-${Date.now()}`;
+                            const newColor = colors[Math.floor(Math.random() * colors.length)];
+                            const newContact = { id: newId, name: newGroupMemberName.trim(), status: "Online • Secure", color: newColor, avatar: null, type: "direct", members: undefined };
+                            setContacts((prev) => {
+                              const updated = [...prev, newContact];
+                              return updated.map((c) => {
+                                if (c.id !== activeContactId) return c;
+                                const newMembers = [...(c.members || []), newId];
+                                return { ...c, members: newMembers, status: `${newMembers.length} member${newMembers.length !== 1 ? "s" : ""}` };
+                              });
+                            });
+                            setNewGroupMemberName("");
+                          }}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105 disabled:opacity-40"
+                          style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+                          disabled={!newGroupMemberName.trim()}
+                        >
+                          + Add
+                        </button>
+                      </div>
+
+                      {/* Existing contacts not yet in the group */}
+                      {nonMemberDirects.map((m) => (
+                        <div key={m.id} className={`flex items-center gap-3 p-3 rounded-2xl mb-1.5 ${theme === "dark" ? "bg-gray-800/40" : "bg-gray-50/60"}`}>
+                          {m.avatar ? (
+                            <img src={m.avatar} alt={m.name} className="w-9 h-9 rounded-xl object-cover" />
+                          ) : (
+                            <div className={`w-9 h-9 rounded-xl ${m.color} flex items-center justify-center flex-shrink-0`}>
+                              <span className="text-white font-black text-sm">{m.name.charAt(0)}</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold truncate ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{m.name}</p>
+                            <p className={`text-xs truncate ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>{m.status}</p>
+                          </div>
+                          <button
+                            onClick={() => addMember(m.id)}
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105"
+                            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      ))}
+
+                      {nonMemberDirects.length === 0 && (
+                        <p className={`text-xs text-center py-2 ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>
+                          All your contacts are in this group — or add someone new above.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
