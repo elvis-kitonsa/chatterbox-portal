@@ -914,9 +914,9 @@ function App() {
 
   // 2. CHAT & CONTACT STATES
   const [contacts, setContacts] = useState([
-    { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500", avatar: null },
-    { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500", avatar: null },
-    { id: "dev-team", name: "Dev Team Group", status: "Group Chat", color: "bg-orange-500", avatar: null },
+    { id: "tech-lead", name: "Tech Lead", status: "online", color: "bg-blue-500", avatar: null, type: "direct" },
+    { id: "project-manager", name: "Project Manager", status: "last seen 2:00 PM", color: "bg-purple-500", avatar: null, type: "direct" },
+    { id: "dev-team", name: "Dev Team Group", status: "5 members", color: "bg-orange-500", avatar: null, type: "group" },
   ]);
   const [activeContactId, setActiveContactId] = useState("tech-lead");
   const [archivedContactIds, setArchivedContactIds] = useState(new Set());
@@ -928,6 +928,7 @@ function App() {
   const [newContactName, setNewContactName] = useState("");
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactColor, setNewContactColor] = useState("bg-violet-500");
+  const [newContactType, setNewContactType] = useState("direct");
   const [messages, setMessages] = useState([
     { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM", contactId: "tech-lead" },
     { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read", contactId: "tech-lead" },
@@ -2223,13 +2224,15 @@ function App() {
   const handleAddContact = () => {
     if (!newContactName.trim()) return;
     const id = `contact-${Date.now()}`;
+    const defaultStatus = newContactType === "group" ? "0 members" : "Online • Secure";
     setContacts((prev) => [
       ...prev,
-      { id, name: newContactName.trim(), status: newContactPhone.trim() || "Online • Secure", color: newContactColor, avatar: null },
+      { id, name: newContactName.trim(), status: newContactPhone.trim() || defaultStatus, color: newContactColor, avatar: null, type: newContactType },
     ]);
     setNewContactName("");
     setNewContactPhone("");
     setNewContactColor("bg-violet-500");
+    setNewContactType("direct");
     setShowAddContactModal(false);
     setActiveContactId(id);
   };
@@ -2934,11 +2937,25 @@ function App() {
             </button>
           </div>
 
-          {/* Contact List — active (non-archived) */}
+          {/* Contact List — active (non-archived), split by type */}
           <div className="flex-1 overflow-y-auto px-3 custom-scrollbar relative z-10">
-            {contacts
-              .filter((c) => !archivedContactIds.has(c.id) && c.name.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((contact) => (
+            {(() => {
+              const active = contacts.filter((c) => !archivedContactIds.has(c.id) && c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+              const directs = active.filter((c) => c.type !== "group");
+              const groups = active.filter((c) => c.type === "group");
+
+              const SectionLabel = ({ icon, label, count }) => (
+                <div className="flex items-center gap-2 px-1 pt-2 pb-1.5">
+                  <div className="flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
+                    {icon}
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em]">{label}</span>
+                    <span className="text-[10px] font-bold opacity-70">({count})</span>
+                  </div>
+                  <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
+                </div>
+              );
+
+              const renderContact = (contact) => (
                 <div
                   key={contact.id}
                   onClick={() => setProfileContactId(contact.id)}
@@ -2965,7 +2982,13 @@ function App() {
                         <span className="text-white font-black text-base">{contact.name.charAt(0)}</span>
                       </div>
                     )}
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-violet-600 z-10" />
+                    {contact.type === "group" ? (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center z-10" style={{ background: "linear-gradient(135deg,#f59e0b,#d97706)", border: "1.5px solid rgba(255,255,255,0.8)" }}>
+                        <svg viewBox="0 0 24 24" width="8" height="8" fill="white"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                      </div>
+                    ) : (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-violet-600 z-10" />
+                    )}
                     <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity z-10">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -3037,7 +3060,36 @@ function App() {
                     )}
                   </div>
                 </div>
-              ))}
+              );
+
+              return (
+                <>
+                  {/* Direct Messages section */}
+                  {directs.length > 0 && (
+                    <>
+                      <SectionLabel
+                        icon={<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                        label="Direct Messages"
+                        count={directs.length}
+                      />
+                      {directs.map(renderContact)}
+                    </>
+                  )}
+
+                  {/* Groups section */}
+                  {groups.length > 0 && (
+                    <>
+                      <SectionLabel
+                        icon={<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+                        label="Groups"
+                        count={groups.length}
+                      />
+                      {groups.map(renderContact)}
+                    </>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Archived section */}
             {(() => {
@@ -3532,9 +3584,25 @@ function App() {
 
                 {/* Form body */}
                 <div className={`p-6 flex flex-col gap-4 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
+                  {/* Chat type toggle */}
+                  <div className={`flex rounded-2xl p-1 ${theme === "dark" ? "bg-gray-800/60" : "bg-gray-100"}`}>
+                    {[{ key: "direct", label: "Direct Message", icon: <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+                       { key: "group",  label: "Group Chat",    icon: <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> }
+                    ].map(({ key, label, icon }) => (
+                      <button
+                        key={key}
+                        onClick={() => setNewContactType(key)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${newContactType === key ? "text-white shadow-md" : theme === "dark" ? "text-gray-400 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"}`}
+                        style={newContactType === key ? { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" } : undefined}
+                      >
+                        {icon}{label}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Name */}
                   <div>
-                    <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Name *</label>
+                    <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{newContactType === "group" ? "Group Name *" : "Name *"}</label>
                     <input
                       type="text"
                       placeholder="e.g. Alice Johnson"
