@@ -4,3 +4,16 @@
   from { opacity: 0; transform: scale(0.92) translateY(10px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
+
+@keyframes icon-shake {
+  0%,100% { transform: rotate(0deg)   scale(1);    }
+  15%      { transform: rotate(-16deg) scale(1.1);  }
+  30%      { transform: rotate(14deg)  scale(1.1);  }
+  45%      { transform: rotate(-10deg) scale(1.05); }
+  60%      { transform: rotate(8deg)   scale(1.05); }
+  75%      { transform: rotate(-4deg)  scale(1);    }
+}
+
+.sidebar-icon-btn:hover svg {
+  animation: icon-shake 0.55s ease-in-out;
+}

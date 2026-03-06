@@ -3001,7 +3001,7 @@ function App() {
               <button
                 onClick={() => setShowBluetoothModal(true)}
                 title="Find nearby ChatterBox users via Bluetooth"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-blue-400/20"
+                className="sidebar-icon-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-blue-400/20"
                 style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -3012,7 +3012,7 @@ function App() {
               <button
                 onClick={() => { setShowSettings(true); setActiveSettingsSection(null); }}
                 title="Settings"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/20"
+                className="sidebar-icon-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-white/20"
                 style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -3021,7 +3021,7 @@ function App() {
                 </svg>
               </button>
               {/* Logout Button */}
-              <button onClick={() => setIsUnlocked(false)} title="Log out" className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+              <button onClick={() => setIsUnlocked(false)} title="Log out" className="sidebar-icon-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
