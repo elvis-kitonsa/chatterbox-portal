@@ -4593,7 +4593,7 @@ function App() {
           })()}
 
           <header
-            className={`p-4 rounded-[2rem] mb-4 flex items-center justify-between border transition-colors duration-500 ${
+            className={`chat-header-bounce p-4 rounded-[2rem] mb-4 flex items-center justify-between border transition-colors duration-500 ${
               theme === "dark" ? "bg-[#1a1f2e] border-gray-700/70" : "bg-white border-violet-100"
             }`}
             style={{
