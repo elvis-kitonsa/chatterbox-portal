@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PhoneInput from "react-phone-input-2"; //
 import "react-phone-input-2/lib/style.css";
+import { supabase } from "./supabaseClient";
 import {
   initBLE,
   startAdvertising,
@@ -2235,7 +2236,6 @@ function App() {
     const id = `contact-${Date.now()}`;
     if (newContactType === "group") {
       const groupStatus = `${newGroupInitialMembers.length} member${newGroupInitialMembers.length !== 1 ? "s" : ""}`;
-      // Create any members that don't already exist as contacts
       const existingIds = new Set(contacts.map((c) => c.id));
       const brandNewContacts = newGroupInitialMembers
         .filter((m) => !existingIds.has(m.id))
@@ -2247,11 +2247,22 @@ function App() {
           members: newGroupInitialMembers.map((m) => m.id),
           description: newGroupDescription.trim() || "" },
       ]);
+      // Persist brand-new member contacts + the group to DB
+      const dbNewMembers = brandNewContacts.map((m) => ({ id: m.id, name: m.name, type: "direct", status: m.status, color: m.color }));
+      if (dbNewMembers.length > 0) supabase.from("contacts").insert(dbNewMembers).then(({ error }) => { if (error) console.error("Error saving new members:", error); });
+      supabase.from("contacts").insert({
+        id, name: newContactName.trim(), type: "group", status: groupStatus, color: newContactColor,
+        members: newGroupInitialMembers.map((m) => m.id), description: newGroupDescription.trim() || "",
+      }).then(({ error }) => { if (error) console.error("Error saving group:", error); });
     } else {
+      const status = newContactPhone.trim() || "Online • Secure";
       setContacts((prev) => [
         ...prev,
-        { id, name: newContactName.trim(), status: newContactPhone.trim() || "Online • Secure", color: newContactColor, avatar: null, type: "direct" },
+        { id, name: newContactName.trim(), status, color: newContactColor, avatar: null, type: "direct" },
       ]);
+      // Persist to DB
+      supabase.from("contacts").insert({ id, name: newContactName.trim(), type: "direct", status, color: newContactColor })
+        .then(({ error }) => { if (error) console.error("Error saving contact:", error); });
     }
     setNewContactName("");
     setNewContactPhone("");
@@ -2276,6 +2287,9 @@ function App() {
     });
     setArchivedContactIds((prev) => { const n = new Set(prev); n.delete(contactId); return n; });
     setContactMenuId(null);
+    // Remove from DB (messages cascade-delete via foreign key)
+    supabase.from("contacts").delete().eq("id", contactId)
+      .then(({ error }) => { if (error) console.error("Error deleting contact:", error); });
   };
 
   const handleToggleArchive = (contactId) => {
@@ -2406,6 +2420,71 @@ function App() {
   useEffect(() => { localStorage.setItem("chatterbox_profile", JSON.stringify(myProfile)); }, [myProfile]);
   useEffect(() => { localStorage.setItem("chatterbox_settings", JSON.stringify(userSettings)); }, [userSettings]);
 
+  // ── Supabase: load contacts + messages on login, set up real-time ──────
+  useEffect(() => {
+    if (!isUnlocked) return;
+
+    // Helper: map DB row → React contact shape
+    const fromDBContact = (c) => ({
+      id: c.id,
+      name: c.name,
+      type: c.type || "direct",
+      status: c.status || "Online • Secure",
+      color: c.color || "bg-violet-500",
+      avatar: null,
+      description: c.description || "",
+      members: c.members || [],
+    });
+
+    // Helper: map DB row → React message shape
+    const fromDBMessage = (m) => ({
+      id: String(m.id),
+      text: m.text || "",
+      sender: m.sender,
+      contactId: m.contact_id,
+      time: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      status: m.status || "sent",
+      type: m.type || "text",
+      fileUrl: m.file_url || null,
+    });
+
+    // Load contacts — if DB is empty, seed with current hardcoded contacts
+    supabase.from("contacts").select("*").then(async ({ data, error }) => {
+      if (error) { console.error("Error loading contacts:", error); return; }
+      if (data && data.length > 0) {
+        setContacts(data.map(fromDBContact));
+      } else {
+        // Seed DB with the default contacts
+        const defaults = [
+          { id: "tech-lead", name: "Tech Lead", type: "direct", status: "online", color: "bg-blue-500" },
+          { id: "project-manager", name: "Project Manager", type: "direct", status: "last seen 2:00 PM", color: "bg-purple-500" },
+          { id: "dev-team", name: "Dev Team Group", type: "group", status: "2 members", color: "bg-orange-500", members: ["tech-lead", "project-manager"] },
+        ];
+        await supabase.from("contacts").insert(defaults);
+      }
+    });
+
+    // Load messages
+    supabase.from("messages").select("*").order("created_at", { ascending: true }).then(({ data, error }) => {
+      if (error) { console.error("Error loading messages:", error); return; }
+      if (data && data.length > 0) setMessages(data.map(fromDBMessage));
+    });
+
+    // Real-time: new messages from other senders appear instantly
+    const channel = supabase
+      .channel("realtime-messages")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
+        const m = payload.new;
+        setMessages((prev) => {
+          if (prev.some((msg) => msg.id === String(m.id))) return prev; // dedupe
+          return [...prev, fromDBMessage(m)];
+        });
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [isUnlocked]);
+
   // Show welcome screen on first login
   useEffect(() => {
     if (isUnlocked && !localStorage.getItem("chatterbox_onboarded")) {
@@ -2435,6 +2514,16 @@ function App() {
     // Update the messages state by adding the new message to the existing array of messages.
     setMessages([...messages, msg]);
     setNewMessage("");
+
+    // Persist to Supabase
+    supabase.from("messages").insert({
+      id: String(msg.id),
+      contact_id: msg.contactId,
+      sender: msg.sender,
+      text: msg.text,
+      type: "text",
+      status: msg.status,
+    }).then(({ error }) => { if (error) console.error("Error saving message:", error); });
 
     // If the active contact was added via BLE, also send over Bluetooth
     const activeContact = contacts.find((c) => c.id === activeContactId);
