@@ -4593,7 +4593,7 @@ function App() {
             );
           })()}
 
-          {/* ── Contact / Group Profile Modal ── */}
+          {/* ── Contact / Group Profile Modal (WhatsApp-style) ── */}
           {showContactProfile && (() => {
             const ac = contacts.find((c) => c.id === activeContactId);
             if (!ac) return null;
@@ -4601,73 +4601,208 @@ function App() {
             const groupMembers = isGroup
               ? (ac.members || []).map((mid) => contacts.find((c) => c.id === mid)).filter(Boolean)
               : [];
+            // Shared groups: groups where this contact is a member
+            const sharedGroups = !isGroup
+              ? contacts.filter((c) => c.type === "group" && (c.members || []).includes(ac.id))
+              : [];
+            // Shared media count
+            const contactMsgs = messages.filter((m) => m.contactId === ac.id);
+            const mediaCount = contactMsgs.filter((m) => m.type === "image").length;
+            const fileCount = contactMsgs.filter((m) => m.type === "file").length;
+            const voiceCount = contactMsgs.filter((m) => m.type === "voice").length;
+
+            const rowBg = theme === "dark" ? "bg-[#1f2537]" : "bg-white";
+            const divider = theme === "dark" ? "border-gray-700/60" : "border-gray-100";
+            const labelColor = theme === "dark" ? "text-violet-400" : "text-violet-600";
+            const subColor = theme === "dark" ? "text-gray-400" : "text-gray-500";
+            const textColor = theme === "dark" ? "text-gray-100" : "text-gray-800";
+            const sectionBg = theme === "dark" ? "bg-[#151b2a]" : "bg-gray-50";
+
             return (
               <div
                 className="fixed inset-0 z-[400] flex items-center justify-center"
-                style={{ backgroundColor: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)" }}
+                style={{ backgroundColor: "rgba(15,23,42,0.65)", backdropFilter: "blur(8px)" }}
                 onClick={() => setShowContactProfile(false)}
               >
                 <div
-                  className={`relative w-full max-w-sm mx-4 rounded-3xl overflow-hidden shadow-2xl ${theme === "dark" ? "bg-[#1a1f2e] text-white" : "bg-white text-gray-900"}`}
+                  className={`relative w-full max-w-sm mx-4 rounded-3xl overflow-hidden shadow-2xl flex flex-col ${theme === "dark" ? "bg-[#151b2a]" : "bg-gray-50"}`}
+                  style={{ maxHeight: "90vh" }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Violet gradient banner */}
-                  <div className="h-28 w-full" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }} />
+                  {/* ── TOP PHOTO SECTION ── */}
+                  <div className="relative flex-shrink-0">
+                    {/* Banner / cover */}
+                    <div className="h-48 w-full" style={{ background: "linear-gradient(160deg, #4f46e5 0%, #7c3aed 60%, #a855f7 100%)" }}>
+                      {ac.avatar && (
+                        <img src={ac.avatar} alt={ac.name} className="w-full h-full object-cover opacity-30" />
+                      )}
+                    </div>
 
-                  {/* Close button */}
-                  <button
-                    onClick={() => setShowContactProfile(false)}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
+                    {/* Back / close arrow — top left */}
+                    <button
+                      onClick={() => setShowContactProfile(false)}
+                      className="absolute top-3 left-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/30 hover:bg-black/50 transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6"/>
+                      </svg>
+                    </button>
 
-                  {/* Avatar overlapping banner */}
-                  <div className="flex flex-col items-center -mt-12 px-6 pb-6">
-                    {ac.avatar ? (
-                      <img src={ac.avatar} alt={ac.name} className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-xl" />
-                    ) : (
-                      <div className={`w-24 h-24 ${ac.color} rounded-2xl flex items-center justify-center border-4 border-white shadow-xl`}>
-                        <span className="text-white font-black text-3xl">{ac.name.charAt(0)}</span>
+                    {/* Avatar — overlapping banner + body */}
+                    <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: "-44px" }}>
+                      {ac.avatar ? (
+                        <img src={ac.avatar} alt={ac.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-2xl" style={{ borderColor: theme === "dark" ? "#151b2a" : "#f9fafb" }} />
+                      ) : (
+                        <div className={`w-24 h-24 ${ac.color} rounded-full flex items-center justify-center border-4 shadow-2xl`} style={{ borderColor: theme === "dark" ? "#151b2a" : "#f9fafb" }}>
+                          <span className="text-white font-black text-3xl">{ac.name.charAt(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── SCROLLABLE BODY ── */}
+                  <div className="overflow-y-auto" style={{ paddingTop: "56px" }}>
+
+                    {/* Name + status line */}
+                    <div className="flex flex-col items-center px-6 pb-5">
+                      <h2 className={`text-xl font-black tracking-tight ${textColor}`}>{ac.name}</h2>
+                      {isGroup ? (
+                        <p className={`text-xs mt-1 ${subColor}`}>Group · {groupMembers.length} participant{groupMembers.length !== 1 ? "s" : ""}</p>
+                      ) : (
+                        <p className={`text-xs mt-1 font-semibold uppercase tracking-widest ${labelColor} animate-pulse`}>● Active Now</p>
+                      )}
+                    </div>
+
+                    {/* ── INFO ROWS ── */}
+                    <div className={`mx-3 rounded-2xl overflow-hidden mb-3 ${rowBg}`}>
+
+                      {/* Phone — only for direct contacts */}
+                      {!isGroup && (
+                        <div className={`flex items-start gap-4 px-4 py-3 border-b ${divider}`}>
+                          <div className="mt-0.5 flex-shrink-0">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke={theme === "dark" ? "#8b5cf6" : "#7c3aed"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.48 2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.03 6.03l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold ${textColor}`}>{ac.phone || "No number saved"}</p>
+                            <p className={`text-[11px] mt-0.5 ${subColor}`}>Mobile</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* About / Description */}
+                      <div className={`flex items-start gap-4 px-4 py-3 ${!isGroup ? "" : ""}`}>
+                        <div className="mt-0.5 flex-shrink-0">
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke={theme === "dark" ? "#8b5cf6" : "#7c3aed"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${ac.description || ac.status ? textColor : `italic ${subColor}`}`}>
+                            {ac.description || ac.status || (isGroup ? "No group description" : "Hey there! I am using ChatterBox.")}
+                          </p>
+                          <p className={`text-[11px] mt-0.5 ${subColor}`}>{isGroup ? "Description" : "About"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── MEDIA ROW ── */}
+                    {(mediaCount > 0 || fileCount > 0 || voiceCount > 0) && (
+                      <div className={`mx-3 rounded-2xl overflow-hidden mb-3 ${rowBg}`}>
+                        <div className={`flex items-center justify-between px-4 py-3`}>
+                          <div className="flex items-center gap-3">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke={theme === "dark" ? "#8b5cf6" : "#7c3aed"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                              <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <div>
+                              <p className={`text-sm font-semibold ${textColor}`}>Media, Links &amp; Docs</p>
+                              <p className={`text-[11px] ${subColor}`}>
+                                {[mediaCount > 0 && `${mediaCount} photo${mediaCount !== 1 ? "s" : ""}`, fileCount > 0 && `${fileCount} file${fileCount !== 1 ? "s" : ""}`, voiceCount > 0 && `${voiceCount} voice`].filter(Boolean).join(" · ")}
+                              </p>
+                            </div>
+                          </div>
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke={subColor.includes("gray") ? "#9ca3af" : "#6b7280"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6"/>
+                          </svg>
+                        </div>
                       </div>
                     )}
 
-                    <h2 className={`mt-3 text-xl font-black tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{ac.name}</h2>
-
-                    {isGroup ? (
-                      <span className={`mt-1 text-xs font-bold uppercase tracking-widest ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>Group · {groupMembers.length} members</span>
-                    ) : (
-                      <span className={`mt-1 text-xs font-bold uppercase tracking-widest animate-pulse ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>● Active Now</span>
-                    )}
-
-                    {ac.description ? (
-                      <p className={`mt-3 text-sm text-center ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{ac.description}</p>
-                    ) : !isGroup && (
-                      <p className={`mt-3 text-sm text-center italic ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>No status set</p>
-                    )}
-
-                    {ac.status && !isGroup && (
-                      <div className={`mt-2 px-3 py-1 rounded-full text-xs font-semibold ${theme === "dark" ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-600"}`}>{ac.status}</div>
-                    )}
-
-                    {/* Group members list */}
-                    {isGroup && groupMembers.length > 0 && (
-                      <div className={`mt-4 w-full rounded-2xl p-3 ${theme === "dark" ? "bg-gray-800/60" : "bg-gray-50"}`}>
-                        <p className={`text-[10px] uppercase tracking-widest font-bold mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Members</p>
-                        <div className="flex flex-col gap-2">
-                          {groupMembers.map((m) => (
-                            <div key={m.id} className="flex items-center gap-2">
-                              {m.avatar ? (
-                                <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-lg object-cover" />
-                              ) : (
-                                <div className={`w-7 h-7 ${m.color} rounded-lg flex items-center justify-center`}>
-                                  <span className="text-white font-black" style={{ fontSize: "11px" }}>{m.name.charAt(0)}</span>
-                                </div>
-                              )}
-                              <span className={`text-sm font-semibold ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>{m.name}</span>
-                            </div>
-                          ))}
+                    {/* ── SHARED GROUPS (direct contacts only) ── */}
+                    {!isGroup && (
+                      <div className={`mx-3 rounded-2xl overflow-hidden mb-3 ${rowBg}`}>
+                        <div className={`px-4 pt-3 pb-1 border-b ${divider}`}>
+                          <p className={`text-[11px] font-bold uppercase tracking-widest ${labelColor}`}>
+                            {sharedGroups.length} group{sharedGroups.length !== 1 ? "s" : ""} in common
+                          </p>
                         </div>
+                        {sharedGroups.length > 0 ? (
+                          sharedGroups.map((g) => (
+                            <div key={g.id} className={`flex items-center gap-3 px-4 py-3 border-b last:border-b-0 ${divider}`}>
+                              <div className={`w-10 h-10 ${g.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold truncate ${textColor}`}>{g.name}</p>
+                                <p className={`text-[11px] truncate ${subColor}`}>{(g.members || []).length} participants</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3">
+                            <p className={`text-sm italic ${subColor}`}>No groups in common</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── GROUP PARTICIPANTS (groups only) ── */}
+                    {isGroup && (
+                      <div className={`mx-3 rounded-2xl overflow-hidden mb-3 ${rowBg}`}>
+                        <div className={`px-4 pt-3 pb-1 border-b ${divider}`}>
+                          <p className={`text-[11px] font-bold uppercase tracking-widest ${labelColor}`}>{groupMembers.length} participant{groupMembers.length !== 1 ? "s" : ""}</p>
+                        </div>
+                        {groupMembers.map((m) => (
+                          <div key={m.id} className={`flex items-center gap-3 px-4 py-3 border-b last:border-b-0 ${divider}`}>
+                            {m.avatar ? (
+                              <img src={m.avatar} alt={m.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                            ) : (
+                              <div className={`w-10 h-10 ${m.color} rounded-full flex items-center justify-center flex-shrink-0`}>
+                                <span className="text-white font-black text-sm">{m.name.charAt(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-semibold truncate ${textColor}`}>{m.name}</p>
+                              <p className={`text-[11px] truncate ${subColor}`}>{m.status || "ChatterBox user"}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ── DANGER ACTIONS (direct contacts only) ── */}
+                    {!isGroup && (
+                      <div className={`mx-3 rounded-2xl overflow-hidden mb-5 ${rowBg}`}>
+                        <button className={`w-full flex items-center gap-4 px-4 py-3 border-b ${divider} hover:bg-red-500/5 transition-colors`}>
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                          </svg>
+                          <span className="text-sm font-semibold text-red-500">Block {ac.name}</span>
+                        </button>
+                        <button className={`w-full flex items-center gap-4 px-4 py-3 hover:bg-red-500/5 transition-colors`}>
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                          </svg>
+                          <span className="text-sm font-semibold text-red-500">Report {ac.name}</span>
+                        </button>
                       </div>
                     )}
                   </div>
