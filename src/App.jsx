@@ -2984,9 +2984,6 @@ function App() {
           );
         })()}
 
-        {/* DYNAMIC BACKGROUND BLUR NODES */}
-        <div className={`absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[120px] animate-pulse pointer-events-none ${theme === "dark" ? "bg-violet-900/20" : "bg-violet-500/5"}`}></div>
-        <div className={`absolute bottom-[10%] right-[5%] w-[500px] h-[500px] rounded-full blur-[150px] pointer-events-none ${theme === "dark" ? "bg-indigo-900/15" : "bg-indigo-500/5"}`}></div>
 
         {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
         <aside className="chat-header-bounce w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
