@@ -921,6 +921,8 @@ function App() {
   const [activeContactId, setActiveContactId] = useState("tech-lead");
   const [archivedContactIds, setArchivedContactIds] = useState(new Set());
   const [showArchivedSection, setShowArchivedSection] = useState(false);
+  const [dmSectionOpen, setDmSectionOpen] = useState(true);
+  const [groupsSectionOpen, setGroupsSectionOpen] = useState(true);
   const [contactMenuId, setContactMenuId] = useState(null); // ID of contact whose context menu is open
   const [pendingDeleteId, setPendingDeleteId] = useState(null); // ID of contact awaiting delete confirmation
   const [profileContactId, setProfileContactId] = useState(null); // ID of contact whose profile popup is open
@@ -2963,21 +2965,32 @@ function App() {
           </div>
 
           {/* Contact List — active (non-archived), split by type */}
-          <div className="flex-1 overflow-y-auto px-3 custom-scrollbar relative z-10">
+          <div className="flex-1 flex flex-col overflow-hidden px-3 relative z-10">
             {(() => {
               const active = contacts.filter((c) => !archivedContactIds.has(c.id) && c.name.toLowerCase().includes(searchTerm.toLowerCase()));
               const directs = active.filter((c) => c.type !== "group");
               const groups = active.filter((c) => c.type === "group");
 
-              const SectionLabel = ({ icon, label, count }) => (
-                <div className="flex items-center gap-2 px-1 pt-2 pb-1.5">
+              const SectionLabel = ({ icon, label, count, open, onToggle }) => (
+                <button
+                  onClick={onToggle}
+                  className="w-full flex items-center gap-2 px-1 pt-2 pb-1.5 group/sec transition-opacity hover:opacity-100"
+                  style={{ opacity: 1 }}
+                >
                   <div className="flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
                     {icon}
                     <span className="text-[10px] font-black uppercase tracking-[0.18em]">{label}</span>
                     <span className="text-[10px] font-bold opacity-70">({count})</span>
                   </div>
                   <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
-                </div>
+                  <svg
+                    viewBox="0 0 24 24" width="12" height="12" fill="none"
+                    stroke="rgba(255,255,255,0.45)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.25s ease", flexShrink: 0 }}
+                  >
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
               );
 
               const renderContact = (contact) => (
@@ -3088,31 +3101,49 @@ function App() {
               );
 
               return (
-                <>
-                  {/* Direct Messages section */}
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  {/* Direct Messages accordion */}
                   {directs.length > 0 && (
-                    <>
+                    <div className={`flex flex-col ${dmSectionOpen && groups.length > 0 ? "flex-1" : ""} min-h-0`}>
                       <SectionLabel
                         icon={<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                         label="Direct Messages"
                         count={directs.length}
+                        open={dmSectionOpen}
+                        onToggle={() => setDmSectionOpen((v) => !v)}
                       />
-                      {directs.map(renderContact)}
-                    </>
+                      <div
+                        className="overflow-hidden transition-all duration-300 ease-in-out"
+                        style={{ maxHeight: dmSectionOpen ? "9999px" : "0px", opacity: dmSectionOpen ? 1 : 0, overflowY: dmSectionOpen ? "auto" : "hidden" }}
+                      >
+                        <div className="custom-scrollbar">
+                          {directs.map(renderContact)}
+                        </div>
+                      </div>
+                    </div>
                   )}
 
-                  {/* Groups section */}
+                  {/* Groups accordion */}
                   {groups.length > 0 && (
-                    <>
+                    <div className={`flex flex-col ${groupsSectionOpen && directs.length > 0 ? "flex-1" : ""} min-h-0`}>
                       <SectionLabel
                         icon={<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
                         label="Groups"
                         count={groups.length}
+                        open={groupsSectionOpen}
+                        onToggle={() => setGroupsSectionOpen((v) => !v)}
                       />
-                      {groups.map(renderContact)}
-                    </>
+                      <div
+                        className="overflow-hidden transition-all duration-300 ease-in-out"
+                        style={{ maxHeight: groupsSectionOpen ? "9999px" : "0px", opacity: groupsSectionOpen ? 1 : 0, overflowY: groupsSectionOpen ? "auto" : "hidden" }}
+                      >
+                        <div className="custom-scrollbar">
+                          {groups.map(renderContact)}
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </>
+                </div>
               );
             })()}
 
