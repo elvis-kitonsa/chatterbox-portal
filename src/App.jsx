@@ -5333,7 +5333,7 @@ function App() {
                   e.stopPropagation();
                   setShowEmojiPicker((prev) => !prev);
                 }}
-                className={`p-1 transition-colors ${showEmojiPicker ? "text-violet-600" : "text-gray-500 hover:text-violet-600"}`}
+                className={`p-1 transition-all duration-150 hover:scale-125 active:scale-95 ${showEmojiPicker ? "text-violet-600 scale-110" : "text-gray-500 hover:text-violet-600"}`}
               >
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                   <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
@@ -5385,7 +5385,7 @@ function App() {
                   />
 
                   {/* Attachment (Clip) */}
-                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`}>
+                  <button onClick={() => fileInputRef.current?.click()} className={`p-1 -rotate-45 transition-all duration-150 hover:scale-125 hover:-rotate-12 active:scale-95 ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`}>
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                       <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"></path>
                     </svg>
@@ -5397,7 +5397,7 @@ function App() {
                   {/* Contacts (Profile) */}
                   {/* Contacts Sharing Button */}
                   {!newMessage && (
-                    <button type="button" className={`p-1 transition-colors ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`} onClick={() => setIsSharingContact(true)}>
+                    <button type="button" className={`p-1 transition-all duration-150 hover:scale-125 active:scale-95 ${theme === "dark" ? "text-gray-400 hover:text-violet-400" : "text-gray-500 hover:text-violet-600"}`} onClick={() => setIsSharingContact(true)}>
                       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
                       </svg>
