@@ -971,6 +971,7 @@ function App() {
   const [activeSettingsSection, setActiveSettingsSection] = useState(null);
   const [draftProfile, setDraftProfile] = useState({ ...myProfile });
   const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
+  const [showContactProfile, setShowContactProfile] = useState(false);
   const [newGroupMemberName, setNewGroupMemberName] = useState("");
   // New group creation form extras
   const [newGroupDescription, setNewGroupDescription] = useState("");
@@ -4592,6 +4593,89 @@ function App() {
             );
           })()}
 
+          {/* ── Contact / Group Profile Modal ── */}
+          {showContactProfile && (() => {
+            const ac = contacts.find((c) => c.id === activeContactId);
+            if (!ac) return null;
+            const isGroup = ac.type === "group";
+            const groupMembers = isGroup
+              ? (ac.members || []).map((mid) => contacts.find((c) => c.id === mid)).filter(Boolean)
+              : [];
+            return (
+              <div
+                className="fixed inset-0 z-[400] flex items-center justify-center"
+                style={{ backgroundColor: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)" }}
+                onClick={() => setShowContactProfile(false)}
+              >
+                <div
+                  className={`relative w-full max-w-sm mx-4 rounded-3xl overflow-hidden shadow-2xl ${theme === "dark" ? "bg-[#1a1f2e] text-white" : "bg-white text-gray-900"}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Violet gradient banner */}
+                  <div className="h-28 w-full" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }} />
+
+                  {/* Close button */}
+                  <button
+                    onClick={() => setShowContactProfile(false)}
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+
+                  {/* Avatar overlapping banner */}
+                  <div className="flex flex-col items-center -mt-12 px-6 pb-6">
+                    {ac.avatar ? (
+                      <img src={ac.avatar} alt={ac.name} className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-xl" />
+                    ) : (
+                      <div className={`w-24 h-24 ${ac.color} rounded-2xl flex items-center justify-center border-4 border-white shadow-xl`}>
+                        <span className="text-white font-black text-3xl">{ac.name.charAt(0)}</span>
+                      </div>
+                    )}
+
+                    <h2 className={`mt-3 text-xl font-black tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{ac.name}</h2>
+
+                    {isGroup ? (
+                      <span className={`mt-1 text-xs font-bold uppercase tracking-widest ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>Group · {groupMembers.length} members</span>
+                    ) : (
+                      <span className={`mt-1 text-xs font-bold uppercase tracking-widest animate-pulse ${theme === "dark" ? "text-violet-400" : "text-violet-600"}`}>● Active Now</span>
+                    )}
+
+                    {ac.description ? (
+                      <p className={`mt-3 text-sm text-center ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{ac.description}</p>
+                    ) : !isGroup && (
+                      <p className={`mt-3 text-sm text-center italic ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>No status set</p>
+                    )}
+
+                    {ac.status && !isGroup && (
+                      <div className={`mt-2 px-3 py-1 rounded-full text-xs font-semibold ${theme === "dark" ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-600"}`}>{ac.status}</div>
+                    )}
+
+                    {/* Group members list */}
+                    {isGroup && groupMembers.length > 0 && (
+                      <div className={`mt-4 w-full rounded-2xl p-3 ${theme === "dark" ? "bg-gray-800/60" : "bg-gray-50"}`}>
+                        <p className={`text-[10px] uppercase tracking-widest font-bold mb-2 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Members</p>
+                        <div className="flex flex-col gap-2">
+                          {groupMembers.map((m) => (
+                            <div key={m.id} className="flex items-center gap-2">
+                              {m.avatar ? (
+                                <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-lg object-cover" />
+                              ) : (
+                                <div className={`w-7 h-7 ${m.color} rounded-lg flex items-center justify-center`}>
+                                  <span className="text-white font-black" style={{ fontSize: "11px" }}>{m.name.charAt(0)}</span>
+                                </div>
+                              )}
+                              <span className={`text-sm font-semibold ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>{m.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <header
             className={`chat-header-bounce p-4 rounded-[2rem] mb-4 flex items-center justify-between border transition-colors duration-500 ${
               theme === "dark" ? "bg-[#1a1f2e] border-gray-700/70" : "bg-white border-violet-100"
@@ -4610,15 +4694,19 @@ function App() {
                 : [];
               return (
                 <div className="flex items-center gap-4 ml-2">
+                  <button onClick={() => setShowContactProfile(true)} className="focus:outline-none flex-shrink-0">
                   {activeContact?.avatar ? (
-                    <img src={activeContact.avatar} alt={activeContact?.name} className="w-10 h-10 rounded-xl object-cover shadow-inner" />
+                    <img src={activeContact.avatar} alt={activeContact?.name} className="w-10 h-10 rounded-xl object-cover shadow-inner hover:ring-2 hover:ring-violet-400 transition-all" />
                   ) : (
-                    <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner flex items-center justify-center`}>
+                    <div className={`w-10 h-10 ${activeContact?.color} rounded-xl shadow-inner flex items-center justify-center hover:ring-2 hover:ring-violet-400 transition-all`}>
                       <span className="text-white font-black text-sm">{activeContact?.name?.charAt(0)}</span>
                     </div>
                   )}
+                  </button>
                   <div>
-                    <h2 className={`text-sm font-black tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{activeContact?.name}</h2>
+                    <button onClick={() => setShowContactProfile(true)} className="focus:outline-none">
+                    <h2 className={`text-sm font-black tracking-tight ${theme === "dark" ? "text-white hover:text-violet-400" : "text-gray-900 hover:text-violet-600"} transition-colors cursor-pointer`}>{activeContact?.name}</h2>
+                    </button>
                     {isGroup ? (
                       <button
                         onClick={() => setShowGroupMembersModal(true)}
