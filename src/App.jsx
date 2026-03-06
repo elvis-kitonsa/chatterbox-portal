@@ -3711,18 +3711,18 @@ function App() {
             );
           })()}
 
-          {/* ─── Add New Contact Modal ─────────────────────────────────── */}
+          {/* ─── Add New Contact Modal (landscape) ───────────────────────── */}
           {showAddContactModal && (
             <div
               className="fixed inset-0 flex items-center justify-center z-[200] p-4"
               style={{ backgroundColor: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)", animation: "emojiPickerIn 0.2s cubic-bezier(0.34,1.4,0.64,1)" }}
               onClick={() => setShowAddContactModal(false)}
             >
-              <div className="w-full max-w-sm rounded-3xl overflow-hidden" style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.3), 0 8px 32px rgba(0,0,0,0.2)" }} onClick={(e) => e.stopPropagation()}>
+              <div className="w-full max-w-3xl rounded-3xl overflow-hidden" style={{ boxShadow: "0 30px 80px rgba(99,102,241,0.3), 0 8px 32px rgba(0,0,0,0.2)" }} onClick={(e) => e.stopPropagation()}>
 
-                {/* Header */}
-                <div className="p-6 flex justify-between items-center relative overflow-hidden" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-                  <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, background: "rgba(255,255,255,0.07)", top: "-60px", right: "-40px" }} />
+                {/* Header — full width */}
+                <div className="px-8 py-5 flex justify-between items-center relative overflow-hidden" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                  <div className="absolute rounded-full pointer-events-none" style={{ width: 200, height: 200, background: "rgba(255,255,255,0.07)", top: "-80px", right: "-60px" }} />
                   <div className="relative z-10 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
                       <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -3732,110 +3732,150 @@ function App() {
                       <p className="text-white/60 text-xs mt-0.5">Add a new conversation</p>
                     </div>
                   </div>
-                  <button onClick={() => setShowAddContactModal(false)} className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20" style={{ background: "rgba(255,255,255,0.15)" }}>
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-
-                {/* Form body */}
-                <div className={`p-6 flex flex-col gap-4 ${theme === "dark" ? "bg-[#1a1f2e]" : "bg-white"}`}>
-                  {/* Chat type toggle */}
-                  <div className={`flex rounded-2xl p-1 ${theme === "dark" ? "bg-gray-800/60" : "bg-gray-100"}`}>
+                  {/* Type toggle — centred in header */}
+                  <div className={`flex rounded-2xl p-1 mx-auto`} style={{ background: "rgba(255,255,255,0.15)" }}>
                     {[{ key: "direct", label: "Direct Message", icon: <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
                        { key: "group",  label: "Group Chat",    icon: <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> }
                     ].map(({ key, label, icon }) => (
                       <button
                         key={key}
                         onClick={() => setNewContactType(key)}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${newContactType === key ? "text-white shadow-md" : theme === "dark" ? "text-gray-400 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"}`}
-                        style={newContactType === key ? { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" } : undefined}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all ${newContactType === key ? "bg-white text-violet-700 shadow-md" : "text-white/70 hover:text-white"}`}
                       >
                         {icon}{label}
                       </button>
                     ))}
                   </div>
+                  <button onClick={() => setShowAddContactModal(false)} className="relative z-10 w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:bg-white/20" style={{ background: "rgba(255,255,255,0.15)" }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
 
-                  {/* Name */}
-                  <div>
-                    <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{newContactType === "group" ? "Group Name *" : "Name *"}</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Alice Johnson"
-                      autoFocus
-                      value={newContactName}
-                      onChange={(e) => setNewContactName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
-                      className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
-                    />
-                  </div>
+                {/* Two-column body */}
+                <div className={`grid grid-cols-2 divide-x ${theme === "dark" ? "bg-[#1a1f2e] divide-gray-700/60" : "bg-white divide-gray-100"}`}>
 
-                  {/* Status (direct) / Description (group) */}
-                  {newContactType === "direct" ? (
+                  {/* ── LEFT: core fields + color ── */}
+                  <div className="p-6 flex flex-col gap-4">
+                    {/* Name */}
                     <div>
-                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Status (optional)</label>
+                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{newContactType === "group" ? "Group Name *" : "Name *"}</label>
                       <input
                         type="text"
-                        placeholder="e.g. Online • Secure"
-                        value={newContactPhone}
-                        onChange={(e) => setNewContactPhone(e.target.value)}
+                        placeholder="e.g. Alice Johnson"
+                        autoFocus
+                        value={newContactName}
+                        onChange={(e) => setNewContactName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
                         className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
                       />
                     </div>
-                  ) : (
-                    <div>
-                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Description (optional)</label>
-                      <input
-                        type="text"
-                        placeholder="What's this group about?"
-                        value={newGroupDescription}
-                        onChange={(e) => setNewGroupDescription(e.target.value)}
-                        className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
-                      />
-                    </div>
-                  )}
 
-                  {/* Members builder — group only */}
-                  {newContactType === "group" && (
-                    <div>
-                      <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-                        Members *
-                        <span className={`text-[10px] font-semibold normal-case tracking-normal px-1.5 py-0.5 rounded-full ${
-                          newGroupInitialMembers.length < 2
-                            ? theme === "dark" ? "bg-red-500/20 text-red-400" : "bg-red-50 text-red-500"
-                            : theme === "dark" ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-50 text-emerald-600"
-                        }`}>
-                          {newGroupInitialMembers.length}/2 min
-                        </span>
-                      </label>
-
-                      {/* Chips */}
-                      {newGroupInitialMembers.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          {newGroupInitialMembers.map((m) => (
-                            <span key={m.id} className={`flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full text-xs font-bold ${theme === "dark" ? "bg-gray-700 text-gray-200" : "bg-violet-50 text-violet-800"}`}>
-                              <span className={`w-5 h-5 rounded-full ${m.color} flex items-center justify-center text-white flex-shrink-0`} style={{ fontSize: "9px" }}>{m.name.charAt(0)}</span>
-                              {m.name}
-                              <button
-                                onClick={() => setNewGroupInitialMembers((prev) => prev.filter((x) => x.id !== m.id))}
-                                className={`ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${theme === "dark" ? "hover:bg-red-500/30 text-gray-400 hover:text-red-400" : "hover:bg-red-100 text-violet-400 hover:text-red-500"}`}
-                              >
-                                <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Input + Add */}
-                      <div className={`flex gap-2 p-1.5 rounded-2xl border ${theme === "dark" ? "bg-gray-800/60 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                    {/* Status / Description */}
+                    {newContactType === "direct" ? (
+                      <div>
+                        <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Status (optional)</label>
                         <input
                           type="text"
-                          value={newGroupMemberInput}
-                          onChange={(e) => setNewGroupMemberInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && newGroupMemberInput.trim()) {
+                          placeholder="e.g. Online • Secure"
+                          value={newContactPhone}
+                          onChange={(e) => setNewContactPhone(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
+                          className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Description (optional)</label>
+                        <input
+                          type="text"
+                          placeholder="What's this group about?"
+                          value={newGroupDescription}
+                          onChange={(e) => setNewGroupDescription(e.target.value)}
+                          className={`w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border transition-colors ${theme === "dark" ? "bg-gray-800/60 border-gray-700 text-white placeholder:text-gray-500 focus:border-violet-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-violet-400"}`}
+                        />
+                      </div>
+                    )}
+
+                    {/* Color picker */}
+                    <div className="mt-auto">
+                      <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Avatar Color</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {CONTACT_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => setNewContactColor(color)}
+                            className={`w-8 h-8 rounded-xl ${color} transition-all hover:scale-110 active:scale-95 flex items-center justify-center`}
+                            style={{ boxShadow: newContactColor === color ? "0 0 0 3px white, 0 0 0 5px #8b5cf6" : "none" }}
+                          >
+                            {newContactColor === color && (
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── RIGHT: members (group) or preview card (direct) ── */}
+                  <div className="p-6 flex flex-col gap-4">
+                    {newContactType === "group" ? (
+                      <>
+                        <label className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                          Members *
+                          <span className={`text-[10px] font-semibold normal-case tracking-normal px-1.5 py-0.5 rounded-full ${
+                            newGroupInitialMembers.length < 2
+                              ? theme === "dark" ? "bg-red-500/20 text-red-400" : "bg-red-50 text-red-500"
+                              : theme === "dark" ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-50 text-emerald-600"
+                          }`}>
+                            {newGroupInitialMembers.length}/2 min
+                          </span>
+                        </label>
+
+                        {/* Chips */}
+                        {newGroupInitialMembers.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {newGroupInitialMembers.map((m) => (
+                              <span key={m.id} className={`flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full text-xs font-bold ${theme === "dark" ? "bg-gray-700 text-gray-200" : "bg-violet-50 text-violet-800"}`}>
+                                <span className={`w-5 h-5 rounded-full ${m.color} flex items-center justify-center text-white flex-shrink-0`} style={{ fontSize: "9px" }}>{m.name.charAt(0)}</span>
+                                {m.name}
+                                <button
+                                  onClick={() => setNewGroupInitialMembers((prev) => prev.filter((x) => x.id !== m.id))}
+                                  className={`ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${theme === "dark" ? "hover:bg-red-500/30 text-gray-400 hover:text-red-400" : "hover:bg-red-100 text-violet-400 hover:text-red-500"}`}
+                                >
+                                  <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Input + Add */}
+                        <div className={`flex gap-2 p-1.5 rounded-2xl border ${theme === "dark" ? "bg-gray-800/60 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                          <input
+                            type="text"
+                            value={newGroupMemberInput}
+                            onChange={(e) => setNewGroupMemberInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && newGroupMemberInput.trim()) {
+                                const inputName = newGroupMemberInput.trim();
+                                const existing = contacts.find((c) => c.type === "direct" && c.name.toLowerCase() === inputName.toLowerCase());
+                                const alreadyAdded = newGroupInitialMembers.some((m) => m.name.toLowerCase() === inputName.toLowerCase());
+                                if (alreadyAdded) return;
+                                const colors = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-pink-500","bg-amber-500","bg-cyan-500","bg-rose-500","bg-indigo-500"];
+                                const entry = existing
+                                  ? { id: existing.id, name: existing.name, color: existing.color }
+                                  : { id: `new-${Date.now()}`, name: inputName, color: colors[Math.floor(Math.random() * colors.length)] };
+                                setNewGroupInitialMembers((prev) => [...prev, entry]);
+                                setNewGroupMemberInput("");
+                              }
+                            }}
+                            placeholder="Add by name — existing or new…"
+                            className={`flex-1 bg-transparent text-sm px-2 outline-none ${theme === "dark" ? "text-white placeholder-gray-600" : "text-gray-900 placeholder-gray-400"}`}
+                          />
+                          <button
+                            onClick={() => {
                               const inputName = newGroupMemberInput.trim();
+                              if (!inputName) return;
                               const existing = contacts.find((c) => c.type === "direct" && c.name.toLowerCase() === inputName.toLowerCase());
                               const alreadyAdded = newGroupInitialMembers.some((m) => m.name.toLowerCase() === inputName.toLowerCase());
                               if (alreadyAdded) return;
@@ -3845,86 +3885,62 @@ function App() {
                                 : { id: `new-${Date.now()}`, name: inputName, color: colors[Math.floor(Math.random() * colors.length)] };
                               setNewGroupInitialMembers((prev) => [...prev, entry]);
                               setNewGroupMemberInput("");
-                            }
-                          }}
-                          placeholder="Add by name — existing or new…"
-                          className={`flex-1 bg-transparent text-sm px-2 outline-none ${theme === "dark" ? "text-white placeholder-gray-600" : "text-gray-900 placeholder-gray-400"}`}
-                        />
-                        <button
-                          onClick={() => {
-                            const inputName = newGroupMemberInput.trim();
-                            if (!inputName) return;
-                            const existing = contacts.find((c) => c.type === "direct" && c.name.toLowerCase() === inputName.toLowerCase());
-                            const alreadyAdded = newGroupInitialMembers.some((m) => m.name.toLowerCase() === inputName.toLowerCase());
-                            if (alreadyAdded) return;
-                            const colors = ["bg-violet-500","bg-blue-500","bg-emerald-500","bg-pink-500","bg-amber-500","bg-cyan-500","bg-rose-500","bg-indigo-500"];
-                            const entry = existing
-                              ? { id: existing.id, name: existing.name, color: existing.color }
-                              : { id: `new-${Date.now()}`, name: inputName, color: colors[Math.floor(Math.random() * colors.length)] };
-                            setNewGroupInitialMembers((prev) => [...prev, entry]);
-                            setNewGroupMemberInput("");
-                          }}
-                          disabled={!newGroupMemberInput.trim()}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105 disabled:opacity-40"
-                          style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
-                        >
-                          + Add
-                        </button>
+                            }}
+                            disabled={!newGroupMemberInput.trim()}
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all hover:scale-105 disabled:opacity-40"
+                            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+                          >
+                            + Add
+                          </button>
+                        </div>
+
+                        {/* Existing contacts quick-pick */}
+                        {(() => {
+                          const suggestions = contacts.filter(
+                            (c) => c.type === "direct" &&
+                            !newGroupInitialMembers.some((m) => m.id === c.id) &&
+                            (newGroupMemberInput === "" || c.name.toLowerCase().includes(newGroupMemberInput.toLowerCase()))
+                          );
+                          if (suggestions.length === 0) return null;
+                          return (
+                            <div className={`rounded-2xl border overflow-hidden ${theme === "dark" ? "border-gray-700 bg-gray-800/60" : "border-gray-200 bg-white"}`}>
+                              {suggestions.map((c) => (
+                                <button
+                                  key={c.id}
+                                  onClick={() => {
+                                    setNewGroupInitialMembers((prev) => [...prev, { id: c.id, name: c.name, color: c.color }]);
+                                    setNewGroupMemberInput("");
+                                  }}
+                                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${theme === "dark" ? "hover:bg-gray-700/60" : "hover:bg-violet-50"}`}
+                                >
+                                  <div className={`w-6 h-6 rounded-lg ${c.color} flex items-center justify-center flex-shrink-0`}>
+                                    <span className="text-white font-black" style={{ fontSize: "9px" }}>{c.name.charAt(0)}</span>
+                                  </div>
+                                  <span className={`text-xs font-semibold ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>{c.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </>
+                    ) : (
+                      /* Direct contact — preview card */
+                      <div className="flex flex-col items-center justify-center h-full gap-4 py-4">
+                        <div className={`w-20 h-20 ${newContactColor} rounded-3xl flex items-center justify-center shadow-xl transition-all duration-300`}>
+                          <span className="text-white font-black text-3xl">{newContactName ? newContactName.charAt(0).toUpperCase() : "?"}</span>
+                        </div>
+                        <div className="text-center">
+                          <p className={`font-black text-lg tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{newContactName || "New Contact"}</p>
+                          {newContactPhone && <p className={`text-xs mt-1 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{newContactPhone}</p>}
+                        </div>
+                        <p className={`text-xs text-center max-w-[180px] ${theme === "dark" ? "text-gray-600" : "text-gray-400"}`}>Preview of how this contact will appear in your sidebar</p>
                       </div>
-
-                      {/* Existing contacts quick-pick */}
-                      {(() => {
-                        const suggestions = contacts.filter(
-                          (c) => c.type === "direct" &&
-                          !newGroupInitialMembers.some((m) => m.id === c.id) &&
-                          (newGroupMemberInput === "" || c.name.toLowerCase().includes(newGroupMemberInput.toLowerCase()))
-                        );
-                        if (suggestions.length === 0) return null;
-                        return (
-                          <div className={`mt-1.5 rounded-2xl border overflow-hidden ${theme === "dark" ? "border-gray-700 bg-gray-800/60" : "border-gray-200 bg-white"}`}>
-                            {suggestions.map((c) => (
-                              <button
-                                key={c.id}
-                                onClick={() => {
-                                  setNewGroupInitialMembers((prev) => [...prev, { id: c.id, name: c.name, color: c.color }]);
-                                  setNewGroupMemberInput("");
-                                }}
-                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${theme === "dark" ? "hover:bg-gray-700/60" : "hover:bg-violet-50"}`}
-                              >
-                                <div className={`w-6 h-6 rounded-lg ${c.color} flex items-center justify-center flex-shrink-0`}>
-                                  <span className="text-white font-black" style={{ fontSize: "9px" }}>{c.name.charAt(0)}</span>
-                                </div>
-                                <span className={`text-xs font-semibold ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>{c.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-
-                  {/* Color picker */}
-                  <div>
-                    <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>Avatar Color</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {CONTACT_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => setNewContactColor(color)}
-                          className={`w-8 h-8 rounded-xl ${color} transition-all hover:scale-110 active:scale-95 flex items-center justify-center`}
-                          style={{ boxShadow: newContactColor === color ? "0 0 0 3px white, 0 0 0 5px #8b5cf6" : "none" }}
-                        >
-                          {newContactColor === color && (
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Footer / CTA */}
-                <div className={`px-6 py-4 flex gap-3 border-t ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-gray-50 border-gray-100"}`}>
+                {/* Footer / CTA — full width */}
+                <div className={`px-8 py-4 flex gap-3 border-t ${theme === "dark" ? "bg-[#111827] border-gray-800" : "bg-gray-50 border-gray-100"}`}>
                   <button onClick={() => setShowAddContactModal(false)} className={`flex-1 py-2.5 rounded-2xl text-sm font-bold transition-all active:scale-95 ${theme === "dark" ? "bg-gray-800 text-gray-300 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}>
                     Cancel
                   </button>
