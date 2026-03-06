@@ -2204,7 +2204,7 @@ function App() {
   // This function simulates sharing a contact in the chat. When you select a contact to share, it creates a new message of type "contact" with the contact's information and adds it to the messages state. It then closes the contact sharing UI.
   const handleShareContact = (contact) => {
     const contactMsg = {
-      id: Date.now(),
+      id: String(Date.now()),
       sender: "me",
       type: "contact", // This triggers your contact card UI
       text: contact.name,
@@ -2366,7 +2366,7 @@ function App() {
       const replyTimer = setTimeout(() => {
         const activeContact = contacts.find((c) => c.id === activeContactId);
         const reply = {
-          id: Date.now(),
+          id: String(Date.now()),
           text: `Hey! This is ${activeContact?.name}. Received your message: "${lastMessage.text}"`,
           sender: "them",
           contactId: activeContactId,
@@ -2476,7 +2476,7 @@ function App() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const m = payload.new;
         setMessages((prev) => {
-          if (prev.some((msg) => msg.id === String(m.id))) return prev; // dedupe
+          if (prev.some((msg) => String(msg.id) === String(m.id))) return prev; // dedupe
           return [...prev, fromDBMessage(m)];
         });
       })
@@ -2503,12 +2503,12 @@ function App() {
     if (newMessage.trim() === "") return;
 
     const msg = {
-      id: Date.now(),
+      id: String(Date.now()),
       text: newMessage,
       sender: "me",
-      contactId: activeContactId, // TAG THE MESSAGE TO THE ACTIVE CHAT
+      contactId: activeContactId,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      status: "sent", // New property: 'sent', 'delivered', or 'read'
+      status: "sent",
     };
 
     // Update the messages state by adding the new message to the existing array of messages.
@@ -2560,7 +2560,7 @@ function App() {
     const isImage = file.type.startsWith("image/");
 
     const msg = {
-      id: Date.now(),
+      id: String(Date.now()),
       text: file.name,
       fileUrl: fileUrl,
       type: isImage ? "image" : "file",
