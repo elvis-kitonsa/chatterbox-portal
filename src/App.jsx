@@ -972,6 +972,9 @@ function App() {
   const [draftProfile, setDraftProfile] = useState({ ...myProfile });
   const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
   const [showContactProfile, setShowContactProfile] = useState(false);
+  const [blockedContacts, setBlockedContacts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("chatterbox_blocked") || "[]"); } catch { return []; }
+  });
   const [newGroupMemberName, setNewGroupMemberName] = useState("");
   // New group creation form extras
   const [newGroupDescription, setNewGroupDescription] = useState("");
@@ -2424,6 +2427,7 @@ function App() {
   useEffect(() => { localStorage.setItem("chatterbox_theme", theme); }, [theme]);
   useEffect(() => { localStorage.setItem("chatterbox_profile", JSON.stringify(myProfile)); }, [myProfile]);
   useEffect(() => { localStorage.setItem("chatterbox_settings", JSON.stringify(userSettings)); }, [userSettings]);
+  useEffect(() => { localStorage.setItem("chatterbox_blocked", JSON.stringify(blockedContacts)); }, [blockedContacts]);
   useEffect(() => {
     if (customWallpaperUrl) localStorage.setItem("chatterbox_wallpaper_img", customWallpaperUrl);
     else localStorage.removeItem("chatterbox_wallpaper_img");
@@ -4788,13 +4792,31 @@ function App() {
                     )}
 
                     {/* ── DANGER ACTIONS (direct contacts only) ── */}
-                    {!isGroup && (
+                    {!isGroup && (() => {
+                      const isBlocked = blockedContacts.includes(ac.id);
+                      const toggleBlock = () => {
+                        setBlockedContacts((prev) =>
+                          isBlocked ? prev.filter((id) => id !== ac.id) : [...prev, ac.id]
+                        );
+                      };
+                      return (
                       <div className={`mx-3 rounded-2xl overflow-hidden mb-5 ${rowBg}`}>
-                        <button className={`w-full flex items-center gap-4 px-4 py-3 border-b ${divider} hover:bg-red-500/5 transition-colors`}>
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-                          </svg>
-                          <span className="text-sm font-semibold text-red-500">Block {ac.name}</span>
+                        <button onClick={toggleBlock} className={`w-full flex items-center gap-4 px-4 py-3 border-b ${divider} hover:bg-red-500/5 transition-colors`}>
+                          {isBlocked ? (
+                            <>
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                              <span className="text-sm font-semibold text-green-500">Unblock {ac.name}</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                              </svg>
+                              <span className="text-sm font-semibold text-red-500">Block {ac.name}</span>
+                            </>
+                          )}
                         </button>
                         <button className={`w-full flex items-center gap-4 px-4 py-3 hover:bg-red-500/5 transition-colors`}>
                           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -4804,7 +4826,8 @@ function App() {
                           <span className="text-sm font-semibold text-red-500">Report {ac.name}</span>
                         </button>
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -5191,6 +5214,34 @@ function App() {
 
           {/* Floating Input Pod */}
           <footer className="mt-4 flex items-end gap-2 p-2 max-w-5xl mx-auto w-full">
+            {/* Blocked contact bar — replaces input entirely */}
+            {(() => {
+              const ac = contacts.find((c) => c.id === activeContactId);
+              if (!ac || ac.type === "group" || !blockedContacts.includes(ac.id)) return null;
+              return (
+                <div className={`flex-1 flex items-center justify-between gap-3 px-5 py-4 rounded-[1.5rem] border ${theme === "dark" ? "bg-[#1a1f2e] border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+                  <div className="flex items-center gap-3">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                    </svg>
+                    <span className={`text-sm font-semibold ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                      You blocked <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>{ac.name}</span>
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setBlockedContacts((prev) => prev.filter((id) => id !== ac.id))}
+                    className="text-xs font-bold text-violet-500 hover:text-violet-400 transition-colors uppercase tracking-wider"
+                  >
+                    Unblock
+                  </button>
+                </div>
+              );
+            })()}
+            {/* Hide the rest of the footer when blocked */}
+            {(() => {
+              const ac = contacts.find((c) => c.id === activeContactId);
+              if (ac && ac.type !== "group" && blockedContacts.includes(ac.id)) return null;
+              return (<>
             {/* 1. THE MAIN CAPSULE (White/Gray background) */}
             <div className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-[1.5rem] shadow-sm border ${theme === "dark" ? "bg-[#1a1f2e] border-gray-700" : "bg-white border-gray-200"}`}>
               {/* ── Emoji Picker ── */}
@@ -5382,6 +5433,8 @@ function App() {
                 </svg>
               )}
             </button>
+            </>);
+            })()}
           </footer>
         </main>
         {/* Audio playback is handled by the audioPlayerRef Audio() instance — no DOM element needed */}
