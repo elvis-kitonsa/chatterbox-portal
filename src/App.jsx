@@ -2984,7 +2984,7 @@ function App() {
         <div className={`absolute bottom-[10%] right-[5%] w-[500px] h-[500px] rounded-full blur-[150px] pointer-events-none ${theme === "dark" ? "bg-indigo-900/15" : "bg-indigo-500/5"}`}></div>
 
         {/* 📱 1. ULTRA-MODERN SIDEBAR (Glass Panel) */}
-        <aside className="w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
+        <aside className="chat-header-bounce w-[340px] m-4 mr-0 rounded-[2.5rem] flex flex-col shadow-2xl z-20 overflow-hidden" style={{ background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)" }}>
           {/* Decorative blobs inside sidebar */}
           <div className="absolute rounded-full pointer-events-none" style={{ width: 260, height: 260, background: "rgba(255,255,255,0.06)", top: "-60px", right: "-60px" }} />
           <div className="absolute rounded-full pointer-events-none" style={{ width: 180, height: 180, background: "rgba(255,255,255,0.04)", bottom: "20%", left: "-60px" }} />
@@ -4727,7 +4727,7 @@ function App() {
             const fontSizeClass = { small: "text-sm", medium: "text-base", large: "text-lg" }[userSettings.fontSize] || "text-base";
             return (
           <div
-            className={`flex-1 rounded-[2.5rem] border-2 overflow-hidden relative transition-all duration-500 ${
+            className={`chat-header-bounce flex-1 rounded-[2.5rem] border-2 overflow-hidden relative transition-all duration-500 ${
               theme === "dark" ? "border-gray-600/70" : "border-violet-200/80"
             }`}
             style={{
