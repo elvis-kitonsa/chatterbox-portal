@@ -977,6 +977,10 @@ function App() {
   const [newGroupInitialMembers, setNewGroupInitialMembers] = useState([]); // [{id,name,color}]
   const [newGroupMemberInput, setNewGroupMemberInput] = useState("");
 
+  // Wallpaper extras
+  const [wallpaperTab, setWallpaperTab] = useState("colors");
+  const [customWallpaperUrl, setCustomWallpaperUrl] = useState(() => localStorage.getItem("chatterbox_wallpaper_img") || null);
+
   // Onboarding
   const [showWelcome, setShowWelcome] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -2419,6 +2423,10 @@ function App() {
   useEffect(() => { localStorage.setItem("chatterbox_theme", theme); }, [theme]);
   useEffect(() => { localStorage.setItem("chatterbox_profile", JSON.stringify(myProfile)); }, [myProfile]);
   useEffect(() => { localStorage.setItem("chatterbox_settings", JSON.stringify(userSettings)); }, [userSettings]);
+  useEffect(() => {
+    if (customWallpaperUrl) localStorage.setItem("chatterbox_wallpaper_img", customWallpaperUrl);
+    else localStorage.removeItem("chatterbox_wallpaper_img");
+  }, [customWallpaperUrl]);
 
   // ── Supabase: load contacts + messages on login, set up real-time ──────
   useEffect(() => {
@@ -4165,32 +4173,113 @@ function App() {
                       {/* Wallpaper */}
                       <div>
                         <p className={`text-[11px] font-black uppercase tracking-wider mb-3 ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>Chat Wallpaper</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          {[
-                            { key: "default", label: "Default", light: "#ffffff", dark: "#111827" },
-                            { key: "violet", label: "Violet", light: "linear-gradient(135deg,#ede9fe,#ddd6fe)", dark: "linear-gradient(135deg,#1e1b4b,#2e1065)" },
-                            { key: "dusk", label: "Dusk", light: "linear-gradient(135deg,#fdf2f8,#fce7f3)", dark: "linear-gradient(135deg,#1a0a1a,#4c0519)" },
-                            { key: "mint", label: "Mint", light: "linear-gradient(135deg,#d1fae5,#e0f2fe)", dark: "linear-gradient(135deg,#0c4a6e,#064e3b)" },
-                          ].map(({ key, label, light, dark }) => {
-                            const isActive = userSettings.wallpaper === key;
-                            const bg = theme === "dark" ? dark : light;
-                            return (
-                              <button
-                                key={key}
-                                onClick={() => setUserSettings((s) => ({ ...s, wallpaper: key }))}
-                                className={`relative h-16 rounded-2xl overflow-hidden border-2 transition-all ${isActive ? "border-violet-500 scale-[1.03]" : theme === "dark" ? "border-gray-700 hover:border-gray-500" : "border-gray-200 hover:border-gray-300"}`}
-                                style={{ background: bg.startsWith("#") ? bg : undefined, backgroundImage: bg.startsWith("linear") ? bg : undefined }}
-                              >
-                                <span className={`absolute bottom-1.5 left-2 text-[10px] font-bold ${theme === "dark" ? "text-white/70" : "text-gray-500"}`}>{label}</span>
-                                {isActive && (
-                                  <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
-                                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
+
+                        {/* Tab switcher */}
+                        <div className={`flex rounded-2xl p-1 mb-3 ${theme === "dark" ? "bg-gray-800/60" : "bg-gray-100"}`}>
+                          {[{ id: "colors", label: "Colors" }, { id: "patterns", label: "Patterns" }, { id: "photo", label: "My Photo" }].map((t) => (
+                            <button key={t.id} onClick={() => setWallpaperTab(t.id)}
+                              className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${wallpaperTab === t.id ? "text-white shadow-md" : theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
+                              style={wallpaperTab === t.id ? { background: "linear-gradient(135deg,#6366f1,#8b5cf6)" } : undefined}
+                            >{t.label}</button>
+                          ))}
                         </div>
+
+                        {/* Colors tab */}
+                        {wallpaperTab === "colors" && (
+                          <div className="grid grid-cols-4 gap-2">
+                            {[
+                              { key: "default",  label: "White",    lightBg: "#ffffff",   darkBg: "#111827" },
+                              { key: "solid-slate", label: "Slate",  lightBg: "#f1f5f9",   darkBg: "#1e293b" },
+                              { key: "solid-sky",   label: "Sky",    lightBg: "#eff6ff",   darkBg: "#0c1a2e" },
+                              { key: "solid-sage",  label: "Sage",   lightBg: "#f0fdf4",   darkBg: "#052e16" },
+                              { key: "solid-rose",  label: "Rose",   lightBg: "#fff1f2",   darkBg: "#2d0a14" },
+                              { key: "solid-sand",  label: "Sand",   lightBg: "#fffbeb",   darkBg: "#1c1100" },
+                              { key: "solid-lavender", label: "Lavender", lightBg: "#faf5ff", darkBg: "#1a0533" },
+                              { key: "violet",   label: "Violet",  lightBg: "linear-gradient(135deg,#ede9fe,#ddd6fe)", darkBg: "linear-gradient(135deg,#1e1b4b,#2e1065)" },
+                              { key: "dusk",     label: "Dusk",    lightBg: "linear-gradient(135deg,#fdf2f8,#fce7f3)", darkBg: "linear-gradient(135deg,#1a0a1a,#4c0519)" },
+                              { key: "mint",     label: "Mint",    lightBg: "linear-gradient(135deg,#d1fae5,#e0f2fe)", darkBg: "linear-gradient(135deg,#0c4a6e,#064e3b)" },
+                              { key: "solid-midnight", label: "Midnight", lightBg: "#1e1b4b", darkBg: "#0d0b2a" },
+                              { key: "solid-charcoal", label: "Charcoal", lightBg: "#374151", darkBg: "#111827" },
+                            ].map(({ key, label, lightBg, darkBg }) => {
+                              const isActive = userSettings.wallpaper === key;
+                              const bg = theme === "dark" ? darkBg : lightBg;
+                              const isGrad = bg.startsWith("linear");
+                              return (
+                                <button key={key} onClick={() => setUserSettings((s) => ({ ...s, wallpaper: key }))}
+                                  className={`relative h-12 rounded-xl overflow-hidden border-2 transition-all ${isActive ? "border-violet-500 scale-[1.05]" : theme === "dark" ? "border-gray-700 hover:border-gray-500" : "border-gray-200 hover:border-violet-200"}`}
+                                  style={isGrad ? { backgroundImage: bg } : { backgroundColor: bg }}
+                                >
+                                  <span className="absolute bottom-0.5 left-1.5 text-[9px] font-bold" style={{ color: "rgba(80,80,80,0.7)", textShadow: "0 0 3px rgba(255,255,255,0.8)" }}>{label}</span>
+                                  {isActive && <div className="absolute top-1 right-1 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center"><svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Patterns tab */}
+                        {wallpaperTab === "patterns" && (
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { key: "pattern-dots",      label: "Dots",     lightStyle: { backgroundColor: "#f5f3ff", backgroundImage: "radial-gradient(circle, #a78bfa 1px, transparent 1px)", backgroundSize: "20px 20px" }, darkStyle: { backgroundColor: "#1a0533", backgroundImage: "radial-gradient(circle, #4c1d95 1px, transparent 1px)", backgroundSize: "20px 20px" } },
+                              { key: "pattern-grid",      label: "Grid",     lightStyle: { backgroundColor: "#f8fafc", backgroundImage: "linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px)", backgroundSize: "24px 24px" }, darkStyle: { backgroundColor: "#0f1117", backgroundImage: "linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(90deg, #1e293b 1px, transparent 1px)", backgroundSize: "24px 24px" } },
+                              { key: "pattern-diagonal",  label: "Lines",    lightStyle: { backgroundColor: "#faf5ff", backgroundImage: "repeating-linear-gradient(45deg, #ddd6fe, #ddd6fe 1px, transparent 1px, transparent 16px)" }, darkStyle: { backgroundColor: "#1a0533", backgroundImage: "repeating-linear-gradient(45deg, #2e1065, #2e1065 1px, transparent 1px, transparent 16px)" } },
+                              { key: "pattern-crosshatch", label: "Crosshatch", lightStyle: { backgroundColor: "#f0fdf4", backgroundImage: "repeating-linear-gradient(45deg, #bbf7d0, #bbf7d0 1px, transparent 1px, transparent 12px), repeating-linear-gradient(-45deg, #bbf7d0, #bbf7d0 1px, transparent 1px, transparent 12px)" }, darkStyle: { backgroundColor: "#022c22", backgroundImage: "repeating-linear-gradient(45deg, #064e3b, #064e3b 1px, transparent 1px, transparent 12px), repeating-linear-gradient(-45deg, #064e3b, #064e3b 1px, transparent 1px, transparent 12px)" } },
+                              { key: "pattern-waves",     label: "Waves",    lightStyle: { backgroundColor: "#eff6ff", backgroundImage: "repeating-linear-gradient(135deg, #bfdbfe 0px, #bfdbfe 2px, transparent 2px, transparent 14px)" }, darkStyle: { backgroundColor: "#0c1a2e", backgroundImage: "repeating-linear-gradient(135deg, #1e3a5f 0px, #1e3a5f 2px, transparent 2px, transparent 14px)" } },
+                              { key: "pattern-bubbles",   label: "Bubbles",  lightStyle: { backgroundColor: "#fff1f2", backgroundImage: "radial-gradient(circle at 25% 25%, #fecdd3 20%, transparent 20%), radial-gradient(circle at 75% 75%, #fecdd3 20%, transparent 20%)", backgroundSize: "32px 32px" }, darkStyle: { backgroundColor: "#2d0a14", backgroundImage: "radial-gradient(circle at 25% 25%, #881337 20%, transparent 20%), radial-gradient(circle at 75% 75%, #881337 20%, transparent 20%)", backgroundSize: "32px 32px" } },
+                            ].map(({ key, label, lightStyle, darkStyle }) => {
+                              const isActive = userSettings.wallpaper === key;
+                              const style = theme === "dark" ? darkStyle : lightStyle;
+                              return (
+                                <button key={key} onClick={() => setUserSettings((s) => ({ ...s, wallpaper: key }))}
+                                  className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all ${isActive ? "border-violet-500 scale-[1.04]" : theme === "dark" ? "border-gray-700 hover:border-gray-500" : "border-gray-200 hover:border-violet-200"}`}
+                                  style={style}
+                                >
+                                  <span className="absolute bottom-1 left-1.5 text-[9px] font-bold" style={{ color: "rgba(80,80,80,0.8)", textShadow: "0 0 4px rgba(255,255,255,0.9)" }}>{label}</span>
+                                  {isActive && <div className="absolute top-1 right-1 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center"><svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* My Photo tab */}
+                        {wallpaperTab === "photo" && (
+                          <div className="flex flex-col gap-3">
+                            {customWallpaperUrl && (
+                              <div className="relative h-28 rounded-2xl overflow-hidden border-2 border-violet-500">
+                                <img src={customWallpaperUrl} alt="Wallpaper" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-2">
+                                  <span className="text-white text-xs font-bold">Current wallpaper</span>
+                                </div>
+                              </div>
+                            )}
+                            <label className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-dashed cursor-pointer transition-colors ${theme === "dark" ? "border-gray-600 hover:border-violet-500 bg-gray-800/40" : "border-gray-300 hover:border-violet-400 bg-gray-50"}`}>
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (ev) => {
+                                  setCustomWallpaperUrl(ev.target.result);
+                                  setUserSettings((s) => ({ ...s, wallpaper: "custom-image" }));
+                                };
+                                reader.readAsDataURL(file);
+                                e.target.value = "";
+                              }} />
+                              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke={theme === "dark" ? "#8b5cf6" : "#7c3aed"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                              </svg>
+                              <span className={`text-xs font-bold ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{customWallpaperUrl ? "Choose a different photo" : "Upload a photo from your device"}</span>
+                            </label>
+                            {customWallpaperUrl && (
+                              <button onClick={() => { setCustomWallpaperUrl(null); setUserSettings((s) => ({ ...s, wallpaper: "default" })); }}
+                                className={`py-2 rounded-2xl text-xs font-bold text-red-500 transition-colors ${theme === "dark" ? "bg-red-500/10 hover:bg-red-500/20" : "bg-red-50 hover:bg-red-100"}`}>
+                                Remove custom wallpaper
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Font Size */}
@@ -4608,11 +4697,32 @@ function App() {
 
           {/* Message Viewport */}
           {(() => {
+            const w = userSettings.wallpaper;
+            const isDark = theme === "dark";
             const wallpaperStyles = {
-              default: theme === "dark" ? { backgroundColor: "#111827" } : { backgroundColor: "#ffffff" },
-              violet: theme === "dark" ? { background: "linear-gradient(135deg, #1e1b4b, #2e1065)" } : { background: "linear-gradient(135deg, #ede9fe, #ddd6fe)" },
-              dusk: theme === "dark" ? { background: "linear-gradient(135deg, #1a0a1a, #4c0519)" } : { background: "linear-gradient(135deg, #fdf2f8, #fce7f3)" },
-              mint: theme === "dark" ? { background: "linear-gradient(135deg, #0c4a6e, #064e3b)" } : { background: "linear-gradient(135deg, #d1fae5, #e0f2fe)" },
+              // ── Legacy gradients (kept for compatibility) ──
+              default:   isDark ? { backgroundColor: "#111827" } : { backgroundColor: "#ffffff" },
+              violet:    isDark ? { background: "linear-gradient(135deg,#1e1b4b,#2e1065)" } : { background: "linear-gradient(135deg,#ede9fe,#ddd6fe)" },
+              dusk:      isDark ? { background: "linear-gradient(135deg,#1a0a1a,#4c0519)" } : { background: "linear-gradient(135deg,#fdf2f8,#fce7f3)" },
+              mint:      isDark ? { background: "linear-gradient(135deg,#0c4a6e,#064e3b)" } : { background: "linear-gradient(135deg,#d1fae5,#e0f2fe)" },
+              // ── Solid colors ──
+              "solid-slate":    isDark ? { backgroundColor: "#1e293b" } : { backgroundColor: "#f1f5f9" },
+              "solid-sky":      isDark ? { backgroundColor: "#0c1a2e" } : { backgroundColor: "#eff6ff" },
+              "solid-sage":     isDark ? { backgroundColor: "#052e16" } : { backgroundColor: "#f0fdf4" },
+              "solid-rose":     isDark ? { backgroundColor: "#2d0a14" } : { backgroundColor: "#fff1f2" },
+              "solid-sand":     isDark ? { backgroundColor: "#1c1100" } : { backgroundColor: "#fffbeb" },
+              "solid-lavender": isDark ? { backgroundColor: "#1a0533" } : { backgroundColor: "#faf5ff" },
+              "solid-midnight": isDark ? { backgroundColor: "#0d0b2a" } : { backgroundColor: "#1e1b4b" },
+              "solid-charcoal": isDark ? { backgroundColor: "#111827" } : { backgroundColor: "#374151" },
+              // ── Patterns ──
+              "pattern-dots":      isDark ? { backgroundColor: "#1a0533", backgroundImage: "radial-gradient(circle,#4c1d95 1px,transparent 1px)", backgroundSize: "20px 20px" } : { backgroundColor: "#f5f3ff", backgroundImage: "radial-gradient(circle,#a78bfa 1px,transparent 1px)", backgroundSize: "20px 20px" },
+              "pattern-grid":      isDark ? { backgroundColor: "#0f1117", backgroundImage: "linear-gradient(#1e293b 1px,transparent 1px),linear-gradient(90deg,#1e293b 1px,transparent 1px)", backgroundSize: "24px 24px" } : { backgroundColor: "#f8fafc", backgroundImage: "linear-gradient(#e2e8f0 1px,transparent 1px),linear-gradient(90deg,#e2e8f0 1px,transparent 1px)", backgroundSize: "24px 24px" },
+              "pattern-diagonal":  isDark ? { backgroundColor: "#1a0533", backgroundImage: "repeating-linear-gradient(45deg,#2e1065,#2e1065 1px,transparent 1px,transparent 16px)" } : { backgroundColor: "#faf5ff", backgroundImage: "repeating-linear-gradient(45deg,#ddd6fe,#ddd6fe 1px,transparent 1px,transparent 16px)" },
+              "pattern-crosshatch":isDark ? { backgroundColor: "#022c22", backgroundImage: "repeating-linear-gradient(45deg,#064e3b,#064e3b 1px,transparent 1px,transparent 12px),repeating-linear-gradient(-45deg,#064e3b,#064e3b 1px,transparent 1px,transparent 12px)" } : { backgroundColor: "#f0fdf4", backgroundImage: "repeating-linear-gradient(45deg,#bbf7d0,#bbf7d0 1px,transparent 1px,transparent 12px),repeating-linear-gradient(-45deg,#bbf7d0,#bbf7d0 1px,transparent 1px,transparent 12px)" },
+              "pattern-waves":     isDark ? { backgroundColor: "#0c1a2e", backgroundImage: "repeating-linear-gradient(135deg,#1e3a5f 0px,#1e3a5f 2px,transparent 2px,transparent 14px)" } : { backgroundColor: "#eff6ff", backgroundImage: "repeating-linear-gradient(135deg,#bfdbfe 0px,#bfdbfe 2px,transparent 2px,transparent 14px)" },
+              "pattern-bubbles":   isDark ? { backgroundColor: "#2d0a14", backgroundImage: "radial-gradient(circle at 25% 25%,#881337 20%,transparent 20%),radial-gradient(circle at 75% 75%,#881337 20%,transparent 20%)", backgroundSize: "32px 32px" } : { backgroundColor: "#fff1f2", backgroundImage: "radial-gradient(circle at 25% 25%,#fecdd3 20%,transparent 20%),radial-gradient(circle at 75% 75%,#fecdd3 20%,transparent 20%)", backgroundSize: "32px 32px" },
+              // ── Custom photo ──
+              "custom-image": customWallpaperUrl ? { backgroundImage: `url(${customWallpaperUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : (isDark ? { backgroundColor: "#111827" } : { backgroundColor: "#ffffff" }),
             };
             const fontSizeClass = { small: "text-sm", medium: "text-base", large: "text-lg" }[userSettings.fontSize] || "text-base";
             return (
