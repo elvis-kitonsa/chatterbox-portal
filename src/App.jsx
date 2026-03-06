@@ -5417,7 +5417,7 @@ function App() {
                   isRecording ? stopAndSendVoiceNote() : startRecording();
                 }
               }}
-              className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition-all flex-shrink-0 z-50 ${isRecording ? "bg-red-500 animate-pulse" : ""}`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md transition-all duration-150 flex-shrink-0 z-50 hover:scale-110 hover:shadow-lg active:scale-95 ${isRecording ? "bg-red-500 animate-pulse" : "hover:brightness-110"}`}
               style={isRecording ? undefined : { background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
             >
               {newMessage.trim() ? (
