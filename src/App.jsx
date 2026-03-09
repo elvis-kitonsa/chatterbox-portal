@@ -932,11 +932,7 @@ function App() {
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactColor, setNewContactColor] = useState("bg-violet-500");
   const [newContactType, setNewContactType] = useState("direct");
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hey, how is the ChatterBox progress?", sender: "them", time: "1:05 PM", contactId: "tech-lead" },
-    { id: 2, text: "The login portal is merged into main!", sender: "me", time: "1:08 PM", status: "read", contactId: "tech-lead" },
-    { id: 3, text: "Hello chat", sender: "me", time: "3:29 PM", status: "delivered", contactId: "tech-lead" },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState(""); // This will be used to store the text of the new message being typed in the input field.
   const [searchTerm, setSearchTerm] = useState(""); // This will be used to implement the search functionality in the sidebar.
 
@@ -2477,10 +2473,10 @@ function App() {
       }
     });
 
-    // Load messages
+    // Load messages — always overwrite local state with DB truth (even if empty)
     supabase.from("messages").select("*").order("created_at", { ascending: true }).then(({ data, error }) => {
       if (error) { console.error("Error loading messages:", error); return; }
-      if (data && data.length > 0) setMessages(data.map(fromDBMessage));
+      setMessages(data ? data.map(fromDBMessage) : []);
     });
 
     // Real-time: new messages from other senders appear instantly
@@ -2515,8 +2511,9 @@ function App() {
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
 
+    const tempId = `temp-${Date.now()}`;
     const msg = {
-      id: String(Date.now()),
+      id: tempId,
       text: newMessage,
       sender: "me",
       contactId: activeContactId,
@@ -2524,19 +2521,23 @@ function App() {
       status: "sent",
     };
 
-    // Update the messages state by adding the new message to the existing array of messages.
-    setMessages([...messages, msg]);
+    setMessages((prev) => [...prev, msg]);
     setNewMessage("");
 
-    // Persist to Supabase
+    // Persist to Supabase — omit id so DB auto-generates it, then replace tempId with real DB id
     supabase.from("messages").insert({
-      id: String(msg.id),
       contact_id: msg.contactId,
       sender: msg.sender,
       text: msg.text,
       type: "text",
       status: msg.status,
-    }).then(({ error }) => { if (error) console.error("Error saving message:", error); });
+    }).select().then(({ data, error }) => {
+      if (error) { console.error("Error saving message:", error); return; }
+      if (data?.[0]) {
+        const dbId = String(data[0].id);
+        setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, id: dbId } : m));
+      }
+    });
 
     // If the active contact was added via BLE, also send over Bluetooth
     const activeContact = contacts.find((c) => c.id === activeContactId);
@@ -2585,6 +2586,21 @@ function App() {
 
     setMessages((prevMessages) => [...prevMessages, msg]);
     e.target.value = "";
+
+    // Persist to Supabase (blob URL won't survive a refresh, but the record will)
+    supabase.from("messages").insert({
+      contact_id: msg.contactId,
+      sender: msg.sender,
+      text: msg.text,
+      type: msg.type,
+      status: msg.status,
+    }).select().then(({ data, error }) => {
+      if (error) { console.error("Error saving file message:", error); return; }
+      if (data?.[0]) {
+        const dbId = String(data[0].id);
+        setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, id: dbId } : m));
+      }
+    });
   };
 
   // --- NEW VOICE NOTE FUNCTIONS START ---
@@ -2679,6 +2695,21 @@ function App() {
       setVoiceWaveforms((prev) => ({ ...prev, [msgId]: waveformData }));
       setMessages((prev) => [...prev, voiceMsg]);
       audioChunks.current = [];
+
+      // Persist to Supabase (blob URL is local-only, duration is saved for display)
+      supabase.from("messages").insert({
+        contact_id: voiceMsg.contactId,
+        sender: voiceMsg.sender,
+        text: `Voice message (${capturedDuration}s)`,
+        type: "voice",
+        status: voiceMsg.status,
+      }).select().then(({ data, error }) => {
+        if (error) { console.error("Error saving voice message:", error); return; }
+        if (data?.[0]) {
+          const dbId = String(data[0].id);
+          setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, id: dbId } : m));
+        }
+      });
     };
 
     stopRecordingCleanup();
@@ -3031,7 +3062,7 @@ function App() {
                 </svg>
               </button>
               {/* Logout Button */}
-              <button onClick={() => setIsUnlocked(false)} title="Log out" className="sidebar-icon-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+              <button onClick={() => { setIsUnlocked(false); setMessages([]); }} title="Log out" className="sidebar-icon-btn w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-red-500/20" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
